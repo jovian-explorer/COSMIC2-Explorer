@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>COSMIC-2 Explorer</title>
+<link rel="icon" type="image/x-icon" href="assets/cosmic2.ico">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<script src="vendor/katex/katex.min.js"></script>
+<script src="vendor/katex/contrib/auto-render.min.js"></script>
+<script src="vendor/plotly.min.js"></script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo" aria-hidden="true"></span>
+    <div>
+      <h1>COSMIC-2 Explorer</h1>
+      <p class="sub">GNSS radio occultation from UCAR CDAAC <span id="version-tag"></span></p>
+    </div>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="guide">Tutorial Guide</button>
+    <button class="tab active" role="tab" data-tab="get">Get data</button>
+    <button class="tab" role="tab" data-tab="explore">Explore</button>
+    <button class="tab" role="tab" data-tab="profile">Profiles</button>
+    <button class="tab" role="tab" data-tab="composite">Compare</button>
+    <button class="tab" role="tab" data-tab="export">Export</button>
+  </nav>
+  <div class="topright">
+    <div class="font-zoom-ctrl" title="Universal UI text scaling">
+      <button type="button" class="zoom-btn" id="btn-font-dec" title="Decrease UI font size (A-)">A-</button>
+      <span class="zoom-label" id="font-scale-display" title="Click to reset font scale to 100%">100%</span>
+      <button type="button" class="zoom-btn" id="btn-font-inc" title="Increase UI font size (A+)">A+</button>
+    </div>
+    <span id="granule-count-badge" class="badge-pill" title="Total profiles indexed locally">0 profiles</span>
+    <button class="ghost" id="btn-vars-catalog" title="Inspect scientific formulas, DOIs, and descriptions for all variables">Variables</button>
+    <button class="ghost" id="btn-data-policy" title="Data availability statement, archive portals, and open source licenses">Data & Licenses</button>
+    <button class="ghost" id="btn-settings">Settings</button>
+    <button class="ghost" id="btn-about">About</button>
+    <button class="ghost" id="btn-help">Help</button>
+  </div>
+</header>
+
+<div id="banner" class="banner hidden"></div>
+
+<main>
+
+<!-- ==================== WORKFLOW GUIDE / TUTORIAL ==================== -->
+<section class="panel" id="tab-guide">
+  <div class="guide-hero">
+    <div class="guide-hero-content">
+      <h2>Welcome to COSMIC-2 Explorer: Step-by-Step Workflow Guide</h2>
+      <p class="guide-hero-sub">
+        Learn how to ingest, filter, condition, compare, and export GNSS Radio Occultation (GNSS-RO) soundings from the six-satellite FORMOSAT-7 / COSMIC-2 tropical constellation.
+      </p>
+      <div class="guide-author-tag">
+        Developed by <strong>Keshav Aggarwal</strong>, Research Associate at Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), Indian Space Research Organisation (ISRO), Thiruvananthapuram, Kerala, India (Former PMRF Scholar at DAASE, IIT Indore).
+      </div>
+    </div>
+    <div class="guide-quick-start">
+      <button class="primary large" id="guide-hero-btn-samples">Load Bundled Example Granules</button>
+      <p class="hint">Instant offline exploration with real occultation files.</p>
+    </div>
+  </div>
+
+  <div class="guide-steps-grid">
+    <!-- Step 1 -->
+    <div class="card guide-card">
+      <div class="step-badge">Step 1</div>
+      <h3>Loading and Ingesting GNSS-RO Data</h3>
+      <p>
+        COSMIC-2 data is archived by the University Corporation for Atmospheric Research (UCAR) COSMIC Data Analysis and Archive Center (CDAAC). Data is categorized into distinct publication streams:
+      </p>
+      <ul class="guide-list">
+        <li><strong>Near Real-Time (nrt):</strong> Available within 1-3 hours of acquisition for operational numerical weather prediction (NWP) assimilation.</li>
+        <li><strong>Rapid / Provisional:</strong> Refined orbits and clocks available daily within 24-48 hours.</li>
+        <li><strong>Post-Processed (postProc / postcal):</strong> High-precision science-grade reanalysis products with finalized GPS/GLONASS satellite ephemerides (typically 1-3 months latency).</li>
+        <li><strong>Offline Granule Samples:</strong> Pre-packaged atmospheric (atmPrf, wetPf2) and ionospheric (ionPrf, ivmL2m, scnLv2) soundings ready to use immediately without network access.</li>
+        <li><strong>Drag-and-Drop Ingestion:</strong> Drag any .nc or _nc files from your desktop directly into this window to index them on the fly.</li>
+      </ul>
+      <div class="step-actions">
+        <button class="primary" id="guide-btn-load-samples">Load Bundled Example Granules</button>
+        <button class="ghost" id="guide-btn-goto-get">Open Get Data Tab</button>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="card guide-card">
+      <div class="step-badge">Step 2</div>
+      <h3>Exploring Spatial Soundings</h3>
+      <p>
+        Every dot represents a GNSS radio occultation tangent point where GPS/GLONASS/Galileo signals penetrated the tropical atmosphere:
+      </p>
+      <ul class="guide-list">
+        <li><strong>Interactive Map:</strong> Visualize occultation distributions on an offline TopoJSON map. Color points by local solar time, latitude, or vertical sampling levels.</li>
+        <li><strong>Spatial Bounding Boxes:</strong> Filter profiles using latitude and longitude limits.</li>
+        <li><strong>Quick Latitude Presets:</strong> Rapidly select All Tropics (30&deg;S - 30&deg;N), Equatorial (10&deg;S - 10&deg;N), Northern Tropics (0&deg; - 30&deg;N), or Southern Tropics (30&deg;S - 0&deg;).</li>
+        <li><strong>Local Solar Time (LST):</strong> Constrain soundings to specific diurnal cycles (0 to 24 h) to isolate daytime convection or nocturnal cooling.</li>
+        <li><strong>Quality Control (QC):</strong> Automatically exclude soundings flagged as unphysical by CDAAC quality checks.</li>
+      </ul>
+      <div class="step-actions">
+        <button class="primary" id="guide-btn-goto-explore">Open Explore Map</button>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="card guide-card">
+      <div class="step-badge">Step 3</div>
+      <h3>Vertical Profile Inspection</h3>
+      <p>
+        Inspect high-resolution thermodynamic vertical profiles with altitude from near-surface to stratospheric levels (up to 60 km):
+      </p>
+      <ul class="guide-list">
+        <li><strong>Thermodynamic Variables:</strong> Temperature (Temp), Dry Temperature (dry_temp), Atmospheric Pressure (Pres), and Refractivity (Ref).</li>
+        <li><strong>Atmospheric Moisture:</strong> Water vapor pressure (Vp) derived from 1D-Var retrievals in wetPf2 products.</li>
+        <li><strong>Ionospheric Soundings:</strong> Electron density (EDENS) profiles extending to ~500 km altitude from ionPrf files.</li>
+        <li><strong>Multi-Profile Overlay:</strong> Select multiple occultations from the Explore table or lasso-select points on the map to compare soundings on a single vertical axis.</li>
+        <li><strong>Thermodynamic Diagnostics:</strong> View calculated tropopause cold-point altitude, lapse rates, and boundary layer inversions.</li>
+      </ul>
+      <div class="guide-formula-box" style="margin: 10px 0; padding: 8px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px;">
+        <strong>Smith-Weintraub Refractivity Formulation:</strong>
+        <p style="margin: 4px 0;">$$N = 77.6 \frac{P}{T} + 3.73 \times 10^5 \frac{e}{T^2} - 40.3 \times 10^6 \frac{N_e}{f^2}$$</p>
+      </div>
+      <div class="guide-formula-box" style="margin: 10px 0; padding: 8px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px;">
+        <strong>Hydrostatic Neutral Dry Temperature:</strong>
+        <p style="margin: 4px 0;">$$T_{dry}(z) = \frac{\bar{m}}{k_B \cdot N(z)} \int_z^\infty g(z') N(z')\,dz'$$</p>
+      </div>
+      <div class="step-actions">
+        <button class="primary" id="guide-btn-goto-profile">Open Profile Visualizer</button>
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="card guide-card">
+      <div class="step-badge">Step 4</div>
+      <h3>Applying Mathematical Pipeline Conditioning</h3>
+      <p>
+        Clean raw measurements and suppress high-frequency instrument noise using configurable statistical conditioning filters:
+      </p>
+      <ul class="guide-list">
+        <li><strong>Outlier Removal:</strong> Filter noisy spikes using Sigma Clipping (Gaussian assumption), MAD Robust Filtering (Median Absolute Deviation), IQR Filter, or Percentile Truncation.</li>
+        <li><strong>Smoothing Algorithms:</strong> Apply Savitzky-Golay polynomial smoothing (preserves peak shapes, tropopause sharp gradients, and structural features), Gaussian kernel filtering, or Rolling Moving Averages.</li>
+        <li><strong>Uncertainty Envelopes:</strong> Generate rolling standard deviation or standard error confidence bands along the profile.</li>
+        <li><strong>Mathematical Provenance:</strong> Every conditioning transformation records its operational parameters to guarantee reproducible science.</li>
+      </ul>
+      <div class="guide-formula-box" style="margin: 10px 0; padding: 8px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px;">
+        <strong>Poisson Potential Temperature ($\theta$):</strong>
+        <p style="margin: 4px 0;">$$\theta(z) = T(z) \left(\frac{P_0}{P(z)}\right)^{\frac{R_{dry}}{C_p}}$$</p>
+      </div>
+      <div class="guide-formula-box" style="margin: 10px 0; padding: 8px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px;">
+        <strong>Brunt-Vaisala Static Stability ($N_{BV}^2$):</strong>
+        <p style="margin: 4px 0;">$$N_{BV}^2(z) = \frac{g(z)}{T(z)}\left(\frac{dT}{dz} + \Gamma_d\right) = \frac{g(z)}{\theta(z)}\frac{d\theta}{dz}$$</p>
+      </div>
+      <div class="step-actions">
+        <button class="primary" id="guide-btn-goto-pipeline">Open Profile Visualizer</button>
+      </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="card guide-card">
+      <div class="step-badge">Step 5</div>
+      <h3>Multi-Profile Comparative Analysis</h3>
+      <p>
+        Transition from individual sounding weather snapshots to climate-scale regional statistics:
+      </p>
+      <ul class="guide-list">
+        <li><strong>Latitudinal Composites:</strong> Aggregate profiles into 5-degree or 10-degree latitudinal bands across the tropics and subtropics.</li>
+        <li><strong>Diurnal and Local Time Grouping:</strong> Group soundings into hourly local solar time bins to study atmospheric tides and equatorial waves.</li>
+        <li><strong>Statistical Spread:</strong> Display group mean profiles with standard deviation (&plusmn;1 sigma) envelopes or 10th-90th percentile ranges.</li>
+        <li><strong>Derived Relationship Scatter:</strong> Correlate tropopause cold-point altitude against latitude, surface pressure against local time, or refractivity gradients.</li>
+      </ul>
+      <div class="step-actions">
+        <button class="primary" id="guide-btn-goto-composite">Open Composite Analysis</button>
+      </div>
+    </div>
+
+    <!-- Step 6 -->
+    <div class="card guide-card">
+      <div class="step-badge">Step 6</div>
+      <h3>Exporting Figures and Data</h3>
+      <p>
+        Export your results in standard formats suitable for peer-reviewed journal articles, technical reports, and scientific archives:
+      </p>
+      <ul class="guide-list">
+        <li><strong>Publication Figures:</strong> Generate high-resolution 300 DPI figures in vector (PDF, SVG) or raster (PNG) formats using Matplotlib's publication style ladder.</li>
+        <li><strong>CF-Compliant NetCDF-4:</strong> Regridded multi-profile 3D arrays with Climate and Forecast (CF) metadata, standard names, units, and coordinate variables.</li>
+        <li><strong>Tabular Data (CSV):</strong> Level-by-level sounding profiles, uniform altitude grid matrices, or metadata catalog tables.</li>
+        <li><strong>Provenance and Citations:</strong> Full JSON provenance trails and BibTeX citation strings for UCAR CDAAC and lead researcher Keshav Aggarwal (SPL/VSSC/ISRO).</li>
+      </ul>
+      <div class="step-actions">
+        <button class="primary" id="guide-btn-goto-export">Open Export Center</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mathematical Pipeline Formulations -->
+  <div class="card" style="margin-top: 20px;">
+    <div class="card-head">
+      <h2>Mathematical Formulations of the GNSS-RO Processing Pipeline</h2>
+      <span class="badge-pill">Atmospheric Physics &amp; Retrieval Chain</span>
+    </div>
+    <p class="hint">
+      Comprehensive mathematical derivations underpinning each transformation in the GNSS Radio Occultation retrieval chain, from phase delay to thermodynamic profiles:
+    </p>
+
+    <div class="grid-2" style="margin-top: 14px; gap: 14px;">
+      <!-- Formula Box 1 -->
+      <div class="guide-formula-box" style="padding: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px;">
+        <h4 style="margin: 0 0 6px 0; color: var(--accent);">1. Doppler Shift &amp; Geometric Optical Impact Parameter</h4>
+        <p style="font-size: calc(12px * var(--font-scale, 1.0)); margin-bottom: 6px;">
+          The relative motion of the transmitter and receiver imposes an atmospheric excess Doppler shift \( \Delta f_D \). Under spherical symmetry, Bouguer's law relates the impact parameter \( a \) to local refractive index \( n \) and radius \( r \):
+        </p>
+        <p style="text-align: center; margin: 8px 0;">$$a = n(r) \cdot r \cdot \sin\phi$$</p>
+        <p style="font-size: calc(11px * var(--font-scale, 1.0)); color: var(--text-muted); margin: 0;">
+          Reference: Kursinski et al. (1997), J. Geophys. Res., 102(D19), 23429-23465. DOI: <a href="https://doi.org/10.1029/97RG02808" target="_blank" rel="noopener">10.1029/97RG02808</a>
+        </p>
+      </div>
+
+      <!-- Formula Box 2 -->
+      <div class="guide-formula-box" style="padding: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px;">
+        <h4 style="margin: 0 0 6px 0; color: var(--accent);">2. Dual-Frequency Ionospheric Combination</h4>
+        <p style="font-size: calc(12px * var(--font-scale, 1.0)); margin-bottom: 6px;">
+          First-order dispersive ionospheric bending is eliminated by taking the linear combination of bending angles \( \alpha_1 \) and \( \alpha_2 \) measured on frequencies \( f_1 \) (1575.42 MHz) and \( f_2 \) (1227.60 MHz):
+        </p>
+        <p style="text-align: center; margin: 8px 0;">$$\alpha_{corr}(a) = \frac{f_1^2 \alpha_1(a) - f_2^2 \alpha_2(a)}{f_1^2 - f_2^2}$$</p>
+        <p style="font-size: calc(11px * var(--font-scale, 1.0)); color: var(--text-muted); margin: 0;">
+          Reference: Vorob'ev &amp; Krasil'nikova (1994), Izvestiya Atmos. Ocean. Phys., 29, 602-609.
+        </p>
+      </div>
+
+      <!-- Formula Box 3 -->
+      <div class="guide-formula-box" style="padding: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px;">
+        <h4 style="margin: 0 0 6px 0; color: var(--accent);">3. Abel Transform Inversion for Refractivity</h4>
+        <p style="font-size: calc(12px * var(--font-scale, 1.0)); margin-bottom: 6px;">
+          Assuming local spherical symmetry in the neutral atmosphere, the integral equation for ray bending angle is inverted analytically via the Abel integral transform to compute refractive index \( n(r) \):
+        </p>
+        <p style="text-align: center; margin: 8px 0;">$$n(r) = \exp\left[ \frac{1}{\pi} \int_a^\infty \frac{\alpha(x)}{\sqrt{x^2 - a^2}} \, dx \right], \quad N = (n - 1) \times 10^6$$</p>
+        <p style="font-size: calc(11px * var(--font-scale, 1.0)); color: var(--text-muted); margin: 0;">
+          Reference: Fjeldbo, Kliore &amp; Eshleman (1971), Astron. J., 76, 123-140. DOI: <a href="https://doi.org/10.1086/111096" target="_blank" rel="noopener">10.1086/111096</a>
+        </p>
+      </div>
+
+      <!-- Formula Box 4 -->
+      <div class="guide-formula-box" style="padding: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px;">
+        <h4 style="margin: 0 0 6px 0; color: var(--accent);">4. Smith-Weintraub Refractivity Decomposition</h4>
+        <p style="font-size: calc(12px * var(--font-scale, 1.0)); margin-bottom: 6px;">
+          At radio frequencies, refractivity \( N \) depends on dry atmospheric constituents, dipolar water vapor polarization, and free electrons:
+        </p>
+        <p style="text-align: center; margin: 8px 0;">$$N = 77.6 \frac{P}{T} + 3.73 \times 10^5 \frac{e}{T^2} - 40.3 \times 10^6 \frac{N_e}{f^2}$$</p>
+        <p style="font-size: calc(11px * var(--font-scale, 1.0)); color: var(--text-muted); margin: 0;">
+          Reference: Smith &amp; Weintraub (1953), Proc. IRE, 41(8), 1035-1037. DOI: <a href="https://doi.org/10.1109/JRPROC.1953.274297" target="_blank" rel="noopener">10.1109/JRPROC.1953.274297</a>
+        </p>
+      </div>
+
+      <!-- Formula Box 5 -->
+      <div class="guide-formula-box" style="padding: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px;">
+        <h4 style="margin: 0 0 6px 0; color: var(--accent);">5. Hydrostatic Integration for Dry Temperature</h4>
+        <p style="font-size: calc(12px * var(--font-scale, 1.0)); margin-bottom: 6px;">
+          Assuming dry air (\( e \approx 0 \)), density is proportional to refractivity (\( \rho \propto N \)). Combining the hydrostatic equation \( dP = -\rho g dz \) and the ideal gas law gives dry temperature by downward integration:
+        </p>
+        <p style="text-align: center; margin: 8px 0;">$$T_{dry}(z) = \frac{\bar{m}_{dry}}{k_B \cdot N(z)} \int_z^\infty g(z') N(z') \, dz'$$</p>
+        <p style="font-size: calc(11px * var(--font-scale, 1.0)); color: var(--text-muted); margin: 0;">
+          Reference: Scherllin-Pirscher et al. (2017), Atmos. Meas. Tech., 10, 1211-1226. DOI: <a href="https://doi.org/10.5194/amt-10-1211-2017" target="_blank" rel="noopener">10.5194/amt-10-1211-2017</a>
+        </p>
+      </div>
+
+      <!-- Formula Box 6 -->
+      <div class="guide-formula-box" style="padding: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px;">
+        <h4 style="margin: 0 0 6px 0; color: var(--accent);">6. 1D-Var Optimal Estimation (Moisture Separation)</h4>
+        <p style="font-size: calc(12px * var(--font-scale, 1.0)); margin-bottom: 6px;">
+          In the warm, moist lower troposphere, water vapor and temperature ambiguities are resolved by minimizing the 1D-Var variational cost function \( J(\mathbf{x}) \) with ECMWF/GFS background states:
+        </p>
+        <p style="text-align: center; margin: 8px 0;">$$J(\mathbf{x}) = \frac{1}{2}(\mathbf{x} - \mathbf{x}_b)^T \mathbf{B}^{-1} (\mathbf{x} - \mathbf{x}_b) + \frac{1}{2}(\mathbf{y} - H(\mathbf{x}))^T \mathbf{R}^{-1} (\mathbf{y} - H(\mathbf{x}))$$</p>
+        <p style="font-size: calc(11px * var(--font-scale, 1.0)); color: var(--text-muted); margin: 0;">
+          Reference: Rodgers (2000), Inverse Methods for Atmospheric Sounding; Healy &amp; Eyre (2000), QJRMS, 126, 1661-1680.
+        </p>
+      </div>
+
+      <!-- Formula Box 7 -->
+      <div class="guide-formula-box" style="padding: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px;">
+        <h4 style="margin: 0 0 6px 0; color: var(--accent);">7. Static Stability &amp; Brunt-Vaisala Frequency (\( N_{BV}^2 \))</h4>
+        <p style="font-size: calc(12px * var(--font-scale, 1.0)); margin-bottom: 6px;">
+          Atmospheric resistance to vertical displacement is governed by the squared buoyancy frequency \( N_{BV}^2 \). Negative values denote convective instability; strong peaks indicate the tropopause inversion layer (TIL):
+        </p>
+        <p style="text-align: center; margin: 8px 0;">$$N_{BV}^2(z) = \frac{g(z)}{T(z)} \left( \frac{dT}{dz} + \frac{g(z)}{c_p} \right) = \frac{g(z)}{\theta(z)} \frac{d\theta}{dz}$$</p>
+        <p style="font-size: calc(11px * var(--font-scale, 1.0)); color: var(--text-muted); margin: 0;">
+          Reference: Vaisala (1925), Commentat. Phys.-Math., 2, 1-19; Brunt (1927), QJRMS, 53, 30-32.
+        </p>
+      </div>
+
+      <!-- Formula Box 8 -->
+      <div class="guide-formula-box" style="padding: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px;">
+        <h4 style="margin: 0 0 6px 0; color: var(--accent);">8. Lower Stratospheric Gravity Wave Potential Energy (\( E_p \))</h4>
+        <p style="font-size: calc(12px * var(--font-scale, 1.0)); margin-bottom: 6px;">
+          Atmospheric gravity wave activity is extracted by detrending vertical temperature profiles using a 4th-order polynomial over 20-40 km altitude to isolate temperature fluctuations \( T' = T - T_0 \):
+        </p>
+        <p style="text-align: center; margin: 8px 0;">$$E_p = \frac{1}{2} \left(\frac{g}{N_{BV}}\right)^2 \left(\frac{T'}{T_0}\right)^2 \quad [\mathrm{J/kg}]$$</p>
+        <p style="font-size: calc(11px * var(--font-scale, 1.0)); color: var(--text-muted); margin: 0;">
+          Reference: Tsuda et al. (2000), J. Geophys. Res., 105(D6), 7257-7273. DOI: <a href="https://doi.org/10.1029/1999JD901005" target="_blank" rel="noopener">10.1029/1999JD901005</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Authoritative Data Sites & Archives -->
+  <div class="card" style="margin-top: 20px;">
+    <div class="card-head">
+      <h2>Authoritative Scientific Data Sites and International Archives</h2>
+      <span class="badge-pill">Open Data Portals</span>
+    </div>
+    <p class="hint">
+      Direct access endpoints, governing organizations, and official portals for Global Navigation Satellite System Radio Occultation data:
+    </p>
+
+    <div class="grid-2" style="margin-top: 14px; gap: 14px;">
+      <!-- Portal 1: UCAR CDAAC -->
+      <div class="card" style="margin: 0; background: var(--bg); border: 1px solid var(--line);">
+        <h3 style="margin: 0 0 6px 0;">1. UCAR CDAAC (COSMIC Data Analysis and Archive Center)</h3>
+        <p style="font-size: calc(12px * var(--font-scale, 1.0)); color: var(--text-muted); margin-bottom: 8px;">
+          <strong>Governing Body:</strong> University Corporation for Atmospheric Research (UCAR), Boulder, Colorado, USA. Sponsored by NSF, NOAA, NASA, and USSF.
+        </p>
+        <p style="font-size: calc(12px * var(--font-scale, 1.0)); margin-bottom: 8px;">
+          Primary scientific archive providing near-real-time (nrt), rapid, post-processed (postProc), and space weather provisional data streams.
+        </p>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <a href="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/" target="_blank" rel="noopener" class="button ghost" style="padding: 4px 10px; font-size: calc(12px * var(--font-scale, 1.0));">🗄️ CDAAC Data Tree ↗</a>
+          <a href="https://www.cosmic.ucar.edu/what-we-do/cosmic-2/data" target="_blank" rel="noopener" class="button ghost" style="padding: 4px 10px; font-size: calc(12px * var(--font-scale, 1.0));">🌐 CDAAC Mission Portal ↗</a>
+        </div>
+      </div>
+
+      <!-- Portal 2: NOAA NCEI -->
+      <div class="card" style="margin: 0; background: var(--bg); border: 1px solid var(--line);">
+        <h3 style="margin: 0 0 6px 0;">2. NOAA NCEI (National Centers for Environmental Information)</h3>
+        <p style="font-size: calc(12px * var(--font-scale, 1.0)); color: var(--text-muted); margin-bottom: 8px;">
+          <strong>Governing Body:</strong> National Oceanic and Atmospheric Administration (NOAA), Department of Commerce, USA.
+        </p>
+        <p style="font-size: calc(12px * var(--font-scale, 1.0)); margin-bottom: 8px;">
+          Authoritative U.S. federal long-term operational climate repository for FORMOSAT-7 / COSMIC-2 and commercial radio occultation soundings.
+        </p>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <a href="https://www.ncei.noaa.gov/data/gps-radio-occultation/" target="_blank" rel="noopener" class="button ghost" style="padding: 4px 10px; font-size: calc(12px * var(--font-scale, 1.0));">📊 NCEI RO Archive ↗</a>
+          <a href="https://www.nesdis.noaa.gov/current-satellite-missions/currently-flying/formosat-7-cosmic-2" target="_blank" rel="noopener" class="button ghost" style="padding: 4px 10px; font-size: calc(12px * var(--font-scale, 1.0));">🛰️ NOAA Mission Overview ↗</a>
+        </div>
+      </div>
+
+      <!-- Portal 3: TASA -->
+      <div class="card" style="margin: 0; background: var(--bg); border: 1px solid var(--line);">
+        <h3 style="margin: 0 0 6px 0;">3. TASA (Taiwan Space Agency)</h3>
+        <p style="font-size: calc(12px * var(--font-scale, 1.0)); color: var(--text-muted); margin-bottom: 8px;">
+          <strong>Governing Body:</strong> Taiwan Space Agency (TASA / NSPO), Hsinchu, Taiwan.
+        </p>
+        <p style="font-size: calc(12px * var(--font-scale, 1.0)); margin-bottom: 8px;">
+          Co-lead constellation operator executing joint spacecraft constellation flight operations and Taiwan Data Processing Center (TARC) dissemination.
+        </p>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <a href="https://www.tasa.org.tw/en-US/" target="_blank" rel="noopener" class="button ghost" style="padding: 4px 10px; font-size: calc(12px * var(--font-scale, 1.0));">🌐 TASA Official Site ↗</a>
+          <a href="https://tacc.cwb.gov.tw/" target="_blank" rel="noopener" class="button ghost" style="padding: 4px 10px; font-size: calc(12px * var(--font-scale, 1.0));">📡 Taiwan Data Center ↗</a>
+        </div>
+      </div>
+
+      <!-- Portal 4: NASA CDDIS & ISRO ISSDC -->
+      <div class="card" style="margin: 0; background: var(--bg); border: 1px solid var(--line);">
+        <h3 style="margin: 0 0 6px 0;">4. NASA CDDIS and ISRO ISSDC</h3>
+        <p style="font-size: calc(12px * var(--font-scale, 1.0)); color: var(--text-muted); margin-bottom: 8px;">
+          <strong>NASA Crustal Dynamics Data Information System:</strong> Precise GNSS satellite ephemerides, high-rate clocks, and global ionospheric maps (IONEX).
+        </p>
+        <p style="font-size: calc(12px * var(--font-scale, 1.0)); margin-bottom: 8px;">
+          <strong>ISRO Indian Space Science Data Centre:</strong> Host for Indian planetary and atmospheric science payloads including Chandrayaan-2 DFRS and MOM MENCA.
+        </p>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <a href="https://cddis.nasa.gov/" target="_blank" rel="noopener" class="button ghost" style="padding: 4px 10px; font-size: calc(12px * var(--font-scale, 1.0));">🛰️ NASA CDDIS Portal ↗</a>
+          <a href="https://pradan.issdc.gov.in/" target="_blank" rel="noopener" class="button ghost" style="padding: 4px 10px; font-size: calc(12px * var(--font-scale, 1.0));">🇮🇳 ISRO ISSDC PRADAN ↗</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Availability, Attribution & Software Licensing -->
+  <div class="card" style="margin-top: 20px;">
+    <div class="card-head">
+      <h2>Data Availability Statements, Attribution Requirements and Software Licenses</h2>
+      <span class="badge-pill">Compliance &amp; Licensing</span>
+    </div>
+
+    <h3>1. Data Availability Statement for Publications</h3>
+    <p>Authors using COSMIC-2 Explorer for academic research or publications are encouraged to include the following Data Availability Statement:</p>
+    <blockquote style="background: var(--bg); border-left: 4px solid var(--accent); margin: 8px 0; padding: 10px 14px; font-size: calc(13px * var(--font-scale, 1.0));">
+      "The COSMIC-2 radio occultation soundings analyzed in this study are publicly available from the University Corporation for Atmospheric Research (UCAR) COSMIC Data Analysis and Archive Center (CDAAC) at https://data.cosmic.ucar.edu/ and the NOAA National Centers for Environmental Information (NCEI) at https://www.ncei.noaa.gov/data/gps-radio-occultation/. The processing, validation, and profile analysis were conducted using COSMIC-2 Explorer (Version 1.0.0), available open-source at https://github.com/keshav-aggarwal/COSMIC2-Explorer."
+    </blockquote>
+
+    <h3 style="margin-top: 14px;">2. Mandatory Dual-Attribution Citations</h3>
+    <p>To ensure computational reproducibility and scientific credit, please provide dual citations:</p>
+    <div class="grid-2" style="gap: 12px;">
+      <div>
+        <strong>UCAR CDAAC Primary Dataset:</strong>
+        <pre style="background: var(--bg); padding: 8px; border-radius: 4px; font-size: calc(11px * var(--font-scale, 1.0)); overflow-x: auto; border: 1px solid var(--line);">
+@misc{UCAR_COSMIC2_2019,
+  author = {{UCAR COSMIC Program}},
+  title  = {{COSMIC-2 Data Products [Data set]}},
+  year   = {2019},
+  publisher = {UCAR/NCAR - COSMIC Data Analysis and Archive Center},
+  doi    = {10.5065/T353-C093},
+  url    = {https://doi.org/10.5065/T353-C093}
+}</pre>
+      </div>
+      <div>
+        <strong>COSMIC-2 Explorer Software Platform:</strong>
+        <pre style="background: var(--bg); padding: 8px; border-radius: 4px; font-size: calc(11px * var(--font-scale, 1.0)); overflow-x: auto; border: 1px solid var(--line);">
+@software{Aggarwal_COSMIC2_Explorer_2026,
+  author       = {Keshav Aggarwal},
+  title        = {{COSMIC-2 Explorer: High-Resolution Radio Occultation Processing, Visualisation, and Atmospheric Profiling System}},
+  year         = {2026},
+  version      = {1.0.0},
+  institution  = {Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO},
+  address      = {Thiruvananthapuram, Kerala, India},
+  url          = {https://github.com/keshav-aggarwal/COSMIC2-Explorer}
+}</pre>
+      </div>
+    </div>
+
+    <h3 style="margin-top: 14px;">3. Open Source Software License (MIT)</h3>
+    <p style="font-size: calc(13px * var(--font-scale, 1.0));">
+      COSMIC-2 Explorer is free and open-source software licensed under the <strong>MIT License</strong>. Copyright &copy; 2026 <strong>Keshav Aggarwal</strong>, Research Associate at Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), Indian Space Research Organisation (ISRO), Thiruvananthapuram, Kerala, India (Former PMRF Scholar at DAASE, IIT Indore).
+    </p>
+  </div>
+</section>
+
+<!-- ==================== GET DATA ==================== -->
+<section class="panel active" id="tab-get">
+  <div class="explain" data-curious>
+    <strong>What is this?</strong> A GPS satellite's radio signal bends as it grazes
+    Earth's atmosphere. Measuring that bend gives a vertical profile of temperature,
+    pressure, humidity and electron density - like a weather balloon, but from
+    orbit, about 5,000 times a day. COSMIC-2 is a six-satellite constellation that
+    samples the tropics densely. Pick a date below and fetch some profiles.
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h2>1. Choose a day</h2>
+      <div class="row">
+        <label>Date (UTC)
+          <input type="date" id="get-date">
+        </label>
+        <button class="ghost" id="btn-latest">Use most recent available</button>
+      </div>
+      <div class="row">
+        <label>Processing stream
+          <select id="get-stream"></select>
+        </label>
+      </div>
+      <p class="hint" id="stream-blurb"></p>
+      <button class="primary" id="btn-scan">Show what is available</button>
+      <p class="hint">Listings come straight from
+        <code>data.cosmic.ucar.edu</code> - no account needed.</p>
+    </div>
+
+    <div class="card">
+      <h2>2. How much do you want?</h2>
+      <div class="row">
+        <label>Profiles to fetch
+          <select id="get-count">
+            <option value="24">24 - a quick look</option>
+            <option value="120" selected>120 - a working sample</option>
+            <option value="480">480 - dense sample</option>
+            <option value="0">Everything for that day</option>
+          </select>
+        </label>
+        <label>Sampling
+          <select id="get-sampling">
+            <option value="spread" selected>Spread over 24 h</option>
+            <option value="first">First profiles of the day</option>
+          </select>
+        </label>
+      </div>
+      <p class="hint" id="sampling-hint"></p>
+      <label class="check"><input type="checkbox" id="get-goodonly">
+        Skip profiles the archive flagged as failed</label>
+      <hr>
+      <h3>No internet, or just curious?</h3>
+      <button class="ghost" id="btn-samples">Load the bundled example profiles</button>
+      <p class="hint">A handful of real granules ship with the app so every
+        feature works offline.</p>
+    </div>
+  </div>
+
+  <div class="card hidden" id="manifest-card">
+    <h2>Available products</h2>
+    <p class="hint" id="manifest-note">Pick a date and press
+      &ldquo;Show what is available&rdquo;.</p>
+    <div id="manifest-list" class="product-grid"></div>
+  </div>
+
+  <div class="card">
+    <h2>Transfers</h2>
+    <div id="jobs-list" class="jobs"><p class="hint">Nothing queued.</p></div>
+  </div>
+
+  <div class="card">
+    <h2>On this computer</h2>
+    <div id="local-summary" class="stats"></div>
+    <div class="row">
+      <button class="ghost" id="btn-reindex">Rebuild index</button>
+      <button class="ghost" id="btn-open-cache">Open data folder</button>
+    </div>
+    <table class="table" id="datasets-table">
+      <thead><tr><th>Product</th><th>Date</th><th>Stream</th><th>Profiles</th>
+        <th>Size</th><th>Coverage</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ==================== EXPLORE ==================== -->
+<section class="panel" id="tab-explore">
+  <div class="explain" data-curious>
+    Every dot is one occultation - one place and moment where a radio ray
+    sliced through the atmosphere. Drag a box on the map or use the filters to
+    narrow down, then tick the profiles you want to look at.
+  </div>
+  <div class="grid-side">
+    <aside class="card filters">
+      <h2>Filters</h2>
+      <label>Product <select id="f-product"></select></label>
+      <label>From <input type="date" id="f-start"></label>
+      <label>To <input type="date" id="f-end"></label>
+      <fieldset>
+        <legend>Latitude</legend>
+        <div class="row tight">
+          <input type="number" id="f-latmin" placeholder="-90" step="1">
+          <input type="number" id="f-latmax" placeholder="90" step="1">
+        </div>
+        <div class="preset-buttons" id="lat-presets">
+          <button type="button" class="preset-btn" data-latmin="-30" data-latmax="30" title="Filter to tropical latitudes (-30 deg to +30 deg)">All Tropics (30&deg;S - 30&deg;N)</button>
+          <button type="button" class="preset-btn" data-latmin="-10" data-latmax="10" title="Filter to equatorial belt (-10 deg to +10 deg)">Equatorial (10&deg;S - 10&deg;N)</button>
+          <button type="button" class="preset-btn" data-latmin="0" data-latmax="30" title="Filter to northern tropics (0 deg to +30 deg)">Northern Tropics (0&deg; - 30&deg;N)</button>
+          <button type="button" class="preset-btn" data-latmin="-30" data-latmax="0" title="Filter to southern tropics (-30 deg to 0 deg)">Southern Tropics (30&deg;S - 0&deg;)</button>
+          <button type="button" class="preset-btn" data-latmin="" data-latmax="" title="Show all soundings globally">Global/All</button>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Longitude</legend>
+        <div class="row tight">
+          <input type="number" id="f-lonmin" placeholder="-180" step="1">
+          <input type="number" id="f-lonmax" placeholder="180" step="1">
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Local solar time (h)</legend>
+        <div class="row tight">
+          <input type="number" id="f-ltmin" placeholder="0" min="0" max="24" step="0.5">
+          <input type="number" id="f-ltmax" placeholder="24" min="0" max="24" step="0.5">
+        </div>
+      </fieldset>
+      <label>Satellite <select id="f-sat"><option value="">any</option></select></label>
+      <label class="check"><input type="checkbox" id="f-good" checked>
+        Good quality only</label>
+      <div class="row">
+        <button class="primary" id="btn-search">Search</button>
+        <button class="ghost" id="btn-reset">Reset</button>
+      </div>
+      <p class="hint" id="search-note"></p>
+    </aside>
+
+    <div class="stack">
+      <div class="card">
+        <div class="card-head">
+          <h2>Where the profiles are</h2>
+          <label class="inline">colour by
+            <select id="map-colour">
+              <option value="local_time">local solar time</option>
+              <option value="lat">latitude</option>
+              <option value="n_levels">number of levels</option>
+            </select>
+          </label>
+        </div>
+        <div id="map-plot" class="plot tall"></div>
+        <p class="hint">Click a point to load that profile. Box- or lasso-select to
+          take a group.</p>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h2>Results</h2>
+          <div class="row tight">
+            <button class="ghost" id="btn-select-page">Select page</button>
+            <button class="ghost" id="btn-clear-sel">Clear selection</button>
+            <span class="pill" id="sel-count">0 selected</span>
+          </div>
+        </div>
+        <div class="scroll-x">
+          <table class="table" id="results-table">
+            <thead><tr>
+              <th></th><th>Time (UTC)</th><th>Lat</th><th>Lon</th><th>LST</th>
+              <th>Sat</th><th>PRN</th><th>Levels</th><th>Top (km)</th><th>QC</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="row" id="pager"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== PROFILES ==================== -->
+<section class="panel" id="tab-profile">
+  <div class="grid-side">
+    <aside class="card filters">
+      <h2>Plot</h2>
+      <label>Quantity (x-axis) <select id="p-field"></select></label>
+      <label>Height (y-axis) <select id="p-vertical"></select></label>
+      <label class="check"><input type="checkbox" id="p-kelvin">
+        Temperature in kelvin</label>
+      <label class="check"><input type="checkbox" id="p-logx">
+        Logarithmic x-axis</label>
+      <hr>
+      <h2>Processing Pipeline</h2>
+      <label title="Select the statistical method to detect and remove anomalous data points. Different methods yield different scientific results.">Outlier Removal 
+        <select id="p-outlier-method">
+          <option value="none" title="Keep all raw data points">None</option>
+          <option value="sigma" title="Removes points beyond N standard deviations from the mean (assumes Gaussian distribution)">Sigma Clipping</option>
+          <option value="mad" title="Robust filtering using Median Absolute Deviation, highly resistant to extreme outliers">MAD Robust Filter</option>
+          <option value="iqr" title="Filters based on the Interquartile Range">IQR Filter</option>
+          <option value="percentile" title="Removes the top and bottom percentiles">Percentile Filter</option>
+        </select>
+      </label>
+      <label title="Select a technique to reduce high-frequency noise while preserving the physical structure of the profile.">Smoothing 
+        <select id="p-smooth-method">
+          <option value="none">None</option>
+          <option value="moving_average" title="Simple unweighted average over a rolling window">Moving Average</option>
+          <option value="gaussian" title="Weighted smoothing preserving edges better than moving average">Gaussian</option>
+          <option value="median" title="Replaces each point with the median of its neighbors; robust to spikes">Median</option>
+          <option value="savgol" title="Savitzky-Golay polynomial fitting; excellently preserves signal peaks and structural integrity">Savitzky-Golay</option>
+        </select>
+      </label>
+      <label title="Select how to represent the statistical confidence or spread of the data.">Uncertainty 
+        <select id="p-uncert-method">
+          <option value="none">None</option>
+          <option value="standard_deviation" title="Shows the rolling standard deviation, representing data spread/variability">Rolling Std Dev</option>
+          <option value="standard_error" title="Shows the standard error of the mean, representing confidence in the smoothed value">Standard Error</option>
+        </select>
+      </label>
+      <hr>
+      <h3>Selected profiles</h3>
+      <div id="p-selected" class="chips"></div>
+      <button class="primary" id="btn-plot">Draw</button>
+      <p class="hint">Select profiles on the Explore tab first.</p>
+      <hr>
+      <h3>Quick views</h3>
+      <button class="ghost" id="btn-view-thermo">Temperature / humidity / refractivity</button>
+      <button class="ghost" id="btn-view-bending">Bending angle vs impact height</button>
+      <button class="ghost" id="btn-view-iono">Electron density</button>
+    </aside>
+    <div class="stack">
+      <div class="card">
+        <div class="card-head">
+          <h2 id="profile-title">Vertical profiles</h2>
+          <span class="pill" id="profile-count"></span>
+        </div>
+        <div id="profile-plot" class="plot tall"></div>
+        <p class="hint" id="profile-caption"></p>
+      </div>
+      <div class="card" id="diag-card">
+        <h2>What this profile shows</h2>
+        <div id="diag-body"><p class="hint">Draw a profile to see its
+          diagnostics.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== COMPARE ==================== -->
+<section class="panel" id="tab-composite">
+  <div class="explain" data-curious>
+    One profile is weather; hundreds of profiles averaged together start to be
+    climate. Group the profiles you have downloaded and compare their average
+    shape, or plot one derived number against another.
+  </div>
+  <div class="grid-side">
+    <aside class="card filters">
+      <h2>Average profiles</h2>
+      <label>Quantity <select id="c-field"></select></label>
+      <label>Group by <select id="c-groupby"></select></label>
+      <label>Spread shown
+        <select id="c-spread">
+          <option value="std">mean &plusmn; 1 standard deviation</option>
+          <option value="p10p90">10th-90th percentile</option>
+        </select>
+      </label>
+      <div class="row tight">
+        <label>Top (km)<input type="number" id="c-top" value="40" step="5"></label>
+        <label>Step (km)<input type="number" id="c-step" value="0.5" step="0.1"></label>
+      </div>
+      <label class="check"><input type="checkbox" id="c-selected-only">
+        Use only my selection</label>
+      <button class="primary" id="btn-composite">Compute</button>
+      <hr>
+      <h2>Relationships</h2>
+      <label>x <select id="s-x"></select></label>
+      <label>y <select id="s-y"></select></label>
+      <label>colour <select id="s-c"></select></label>
+      <button class="primary" id="btn-scatter">Plot</button>
+    </aside>
+    <div class="stack">
+      <div class="card">
+        <h2 id="composite-title">Average profiles by group</h2>
+        <div id="composite-plot" class="plot tall"></div>
+        <p class="hint" id="composite-caption"></p>
+      </div>
+      <div class="card">
+        <h2>Derived quantities</h2>
+        <div id="scatter-plot" class="plot"></div>
+        <p class="hint" id="scatter-caption"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== EXPORT ==================== -->
+<section class="panel" id="tab-export">
+  <div class="explain" data-curious>
+    Everything you export carries its provenance: which product and processing
+    stream it came from, which granule files, and the citation UCAR asks you to
+    use. Drop the file straight into a paper or a notebook.
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <h2>Data files</h2>
+      <label>What to export
+        <select id="e-kind">
+          <option value="profiles_csv">CSV - every level of every profile</option>
+          <option value="grid_csv">CSV - one quantity, profiles regridded to columns</option>
+          <option value="netcdf">netCDF-4 - regridded array, CF attributes</option>
+          <option value="metadata_csv">CSV - the index table only</option>
+          <option value="json">JSON - metadata and provenance</option>
+        </select>
+      </label>
+      <label>Quantity (for the regridded forms)
+        <select id="e-field"></select></label>
+      <div class="row tight">
+        <label>Top (km)<input type="number" id="e-top" value="60" step="5"></label>
+        <label>Step (km)<input type="number" id="e-step" value="0.2" step="0.1"></label>
+      </div>
+      <label class="check"><input type="checkbox" id="e-selected-only" checked>
+        Only my selection</label>
+      <label>File name <input type="text" id="e-name" value="cosmic2"></label>
+      <button class="primary" id="btn-export-data">Write file</button>
+    </div>
+
+    <div class="card">
+      <h2>Figures</h2>
+      <label>Figure
+        <select id="e-fig">
+          <option value="profiles">Profile overlay</option>
+          <option value="panels">One profile, several quantities</option>
+          <option value="composite">Group averages with spread</option>
+          <option value="map">Occultation map</option>
+          <option value="coverage">Sampling summary</option>
+          <option value="scatter">Derived quantity relationship</option>
+        </select>
+      </label>
+      <div class="row tight">
+        <label>Format
+          <select id="e-fmt">
+            <option value="png">PNG</option>
+            <option value="pdf">PDF (vector)</option>
+            <option value="svg">SVG (vector)</option>
+            <option value="eps">EPS</option>
+          </select>
+        </label>
+        <label>Resolution (dpi)<input type="number" id="e-dpi" value="300" step="50"></label>
+      </div>
+      <label>Title <input type="text" id="e-title" placeholder="optional"></label>
+      <label>Caption <input type="text" id="e-caption" placeholder="optional"></label>
+      <button class="primary" id="btn-export-fig">Render figure</button>
+      <p class="hint">Rendered with matplotlib at publication settings:
+        editable vector text, three-size font ladder, no chart junk.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>Exported files</h2>
+      <button class="ghost" id="btn-open-exports">Open exports folder</button>
+    </div>
+    <table class="table" id="exports-table">
+      <thead><tr><th>File</th><th>Size</th><th>Written</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>How to cite the data</h2>
+    <pre id="citation-box" class="cite"></pre>
+    <p class="hint">Source: <span id="citation-src"></span></p>
+  </div>
+</section>
+
+</main>
+
+<div id="drawer" class="drawer hidden">
+  <div class="drawer-head">
+    <h2 id="drawer-title">Help</h2>
+    <button class="ghost" id="drawer-close">Close</button>
+  </div>
+  <div id="drawer-body" class="drawer-body"></div>
+</div>
+
+<div id="drop-overlay" class="drop-overlay hidden">
+  <div class="drop-modal">
+    <div class="drop-icon">&#128229;</div>
+    <h2>Drop NetCDF Files to Ingest</h2>
+    <p>Drop GNSS-RO files (*.nc or *_nc) to automatically index and import them.</p>
+  </div>
+</div>
+
+<div id="toasts" class="toasts"></div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

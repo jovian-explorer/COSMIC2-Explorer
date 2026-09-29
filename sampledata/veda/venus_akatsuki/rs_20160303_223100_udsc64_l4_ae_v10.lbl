@@ -1,0 +1,487 @@
+PDS_VERSION_ID               = PDS3
+DD_VERSION_ID                = PDSCAT1R103
+
+
+/* ---- FILE CHARACTERISTICS ---- */
+
+FILE_NAME                    = "rs_20160303_223100_udsc64_l4_ae_v10.tab"
+FILE_RECORDS                 = 307
+RECORD_TYPE                  = FIXED_LENGTH
+RECORD_BYTES                 = 239
+
+
+/* ---- POINTERS TO DATA OBJECTS ---- */
+
+^ATM_TABLE                   = "rs_20160303_223100_udsc64_l4_ae_v10.tab"
+
+
+/* ---- IDENTIFICATION DATA ELEMENTS ---- */
+
+MISSION_NAME                 = "VENUS CLIMATE ORBITER"
+MISSION_ALIAS_NAME           = ('PLANET-C', 'AKATSUKI')
+MISSION_ID                   = "VCO"
+DATA_SET_ID                  = "VCO-V-RS-5-OCC-V1.0"
+PRODUCT_ID                   = "RS_20160303_223100_UDSC64_L4_AE_V10.TAB"
+PRODUCT_TYPE                 = "OCCULTATION"
+PRODUCT_CREATION_TIME        = 2018-10-01T04:35:10.324
+INSTRUMENT_HOST_NAME         = "VENUS CLIMATE ORBITER"
+INSTRUMENT_HOST_ID           = "VCO"
+INSTRUMENT_NAME              = "RADIO SCIENCE"
+INSTRUMENT_ID                = "RS"
+PRODUCER_ID                  = "VCO/RS TEAM"
+INSTITUTION_NAME             = "ISAS/JAXA"
+SOURCE_PRODUCT_ID            = "RS_20160303_223100_UDSC64_L3_E_V10.TAB"
+MISSION_PHASE_NAME           = "PRIMARY SCIENCE PHASE"
+
+
+/* TIME INFORMATION */
+
+START_TIME                   = 2016-03-03T23:17:09.324
+OBSERVATION_TIME             = 2016-03-03T23:20:04.841
+STOP_TIME                    = 2016-03-03T23:23:00.359
+START_JULIAN_DATE_VALUE      = 2457451.4702468053
+MID_JULIAN_DATE_VALUE        = 2457451.472278258
+STOP_JULIAN_DATE_VALUE       = 2457451.474309711
+SPACECRAFT_CLOCK_START_COUNT = "2/1586771808"
+SPACECRAFT_CLOCK_STOP_COUNT  = "2/1586783041"
+
+
+/* TARGET INFORMATION */
+
+TARGET_NAME                  = VENUS
+VCO:SPHERICAL_RADIUS         = 6051.8 <km>
+
+
+/* ---- DESCRIPTIVE DATA ELEMENTS ---- */
+
+/* INSTRUMENTAL INFORMATION AND ITS CONDITION */
+
+OBSERVATION_TYPE             = "OCCULTATION"
+VCO:GROUND_STATION           = "UDSC64"
+
+
+/* ORBIT INFORMATION */
+
+ORBIT_NUMBER                 = 9
+PERIAPSIS_TIME               = 2016-03-03T21:19:03
+PERIAPSIS_LONGITUDE          = 9.27 <deg>
+PERIAPSIS_LATITUDE           = 4.22 <deg>
+PERIAPSIS_ALTITUDE           = 5478.3 <km>
+ORBITAL_INCLINATION          = 169.29 <deg>
+VCO:ORBITAL_ECCENTRICITY     = 0.939
+ASCENDING_NODE_LONGITUDE     = 216.97 <deg>
+PERIAPSIS_ARGUMENT_ANGLE     = 156.68 <deg>
+ORBITAL_SEMIMAJOR_AXIS       = 188775.21 <km>
+
+
+/* OTHERS */
+
+DESCRIPTION                  = "
+    This file contains an atmospheric temperature-pressure profile derived
+    from Venus Climate Orbiter (VCO, also known as PLANET-C and AKATSUKI)
+    radio occultation data. Atmospheric Doppler frequency time series
+    observed at the ground station was converted to bending angle as a
+    function of impact parameter. These results were then inverted to
+    refractive index as a function of radius via an Abel transform. Number
+    density was obtained from refractive index using a conversion formula
+    appropriate to the composition of the atmosphere, which is known.
+    Pressure and temperature profiles were derived by assuming hydrostatic
+    balance and using the ideal gas law.
+  "
+NOTE                         = "
+    The egress profile might suffer from the effect of a large latitudinal
+    movement of the ray path.
+  "
+
+
+/* ---- DATA OBJECTS DEFINITIONS ---- */
+
+OBJECT                       = ATM_TABLE
+
+  NAME                       = ATM_DATA
+  INTERCHANGE_FORMAT         = ASCII
+  ROW_BYTES                  = 239
+  ROWS                       = 307
+  COLUMNS                    = 24
+
+  OBJECT                     = COLUMN
+    COLUMN_NUMBER            = 1
+    NAME                     = SAMPLE_NUMBER
+    DATA_TYPE                = ASCII_INTEGER
+    START_BYTE               = 1
+    BYTES                    = 5
+    UNIT                     = "N/A"
+    FORMAT                   = "I5"
+    VALID_MINIMUM            = 1
+    DESCRIPTION              = "
+        The number of this row in the table, starting from 1 in the first
+        row.
+      "
+  END_OBJECT                 = COLUMN
+
+  OBJECT                     = COLUMN
+    COLUMN_NUMBER            = 2
+    NAME                     = UTC_TIME
+    DATA_TYPE                = TIME
+    START_BYTE               = 8
+    BYTES                    = 23
+    FORMAT                   = "A23"
+    UNIT                     = "N/A"
+    DESCRIPTION              = "
+        The UTC receiver date and time of this measurement, in the format
+        YYYY-MM-DDThh:mm:ss.SSS.
+      "
+  END_OBJECT                 = COLUMN
+
+  OBJECT                     = COLUMN
+    COLUMN_NUMBER            = 3
+    NAME                     = EPHEMERIS_SECONDS
+    DATA_TYPE                = ASCII_REAL
+    START_BYTE               = 33
+    BYTES                    = 16
+    FORMAT                   = "F16.6"
+    UNIT                     = "SECOND"
+    DESCRIPTION              = "
+        Seconds from 12h 1 January 2000 TDB corresponding to UTC_TIME
+        (column 2); includes leap seconds, if any.
+      "
+  END_OBJECT                 = COLUMN
+
+  OBJECT                     = COLUMN
+    COLUMN_NUMBER            = 4
+    NAME                     = RADIUS
+    DATA_TYPE                = ASCII_REAL
+    START_BYTE               = 51
+    BYTES                    = 8
+    FORMAT                   = "F8.3"
+    UNIT                     = "KILOMETER"
+    VALID_MINIMUM            = 0.0
+    DESCRIPTION              = "
+        Radius with respect to the center of the planet at measurement
+        location.
+      "
+  END_OBJECT                 = COLUMN
+
+  OBJECT                     = COLUMN
+    COLUMN_NUMBER            = 5
+    NAME                     = LATITUDE
+    DATA_TYPE                = ASCII_REAL
+    START_BYTE               = 61
+    BYTES                    = 6
+    FORMAT                   = "F6.2"
+    UNIT                     = "DEGREE"
+    VALID_MAXIMUM            = 90.0
+    VALID_MINIMUM            = -90.0
+    DESCRIPTION              = "
+        North latitude at measurement location.
+      "
+  END_OBJECT                 = COLUMN
+
+  OBJECT                     = COLUMN
+    COLUMN_NUMBER            = 6
+    NAME                     = LONGITUDE
+    DATA_TYPE                = ASCII_REAL
+    START_BYTE               = 69
+    BYTES                    = 6
+    FORMAT                   = "F6.2"
+    UNIT                     = "DEGREE"
+    VALID_MAXIMUM            = 360.0
+    VALID_MINIMUM            = 0.0
+    DESCRIPTION              = "
+        East longitude at measurement location.
+      "
+  END_OBJECT                 = COLUMN
+
+  OBJECT                     = COLUMN
+    COLUMN_NUMBER            = 7
+    NAME                     = GEOPOTENTIAL
+    DATA_TYPE                = ASCII_INTEGER
+    START_BYTE               = 77
+    BYTES                    = 8
+    FORMAT                   = "I8"
+    UNIT                     = "METER SQUARED PER SECOND SQUARED"
+    INVALID_CONSTANT         = -9999999
+    DESCRIPTION              = "
+        Geopotential at measurement location.
+      "
+  END_OBJECT                 = COLUMN
+
+  OBJECT                     = COLUMN
+    COLUMN_NUMBER            = 8
+    NAME                     = GEOPOTENTIAL_HEIGHT
+    DATA_TYPE                = ASCII_REAL
+    START_BYTE               = 87
+    BYTES                    = 6
+    FORMAT                   = "F6.3"
+    UNIT                     = "KILOMETER"
+    VALID_MINIMUM            = 0.0
+    INVALID_CONSTANT         = -9.999
+    DESCRIPTION              = "
+        Geopotential height calculated from GEOPOTENTIAL (column 7).
+      "
+  END_OBJECT                 = COLUMN
+
+  OBJECT                     = COLUMN
+    COLUMN_NUMBER            = 9
+    NAME                     = "PRESSURE (LOWER TEMPERATURE AT BOUNDARY)"
+    DATA_TYPE                = ASCII_REAL
+    START_BYTE               = 95
+    BYTES                    = 10
+    FORMAT                   = "F10.2"
+    UNIT                     = "PASCAL"
+    VALID_MINIMUM            = 0.0
+    INVALID_CONSTANT         = -999999.99
+    DESCRIPTION              = "
+        Atmospheric pressure at RADIUS (column 4) from the center of the
+        planet calculated using the lower temperature of 140 K for the
+        upper boundary condition.
+      "
+  END_OBJECT                 = COLUMN
+
+  OBJECT                     = COLUMN
+    COLUMN_NUMBER            = 10
+    NAME                     = "SIGMA PRESSURE (LOWER TEMPERATURE AT
+                                BOUNDARY)"
+    DATA_TYPE                = ASCII_REAL
+    START_BYTE               = 107
+    BYTES                    = 6
+    FORMAT                   = "F6.2"
+    UNIT                     = "PASCAL"
+    VALID_MINIMUM            = 0.0
+    INVALID_CONSTANT         = -99.99
+    DESCRIPTION              = "
+        One standard deviation uncertainty in `PRESSURE (LOWER TEMPERATURE
+        AT BOUNDARY)' (column 9).
+      "
+  END_OBJECT                 = COLUMN
+
+  OBJECT                     = COLUMN
+    COLUMN_NUMBER            = 11
+    NAME                     = "PRESSURE (MEDIUM TEMPERATURE AT BOUNDARY)"
+    DATA_TYPE                = ASCII_REAL
+    START_BYTE               = 115
+    BYTES                    = 10
+    FORMAT                   = "F10.2"
+    UNIT                     = "PASCAL"
+    VALID_MINIMUM            = 0.0
+    INVALID_CONSTANT         = -999999.99
+    DESCRIPTION              = "
+        Atmospheric pressure at RADIUS (column 4) calculated using the
+        medium temperature of 170 K for upper boundary condition.
+      "
+  END_OBJECT                 = COLUMN
+
+  OBJECT                     = COLUMN
+    COLUMN_NUMBER            = 12
+    NAME                     = "SIGMA PRESSURE (MEDIUM TEMPERATURE AT
+                                BOUNDARY)"
+    DATA_TYPE                = ASCII_REAL
+    START_BYTE               = 127
+    BYTES                    = 6
+    FORMAT                   = "F6.2"
+    UNIT                     = "PASCAL"
+    VALID_MINIMUM            = 0.0
+    INVALID_CONSTANT         = -99.99
+    DESCRIPTION              = "
+        One standard deviation uncertainty in `PRESSURE (MEDIUM TEMPERATURE
+        AT BOUNDARY)' (column 11).
+      "
+  END_OBJECT                 = COLUMN
+
+  OBJECT                     = COLUMN
+    COLUMN_NUMBER            = 13
+    NAME                     = "PRESSURE (HIGHER TEMPERATURE AT BOUNDARY)"
+    DATA_TYPE                = ASCII_REAL
+    START_BYTE               = 135
+    BYTES                    = 10
+    FORMAT                   = "F10.2"
+    UNIT                     = "PASCAL"
+    VALID_MINIMUM            = 0.0
+    INVALID_CONSTANT         = -999999.99
+    DESCRIPTION              = "
+        Atmospheric pressure at RADIUS (column 4) calculated using the
+        higher temperature of 200 K at upper boundary condition.
+      "
+  END_OBJECT                 = COLUMN
+
+  OBJECT                     = COLUMN
+    COLUMN_NUMBER            = 14
+    NAME                     = "SIGMA PRESSURE (HIGHER TEMPERATURE AT
+                                BOUNDARY)"
+    DATA_TYPE                = ASCII_REAL
+    START_BYTE               = 147
+    BYTES                    = 6
+    FORMAT                   = "F6.2"
+    UNIT                     = "PASCAL"
+    VALID_MINIMUM            = 0.0
+    INVALID_CONSTANT         = -99.99
+    DESCRIPTION              = "
+        One standard deviation uncertainty in `PRESSURE (HIGHER TEMPERATURE
+        AT BOUNDARY)' (column 13).
+      "
+  END_OBJECT                 = COLUMN
+
+  OBJECT                     = COLUMN
+    COLUMN_NUMBER            = 15
+    NAME                     = "TEMPERATURE (LOWER TEMPERATURE AT BOUNDARY)"
+    DATA_TYPE                = ASCII_REAL
+    START_BYTE               = 155
+    BYTES                    = 6
+    FORMAT                   = "F6.2"
+    UNIT                     = "KELVIN"
+    VALID_MINIMUM            = 0.0
+    INVALID_CONSTANT         = -99.99
+    DESCRIPTION              = "
+        Atmospheric temperature at RADIUS (column 4) calculated using the
+        lower temperature of 140 K for the upper boundary condition.
+      "
+  END_OBJECT                 = COLUMN
+
+  OBJECT                     = COLUMN
+    COLUMN_NUMBER            = 16
+    NAME                     = "SIGMA TEMPERATURE (LOWER TEMPERATURE AT
+                                BOUNDARY)"
+    DATA_TYPE                = ASCII_REAL
+    START_BYTE               = 163
+    BYTES                    = 5
+    FORMAT                   = "F5.2"
+    UNIT                     = "KELVIN"
+    VALID_MINIMUM            = 0.0
+    INVALID_CONSTANT         = -9.99
+    DESCRIPTION              = "
+        One standard deviation uncertainty in `TEMPERATURE (LOWER
+        TEMPERATURE AT BOUNDARY)' (column 15).
+      "
+  END_OBJECT                 = COLUMN
+
+  OBJECT                     = COLUMN
+    COLUMN_NUMBER            = 17
+    NAME                     = "TEMPERATURE (MEDIUM TEMPERATURE AT BOUNDARY)"
+    DATA_TYPE                = ASCII_REAL
+    START_BYTE               = 170
+    BYTES                    = 6
+    FORMAT                   = "F6.2"
+    UNIT                     = "KELVIN"
+    VALID_MINIMUM            = 0.0
+    INVALID_CONSTANT         = -99.99
+    DESCRIPTION              = "
+        Atmospheric temperature at RADIUS (column 4) calculated using the
+        medium temperature of 170 K at the upper boundary condition.
+      "
+  END_OBJECT                 = COLUMN
+
+  OBJECT                     = COLUMN
+    COLUMN_NUMBER            = 18
+    NAME                     = "SIGMA TEMPERATURE (MEDIUM TEMPERATURE AT
+                                BOUNDARY)"
+    DATA_TYPE                = ASCII_REAL
+    START_BYTE               = 178
+    BYTES                    = 5
+    FORMAT                   = "F5.2"
+    UNIT                     = "KELVIN"
+    VALID_MINIMUM            = 0.0
+    INVALID_CONSTANT         = -9.99
+    DESCRIPTION              = "
+        One standard deviation uncertainty in `TEMPERATURE (MEDIUM
+        TEMPERATURE AT BOUNDARY)' (column 17).
+      "
+  END_OBJECT                 = COLUMN
+
+  OBJECT                     = COLUMN
+    COLUMN_NUMBER            = 19
+    NAME                     = "TEMPERATURE (HIGHER TEMPERATURE AT BOUNDARY)"
+    DATA_TYPE                = ASCII_REAL
+    START_BYTE               = 185
+    BYTES                    = 6
+    FORMAT                   = "F6.2"
+    UNIT                     = "KELVIN"
+    VALID_MINIMUM            = 0.0
+    INVALID_CONSTANT         = -99.99
+    DESCRIPTION              = "
+        Atmospheric temperature at RADIUS (column 4) calculated using the
+        higher temperature of 200 K for the upper boundary condition.
+      "
+  END_OBJECT                 = COLUMN
+
+  OBJECT                     = COLUMN
+    COLUMN_NUMBER            = 20
+    NAME                     = "SIGMA TEMPERATURE (HIGHER TEMPERATURE AT
+                                BOUNDARY)"
+    DATA_TYPE                = ASCII_REAL
+    START_BYTE               = 193
+    BYTES                    = 5
+    FORMAT                   = "F5.2"
+    UNIT                     = "KELVIN"
+    VALID_MINIMUM            = 0.0
+    INVALID_CONSTANT         = -9.99
+    DESCRIPTION              = "
+        One standard deviation uncertainty in `TEMPERATURE (HIGHER
+        TEMPERATURE AT BOUNDARY)' (column 19).
+      "
+  END_OBJECT                 = COLUMN
+
+  OBJECT                     = COLUMN
+    COLUMN_NUMBER            = 21
+    NAME                     = NUMBER_DENSITY
+    DATA_TYPE                = ASCII_REAL
+    START_BYTE               = 200
+    BYTES                    = 11
+    FORMAT                   = "E11.5"
+    UNIT                     = "1 PER CUBIC METER"
+    VALID_MINIMUM            = 0.0
+    INVALID_CONSTANT         = 0.99999E+01
+    DESCRIPTION              = "
+        Molecular number density of the atmosphere at RADIUS (column 4).
+      "
+  END_OBJECT                 = COLUMN
+
+  OBJECT                     = COLUMN
+    COLUMN_NUMBER            = 22
+    NAME                     = SIGMA_NUMBER_DENSITY
+    DATA_TYPE                = ASCII_REAL
+    START_BYTE               = 213
+    BYTES                    = 8
+    FORMAT                   = "E8.2"
+    UNIT                     = "1 PER CUBIC METER"
+    VALID_MINIMUM            = 0.0
+    INVALID_CONSTANT         = 0.99E+01
+    DESCRIPTION              = "
+        One standard deviation uncertainty in NUMBER DENSITY (column 21).
+      "
+  END_OBJECT                 = COLUMN
+
+  OBJECT                     = COLUMN
+    COLUMN_NUMBER            = 23
+    NAME                     = SOLAR_ZENITH_ANGLE
+    DATA_TYPE                = ASCII_REAL
+    START_BYTE               = 223
+    BYTES                    = 7
+    FORMAT                   = "F7.3"
+    UNIT                     = "DEGREES"
+    VALID_MAXIMUM            = 180.0
+    VALID_MINIMUM            = 0.0
+    INVALID_CONSTANT         = -99.999
+    DESCRIPTION              = "
+        Solar zenith angle at measurement location.
+      "
+  END_OBJECT                 = COLUMN
+
+  OBJECT                     = COLUMN
+    COLUMN_NUMBER            = 24
+    NAME                     = LOCAL_SOLAR_TIME
+    DATA_TYPE                = ASCII_REAL
+    START_BYTE               = 232
+    BYTES                    = 6
+    FORMAT                   = "F6.3"
+    UNIT                     = "HOURS"
+    VALID_MAXIMUM            = 24.0
+    VALID_MINIMUM            = 0.0
+    INVALID_CONSTANT         = -9.999
+    DESCRIPTION              = "
+        Local solar time at measurement location.
+      "
+  END_OBJECT                 = COLUMN
+
+END_OBJECT                   = ATM_TABLE
+
+END

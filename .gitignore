@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+build/*
+!build/*.spec
+!build/*.ico
+dist/
+_devhome/
+.orchestrator/
+*.log
+.DS_Store
+Thumbs.db
