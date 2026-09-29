@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cosmic2-explorer"
+version = "1.0.0"
+description = "Desktop explorer and analysis environment for COSMIC-2 GNSS radio occultation data"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Keshav Aggarwal" }]
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+]
+dependencies = [
+    "fastapi>=0.100",
+    "uvicorn>=0.23",
+    "pydantic>=2.0",
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "pandas>=2.0",
+    "matplotlib>=3.7",
+    "netCDF4>=1.6",
+    "requests>=2.28",
+    "pywebview>=5.0",
+]
+
+[project.optional-dependencies]
+# Linux needs a GUI toolkit for the native window; without one the app opens
+# in the default browser instead.
+qt = ["pywebview[qt]>=5.0"]
+dev = ["pytest>=7.3"]
+build = ["pyinstaller>=6.0"]
+
+[project.urls]
+Repository = "https://github.com/jovian-explorer/COSMIC2-Explorer"
+
+[project.scripts]
+cosmic2-explorer = "cosmic2.app:run"
+cosmic2-explorer-server = "cosmic2.server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+cosmic2 = ["frontend/**/*", "sampledata/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+    "network: needs the live CDAAC archive (run with COSMIC2_NETWORK_TESTS=1)",
+    "exe: launches a built Windows executable (set COSMIC2_EXE or build to dist/)",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning:dateutil.*",
+    "ignore:Setting the shape on a NumPy array has been deprecated in NumPy 2.5.*:DeprecationWarning",
+]

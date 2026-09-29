@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
+FRONTEND = ROOT / "src" / "cosmic2" / "frontend"
 
 
 def test_zero_em_en_dashes():
@@ -14,11 +15,11 @@ def test_zero_em_en_dashes():
     violating_lines = []
 
     ignored_dirs = {
-        ".git", "__pycache__", ".pytest_cache", "dist",
-        "vendor", ".orchestrator", "_devhome", ".idea", ".vscode"
+        ".git", "__pycache__", ".pytest_cache", "build", "dist",
+        "vendor", ".venv", "venv", ".idea", ".vscode"
     }
 
-    scanned_exts = {".py", ".html", ".js", ".css", ".md", ".json", ".spec", ".ini", ".ps1"}
+    scanned_exts = {".py", ".html", ".js", ".css", ".md", ".json", ".spec", ".toml", ".yml"}
 
     for dirpath, dirnames, filenames in os.walk(ROOT):
         dirnames[:] = [d for d in dirnames if d not in ignored_dirs]
@@ -52,7 +53,6 @@ def test_license_and_documentation_present():
         "DATA_POLICY.md",
         "THIRD_PARTY_LICENSES.md",
         "README.md",
-        "STATUS.md",
     ]
     for rel_path in mandatory_files:
         p = ROOT / rel_path
@@ -66,8 +66,7 @@ def test_author_affiliation():
         ROOT / "LICENSE",
         ROOT / "DATA_POLICY.md",
         ROOT / "README.md",
-        ROOT / "STATUS.md",
-        ROOT / "frontend" / "js" / "main.js",
+        FRONTEND / "js" / "main.js",
     ]
     for p in docs_to_check:
         assert p.is_file(), f"Document missing: {p}"
@@ -80,7 +79,7 @@ def test_author_affiliation():
 
 def test_katex_offline_assets_integrity():
     """Verify that KaTeX scripts, styles, and font binaries are available locally without CDNs."""
-    katex_dir = ROOT / "frontend" / "vendor" / "katex"
+    katex_dir = FRONTEND / "vendor" / "katex"
     assert katex_dir.is_dir(), "frontend/vendor/katex directory missing"
     assert (katex_dir / "katex.min.js").is_file(), "katex.min.js missing"
     assert (katex_dir / "katex.min.css").is_file(), "katex.min.css missing"
@@ -95,29 +94,18 @@ def test_katex_offline_assets_integrity():
 def test_logo_and_icons_integrity():
     """Verify all mission logos and icon formats exist and are non-empty."""
     icon_assets = [
-        ROOT / "frontend" / "assets" / "cosmic2_logo.png",
-        ROOT / "frontend" / "assets" / "cosmic2_icon.png",
-        ROOT / "frontend" / "assets" / "cosmic2.ico",
-        ROOT / "build" / "cosmic2.ico",
-        ROOT / "dist" / "cosmic2.ico",
+        FRONTEND / "assets" / "cosmic2_logo.png",
+        FRONTEND / "assets" / "cosmic2_icon.png",
+        FRONTEND / "assets" / "cosmic2.ico",
     ]
     for asset in icon_assets:
         assert asset.is_file(), f"Visual asset missing: {asset}"
         assert asset.stat().st_size > 1000, f"Visual asset appears corrupt or empty: {asset}"
 
 
-def test_veda_package_structure():
-    """Verify all VEDA packages and subpackages have __init__.py files for PyInstaller."""
-    subpkgs = ["analysis", "api", "core", "missions", "readers"]
-    assert (ROOT / "backend" / "veda" / "__init__.py").is_file(), "backend/veda/__init__.py missing"
-    for sub in subpkgs:
-        init_file = ROOT / "backend" / "veda" / sub / "__init__.py"
-        assert init_file.is_file(), f"Missing __init__.py in backend/veda/{sub}"
-
-
 def test_tutorial_guide_and_ui_features():
     """Verify presence and structure of Tutorial Guide, presets, counter badge, and dropzone."""
-    index_html = (ROOT / "frontend" / "index.html").read_text(encoding="utf-8")
+    index_html = (FRONTEND / "index.html").read_text(encoding="utf-8")
 
     # 1. Tutorial Guide tab button and panel
     assert 'data-tab="guide"' in index_html, "Missing Tutorial Guide tab button"
@@ -156,9 +144,9 @@ def test_tutorial_guide_and_ui_features():
 
 def test_universal_font_scaling_controls():
     """Verify Universal UI Font Size Zoom Controller in index.html and app.css."""
-    index_html = (ROOT / "frontend" / "index.html").read_text(encoding="utf-8")
-    app_css = (ROOT / "frontend" / "css" / "app.css").read_text(encoding="utf-8")
-    main_js = (ROOT / "frontend" / "js" / "main.js").read_text(encoding="utf-8")
+    index_html = (FRONTEND / "index.html").read_text(encoding="utf-8")
+    app_css = (FRONTEND / "css" / "app.css").read_text(encoding="utf-8")
+    main_js = (FRONTEND / "js" / "main.js").read_text(encoding="utf-8")
 
     # 1. HTML Controls exist
     assert 'class="font-zoom-ctrl"' in index_html, "Missing font-zoom-ctrl in index.html"
@@ -178,9 +166,9 @@ def test_universal_font_scaling_controls():
 
 def test_clean_plotly_math_and_katex_integration():
     """Verify cleanPlotlyMath helper and KaTeX equation formatting."""
-    ui_js = (ROOT / "frontend" / "js" / "ui.js").read_text(encoding="utf-8")
-    index_html = (ROOT / "frontend" / "index.html").read_text(encoding="utf-8")
-    science_js = (ROOT / "frontend" / "js" / "tabs_science.js").read_text(encoding="utf-8")
+    ui_js = (FRONTEND / "js" / "ui.js").read_text(encoding="utf-8")
+    index_html = (FRONTEND / "index.html").read_text(encoding="utf-8")
+    science_js = (FRONTEND / "js" / "tabs_science.js").read_text(encoding="utf-8")
 
     # 1. cleanPlotlyMath export and usage
     assert "export function cleanPlotlyMath" in ui_js, "Missing cleanPlotlyMath in ui.js"

@@ -2,8 +2,9 @@
 
 Starts the FastAPI backend on a free loopback port in a daemon thread, waits
 for it to answer, then opens a native window pointed at it via pywebview
-(WebView2 on Windows).  If no webview runtime is available the app falls back
-to the system browser rather than failing, so the tool still works.
+(WebView2 on Windows, WebKit on macOS, GTK or Qt on Linux).  If no webview
+runtime is available the app falls back to the system browser rather than
+failing, so the tool still works.
 
 Explorer double-click fix (2026-09-19):
   When Windows Explorer launches an EXE it sets CWD to Desktop or the user's
@@ -35,23 +36,17 @@ import urllib.request
 import webbrowser
 from pathlib import Path
 
-# ─── Resolve our own location before any relative-path assumptions ────────────
-# For a PyInstaller onefile EXE, sys.executable is the EXE path.
-# For a plain source run, __file__ is app.py inside backend/.
-_EXE_DIR: Path = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) \
-    else Path(__file__).resolve().parent
+# In a PyInstaller build, run from the unpack dir so native DLLs (for example
+# WebView2Loader) are found; every resource path is package-relative, so a
+# source or pip-installed run never needs to touch the working directory.
+if getattr(sys, "frozen", False):
+    _CWD_DIR = getattr(sys, "_MEIPASS", str(Path(sys.executable).resolve().parent))
+    os.chdir(_CWD_DIR)
+    os.environ["PATH"] = _CWD_DIR + os.pathsep + os.environ.get("PATH", "")
 
-# Change CWD to MEIPASS so native DLLs (like WebView2Loader) are found.
-_CWD_DIR = getattr(sys, "_MEIPASS", str(_EXE_DIR))
-os.chdir(_CWD_DIR)
-os.environ["PATH"] = _CWD_DIR + os.pathsep + os.environ.get("PATH", "")
-
-if __package__ in (None, ""):
-    sys.path.insert(0, getattr(sys, "_MEIPASS", str(Path(__file__).resolve().parent)))
-
-from cosmic2.config import (APP_NAME, APP_TITLE, APP_VERSION, LOG_DIR,
-                             DATA_ROOT, ensure_dirs, frontend_dir)
-from server import free_port
+from .config import (APP_NAME, APP_TITLE, APP_VERSION, LOG_DIR,
+                     DATA_ROOT, ensure_dirs, frontend_dir)
+from .server import free_port
 
 STARTUP_TIMEOUT_S = 120   # cold-start of a 198 MB onefile EXE can take 60-90s
 # How long to wait for the pywebview window to appear after start() returns.
@@ -98,7 +93,7 @@ def _show_error_dialog(title: str, message: str) -> None:
 
 def _serve(host: str, port: int) -> None:
     import uvicorn
-    from cosmic2.api import app
+    from .api import app
     uvicorn.run(app, host=host, port=port, log_level="warning")
 
 
@@ -255,6 +250,11 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
 
-if __name__ == "__main__":
+def run() -> None:
+    """Console-script entry point (``cosmic2-explorer``)."""
     multiprocessing.freeze_support()  # required for a PyInstaller onefile build
     raise SystemExit(main())
+
+
+if __name__ == "__main__":
+    run()

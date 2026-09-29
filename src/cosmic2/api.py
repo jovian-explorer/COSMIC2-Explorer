@@ -53,13 +53,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount VEDA multi-mission scientific router if available
-try:
-    from veda.api.routes import router as veda_router
-    app.include_router(veda_router)
-except Exception:
-    pass
-
 ARCHIVE = Archive(SETTINGS)
 
 

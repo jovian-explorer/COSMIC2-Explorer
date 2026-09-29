@@ -56,7 +56,7 @@ DATA_LICENSES = {
         "name": "MIT License",
         "type": "Open Source",
         "copyright": "Copyright (c) 2026 Keshav Aggarwal, Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO",
-        "url": "https://github.com/keshav-aggarwal/COSMIC2-Explorer/blob/main/LICENSE",
+        "url": "https://github.com/jovian-explorer/COSMIC2-Explorer/blob/main/LICENSE",
         "terms": "Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files.",
     },
 }
@@ -133,10 +133,14 @@ def _data_root() -> Path:
     env = os.environ.get("COSMIC2_EXPLORER_HOME")
     if env:
         return Path(env).expanduser()
+    home = Path(os.path.expanduser("~"))
     if sys.platform.startswith("win"):
-        base = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~")
-        return Path(base) / APP_NAME
-    return Path(os.path.expanduser("~")) / ".local" / "share" / APP_NAME
+        base = os.environ.get("LOCALAPPDATA")
+        return (Path(base) if base else home) / APP_NAME
+    if sys.platform == "darwin":
+        return home / "Library" / "Application Support" / APP_NAME
+    xdg = os.environ.get("XDG_DATA_HOME")
+    return (Path(xdg) if xdg else home / ".local" / "share") / APP_NAME
 
 
 DATA_ROOT = _data_root()
@@ -148,15 +152,13 @@ SETTINGS_PATH = DATA_ROOT / "settings.json"
 
 
 def bundle_root() -> Path:
-    """Directory that holds the read-only frontend assets.
+    """Directory that holds the read-only frontend and sample-data assets.
 
-    PyInstaller unpacks ``--add-data`` payloads into ``sys._MEIPASS``; in a
-    source checkout the frontend sits one level above ``backend/``.
+    They ship inside the ``cosmic2`` package, so the same lookup works from a
+    source checkout, a pip install and a PyInstaller build (which places the
+    package, and its data, under ``sys._MEIPASS/cosmic2``).
     """
-    meipass = getattr(sys, "_MEIPASS", None)
-    if meipass:
-        return Path(meipass)
-    return Path(__file__).resolve().parents[2]
+    return Path(__file__).resolve().parent
 
 
 def frontend_dir() -> Path:

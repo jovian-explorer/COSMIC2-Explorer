@@ -6,20 +6,17 @@ Run with: python -m pytest tests/ -v
 import json
 import math
 import os
-import sys
 import urllib.request
 from pathlib import Path
 
 import numpy as np
 import pytest
 
-# Add backend to path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
-
 from cosmic2 import analysis, readers, vocab
 from cosmic2.config import sampledata_dir
 
-BASE = "http://127.0.0.1:8992"
+# Started by conftest.pytest_sessionstart on a free port.
+BASE = os.environ.get("COSMIC2_TEST_BASE", "http://127.0.0.1:8992")
 
 # ---------------------------------------------------------------------------
 # helpers
@@ -254,7 +251,7 @@ class TestAnalysis:
 # API endpoint tests (require running server)
 # ---------------------------------------------------------------------------
 
-@pytest.mark.skipif(not server_up(), reason="Server not running on port 8992")
+@pytest.mark.skipif(not server_up(), reason="API test server not running")
 class TestAPI:
     @pytest.fixture(autouse=True)
     def load_samples(self):
@@ -418,7 +415,7 @@ class TestAPI:
 # netCDF export round-trip
 # ---------------------------------------------------------------------------
 
-@pytest.mark.skipif(not server_up(), reason="Server not running on port 8992")
+@pytest.mark.skipif(not server_up(), reason="API test server not running")
 class TestExports:
     @pytest.fixture(autouse=True)
     def load_samples(self):
@@ -462,17 +459,11 @@ class TestExports:
         assert len(data) == res["bytes"]
 
 def test_packaged_resource_loading():
-    "Test simulated _MEIPASS bundle resource loading."
-    import sys
-    from cosmic2.config import bundle_root, frontend_dir
-    orig_meipass = getattr(sys, '_MEIPASS', None)
-    try:
-        sys._MEIPASS = 'dummy_meipass_path'
-        assert str(bundle_root()) == 'dummy_meipass_path'
-        assert str(frontend_dir()).startswith('dummy_meipass_path')
-    finally:
-        if orig_meipass is None:
-            if hasattr(sys, '_MEIPASS'):
-                delattr(sys, '_MEIPASS')
-        else:
-            sys._MEIPASS = orig_meipass
+    """Frontend and sample data ship inside the package, so they resolve the
+    same way from a checkout, a pip install and a PyInstaller build."""
+    import cosmic2
+    from cosmic2.config import bundle_root, frontend_dir, sampledata_dir
+    pkg = Path(cosmic2.__file__).resolve().parent
+    assert bundle_root() == pkg
+    assert (frontend_dir() / "index.html").is_file()
+    assert sampledata_dir().is_dir()

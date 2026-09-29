@@ -6,8 +6,8 @@ Tests the exact conditions under which Windows Explorer launches an EXE:
   - No stdin/stdout/stderr attached
   - Process starts as a non-terminal child of explorer.exe
 
-Run from the project directory:
-    python tests/test_explorer_launch.py
+Windows only.  Skipped unless a built EXE is present: build one with
+``python scripts/build_exe.py`` (lands in dist/) or point COSMIC2_EXE at it.
 """
 from __future__ import annotations
 
@@ -18,9 +18,19 @@ import tempfile
 import time
 from pathlib import Path
 
+import pytest
+
 PROJECT = Path(__file__).resolve().parents[1]
-EXE = PROJECT / "dist" / "COSMIC2-Explorer.exe"
-APPDATA = Path(os.environ.get("LOCALAPPDATA", "")) / "COSMIC2Explorer"
+EXE = Path(os.environ.get("COSMIC2_EXE") or PROJECT / "dist" / "COSMIC2-Explorer.exe")
+# The EXE inherits COSMIC2_EXPLORER_HOME (set by conftest), so it logs there.
+APPDATA = Path(os.environ.get("COSMIC2_EXPLORER_HOME")
+               or Path(os.environ.get("LOCALAPPDATA", "")) / "COSMIC2Explorer")
+
+pytestmark = [
+    pytest.mark.exe,
+    pytest.mark.skipif(sys.platform != "win32", reason="Windows EXE launch test"),
+    pytest.mark.skipif(not EXE.is_file(), reason=f"no built EXE at {EXE}"),
+]
 STARTUP_LOG = APPDATA / "logs" / "startup.log"
 ERROR_LOG = APPDATA / "logs" / "startup-error.log"
 
@@ -173,7 +183,7 @@ def test_no_error_log() -> None:
 if __name__ == "__main__":
     if not EXE.is_file():
         print(f"[SKIP] EXE not found: {EXE}")
-        print("  Build first: .\\build_windows.ps1")
+        print("  Build first: python scripts/build_exe.py")
         sys.exit(0)
 
     test_exe_exists()

@@ -249,7 +249,6 @@ export function updatePlotlyFonts() {
   const fontScale = parseFloat(getComputedStyle(root).getPropertyValue('--font-scale') || '1.0');
   const plotIds = [
     'explore-map', 'profile-plot', 'composite-plot', 'scatter-plot',
-    'veda-comparison-plot', 'veda-planet-map', 'veda-observation-plot',
     'transect-plot', 'histogram-plot'
   ];
   for (const id of plotIds) {

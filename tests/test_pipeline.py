@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from backend.cosmic2.pipeline import apply_pipeline, ProcessedProfile
+from cosmic2.pipeline import apply_pipeline, ProcessedProfile
 
 def test_pipeline_outlier_sigma():
     z = np.arange(100.0)

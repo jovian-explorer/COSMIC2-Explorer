@@ -1,8 +1,10 @@
 """Run the COSMIC-2 Explorer backend.
 
-    python server.py                  # pick a free port, print the URL
-    python server.py --port 8765      # fixed port
-    python server.py --host 0.0.0.0   # expose on the LAN (see the warning)
+    cosmic2-explorer-server                  # pick a free port, print the URL
+    cosmic2-explorer-server --port 8765      # fixed port
+    cosmic2-explorer-server --host 0.0.0.0   # expose on the LAN (see the warning)
+
+(``python -m cosmic2.server`` works the same way.)
 
 The default bind is 127.0.0.1: the API has no authentication because it is
 designed to serve one local user.  Binding to a routable address exposes the
@@ -14,14 +16,10 @@ from __future__ import annotations
 import argparse
 import socket
 import sys
-from pathlib import Path
-
-if __package__ in (None, ""):  # allow `python server.py` from any cwd
-    sys.path.insert(0, getattr(sys, "_MEIPASS", str(Path(__file__).resolve().parent)))
 
 import uvicorn
 
-from cosmic2.config import APP_TITLE, APP_VERSION, DATA_ROOT, ensure_dirs
+from .config import APP_TITLE, APP_VERSION, DATA_ROOT, ensure_dirs
 
 
 def free_port(preferred: int = 8765, tries: int = 40) -> int:
@@ -59,7 +57,7 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _get_app():
-    from cosmic2.api import app
+    from .api import app
     return app
 
 

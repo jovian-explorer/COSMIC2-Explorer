@@ -1,39 +1,43 @@
-"""pytest configuration for COSMIC-2 Explorer tests."""
-import sys
+"""pytest configuration for COSMIC-2 Explorer tests.
+
+Tests run against the installed ``cosmic2`` package (``pip install -e .[dev]``
+for development).  All app data goes to a throwaway directory, and the API
+server used by the HTTP tests binds a free loopback port, so the suite never
+touches the user's real data and can run alongside other local apps.
+"""
+import os
+import socket
+import tempfile
 import threading
 import time
 import urllib.request
-from pathlib import Path
-import pytest
 
-# Make the backend importable
-backend_dir = Path(__file__).resolve().parents[1] / "backend"
-if str(backend_dir) not in sys.path:
-    sys.path.insert(0, str(backend_dir))
+# Must be set before cosmic2.config is imported anywhere.
+os.environ.setdefault("COSMIC2_EXPLORER_HOME", tempfile.mkdtemp(prefix="cosmic2-test-home-"))
+
+
+def _free_port() -> int:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("127.0.0.1", 0))
+        return int(s.getsockname()[1])
+
 
 def pytest_sessionstart(session):
-    """Ensure backend server is running on 127.0.0.1:8992 before test collection."""
+    """Start the API server before collection; tests read its URL from COSMIC2_TEST_BASE."""
     import uvicorn
     from cosmic2.api import app
 
-    base = "http://127.0.0.1:8992"
-    try:
-        urllib.request.urlopen(base + "/api/health", timeout=1)
-        return
-    except Exception:
-        pass
+    port = _free_port()
+    base = f"http://127.0.0.1:{port}"
+    os.environ["COSMIC2_TEST_BASE"] = base
 
-    config = uvicorn.Config(app, host="127.0.0.1", port=8992, log_level="error")
+    config = uvicorn.Config(app, host="127.0.0.1", port=port, log_level="error")
     server = uvicorn.Server(config)
-    t = threading.Thread(target=server.run, daemon=True)
-    t.start()
+    threading.Thread(target=server.run, daemon=True).start()
 
-    # Wait for server to become responsive
-    for _ in range(50):
+    for _ in range(100):
         try:
             urllib.request.urlopen(base + "/api/health", timeout=1)
             break
         except Exception:
             time.sleep(0.1)
-
-

@@ -72,6 +72,6 @@ When utilizing these logos or scientific software outputs in publications or pos
   year = {2026},
   institution = {Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO},
   address = {Thiruvananthapuram, Kerala, India},
-  url = {https://github.com/keshav-aggarwal/COSMIC2-Explorer}
+  url = {https://github.com/jovian-explorer/COSMIC2-Explorer}
 }
 ```
