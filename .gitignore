@@ -3,12 +3,10 @@ __pycache__/
 *.pyo
 .pytest_cache/
 *.egg-info/
-build/*
-!build/*.spec
-!build/*.ico
+build/
 dist/
-_devhome/
-.orchestrator/
+.venv/
+venv/
 *.log
 .DS_Store
 Thumbs.db

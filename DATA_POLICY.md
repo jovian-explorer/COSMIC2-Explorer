@@ -31,11 +31,6 @@ All data retrieved, cached, or processed by COSMIC-2 Explorer originates from pu
 * **Mission Portal**: https://www.tasa.org.tw/en-US/
 * **Partnership**: Joint international collaboration between American Institute in Taiwan (AIT) and Taipei Economic and Cultural Representative Office (TECRO), executed by NOAA and TASA.
 
-### D. NASA Planetary Data System (PDS) and ESA Planetary Science Archive (PSA)
-* For cross-mission and planetary comparative atmospheric occultation datasets integrated through the VEDA module (including Akatsuki, BepiColombo, Cassini, Galileo, Juno, MAVEN, New Horizons, Venus Express):
-  * **NASA PDS**: https://pds.nasa.gov/ (Public Domain, US Government Work)
-  * **ESA PSA**: https://www.cosmos.esa.int/web/psa/ (Open access under ESA scientific data policies)
-
 ---
 
 ## 3. Data Availability Statement for Publications
@@ -43,7 +38,7 @@ All data retrieved, cached, or processed by COSMIC-2 Explorer originates from pu
 When publishing scientific findings, atmospheric figures, or derived geophysical datasets produced using COSMIC-2 Explorer, authors should include a Data Availability Statement structured as follows:
 
 > **Data Availability Statement**:
-> The COSMIC-2 radio occultation soundings analyzed in this study are publicly available from the University Corporation for Atmospheric Research (UCAR) COSMIC Data Analysis and Archive Center (CDAAC) at https://data.cosmic.ucar.edu/ and the NOAA National Centers for Environmental Information (NCEI) at https://www.ncei.noaa.gov/data/gps-radio-occultation/. The processing, validation, and profile analysis were conducted using COSMIC-2 Explorer (Version 1.0.0), available open-source at https://github.com/keshav-aggarwal/COSMIC2-Explorer.
+> The COSMIC-2 radio occultation soundings analyzed in this study are publicly available from the University Corporation for Atmospheric Research (UCAR) COSMIC Data Analysis and Archive Center (CDAAC) at https://data.cosmic.ucar.edu/ and the NOAA National Centers for Environmental Information (NCEI) at https://www.ncei.noaa.gov/data/gps-radio-occultation/. The processing, validation, and profile analysis were conducted using COSMIC-2 Explorer (Version 1.0.0), available open-source at https://github.com/jovian-explorer/COSMIC2-Explorer.
 
 ---
 
@@ -65,7 +60,7 @@ To ensure proper provenance and scientific reproducibility, please provide dual 
   version = {1.0.0},
   institution = {Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO},
   address = {Thiruvananthapuram, Kerala, India},
-  url = {https://github.com/keshav-aggarwal/COSMIC2-Explorer}
+  url = {https://github.com/jovian-explorer/COSMIC2-Explorer}
 }
 ```
 
