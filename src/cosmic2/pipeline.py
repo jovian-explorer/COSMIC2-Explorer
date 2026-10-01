@@ -13,7 +13,7 @@ class ProvenanceRecord:
     timestamp: str
     operation: str
     parameters: dict
-    software_version: str = "1.0.0"
+    software_version: str = "0.0.1"
 
 @dataclass
 class ProcessedProfile:

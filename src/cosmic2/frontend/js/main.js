@@ -245,7 +245,7 @@ function aboutBody() {
   title     = {{COSMIC-2 Explorer: Atmospheric and Ionospheric GNSS Radio Occultation Scientific Analysis and Visualization Platform}},
   year      = {2026},
   publisher = {Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO},
-  version   = {1.0.0},
+  version   = {0.0.1},
   url       = {https://jovian-explorer.github.io/},
   address   = {Thiruvananthapuram, Kerala, India}
 }</pre>
@@ -342,7 +342,7 @@ function dataPolicyBody() {
     <h3>1. Data Availability Statement</h3>
     <p style="font-size: calc(12px * var(--font-scale, 1.0));">Authors using COSMIC-2 Explorer for academic research or publications are requested to include the following Data Availability Statement:</p>
     <blockquote style="background: var(--bg); border-left: 4px solid var(--accent); margin: 6px 0; padding: 8px 12px; font-size: calc(12px * var(--font-scale, 1.0));">
-      "The COSMIC-2 radio occultation soundings analyzed in this study are publicly available from the University Corporation for Atmospheric Research (UCAR) COSMIC Data Analysis and Archive Center (CDAAC) at https://data.cosmic.ucar.edu/ and the NOAA National Centers for Environmental Information (NCEI) at https://www.ncei.noaa.gov/data/gps-radio-occultation/. The processing, validation, and profile analysis were conducted using COSMIC-2 Explorer (Version 1.0.0), available open-source at https://github.com/jovian-explorer/COSMIC2-Explorer."
+      "The COSMIC-2 radio occultation soundings analyzed in this study are publicly available from the University Corporation for Atmospheric Research (UCAR) COSMIC Data Analysis and Archive Center (CDAAC) at https://data.cosmic.ucar.edu/ and the NOAA National Centers for Environmental Information (NCEI) at https://www.ncei.noaa.gov/data/gps-radio-occultation/. The processing, validation, and profile analysis were conducted using COSMIC-2 Explorer (Version 0.0.1), available open-source at https://github.com/jovian-explorer/COSMIC2-Explorer."
     </blockquote>
 
     <hr/>
@@ -375,7 +375,7 @@ function dataPolicyBody() {
   author       = {Keshav Aggarwal},
   title        = {{COSMIC-2 Explorer: High-Resolution Radio Occultation Processing, Visualisation, and Atmospheric Profiling System}},
   year         = {2026},
-  version      = {1.0.0},
+  version      = {0.0.1},
   institution  = {Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO},
   address      = {Thiruvananthapuram, Kerala, India},
   url          = {https://github.com/jovian-explorer/COSMIC2-Explorer}

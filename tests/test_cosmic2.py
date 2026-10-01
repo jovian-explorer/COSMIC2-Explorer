@@ -260,7 +260,7 @@ class TestAPI:
     def test_health(self):
         d = get("/api/health")
         assert d["status"] == "ok"
-        assert d["version"] == "1.0.0"
+        assert d["version"] == "0.0.1"
 
     def test_meta_complete(self):
         d = get("/api/meta")
@@ -269,7 +269,7 @@ class TestAPI:
         assert "settings" in d
         assert "group_by_options" in d
         assert "citation" in d
-        assert d["app"]["version"] == "1.0.0"
+        assert d["app"]["version"] == "0.0.1"
         assert d["settings"]["default_stream"] in d["streams"]
 
     def test_meta_streams_have_required_keys(self):

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cosmic2-explorer"
-version = "1.0.0"
+version = "0.0.1"
 description = "Desktop explorer and analysis environment for COSMIC-2 GNSS radio occultation data"
 readme = "README.md"
 license = { file = "LICENSE" }

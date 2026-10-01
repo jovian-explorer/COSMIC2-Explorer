@@ -49,3 +49,5 @@ jobs:
         with:
           files: artifacts/*
           generate_release_notes: true
+          # Until the public 1.0.0 release, every build is a pre-release (version 0.0.1)
+          prerelease: ${{ startsWith(github.ref_name, 'v0.') }}
