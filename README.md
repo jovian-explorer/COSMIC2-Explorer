@@ -27,7 +27,7 @@ A production-quality scientific desktop GUI and analysis environment for UCAR/CD
 
 ### Option 1: download the app (no Python needed)
 
-Grab the archive for your OS from the [Releases page](https://github.com/jovian-explorer/COSMIC2-Explorer/releases/latest):
+Grab the archive for your OS from the [Releases page](https://github.com/jovian-explorer/COSMIC2-Explorer/releases):
 
 | OS | File | Run |
 |---|---|---|
