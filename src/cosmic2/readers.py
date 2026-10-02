@@ -125,39 +125,87 @@ def _mask_fill(a: np.ndarray) -> np.ndarray:
     arr = np.asarray(a, dtype="float64")
     bad = ~np.isfinite(arr)
     for fv in FILL_VALUES:
-        bad |= np.isclose(arr, fv, rtol=0, atol=1e-3)
+        # Relative tolerance for the huge netCDF default fill: stored as
+        # float32 it reads back as 9.969209968e36, which no absolute tolerance
+        # would match.
+        tol = 1e-3 if abs(fv) < 1e6 else abs(fv) * 1e-6
+        bad |= np.abs(arr - fv) <= tol
     arr = arr.copy()
     arr[bad] = np.nan
     return arr
 
 
 def _open(path: str):
-    if _NC4 is not None:
+    # CDAAC granules are netCDF-3 classic, mostly with an unlimited (record)
+    # dimension.  scipy reads those in one pass; netCDF4 strides through every
+    # record once per variable, which is ~20x slower on a day-long ivmL2m file
+    # (1.2 s against 0.05 s).  netCDF4 is kept for netCDF-4/HDF5 files, which
+    # scipy cannot open.
+    try:
+        return _NC3(path, "r", mmap=False), "nc3"
+    except Exception:
+        if _NC4 is None:
+            raise
+    return _NC4(path, "r"), "nc4"
+
+
+def _numeric(raw: Any, attrs: dict) -> np.ndarray | None:
+    """Float64 copy of a variable's values with CF packing undone and its own
+    declared fill values set to NaN.  Character variables return ``None``.
+
+    ``valid_range`` is deliberately *not* applied: CDAAC declares ranges that
+    real data exceed (scnLv2 GNSS positions near 15 000 km against a declared
+    +/-9999 km), and masking on them would delete good samples.
+    """
+    arr = np.ma.getdata(raw)
+    if arr.dtype.kind not in "biuf":
+        return None
+    out = np.array(arr, dtype="float64")
+    bad = np.zeros(out.shape, dtype=bool)
+    for key in ("_FillValue", "missing_value"):
+        fv = attrs.get(key)
+        if fv is None:
+            continue
+        # Compared in the variable's own type, as the netCDF library does, so
+        # a fill attribute written at a different precision still matches.
         try:
-            return _NC4(path, "r"), "nc4"
-        except Exception:
-            pass
-    return _NC3(path, "r", mmap=False), "nc3"
+            fills = np.ravel(np.asarray(fv)).astype(arr.dtype)
+        except (TypeError, ValueError, OverflowError):
+            continue
+        for f in fills:
+            bad |= arr == f
+    scale = attrs.get("scale_factor")
+    offset = attrs.get("add_offset")
+    if scale is not None:
+        out *= float(np.ravel(scale)[0])
+    if offset is not None:
+        out += float(np.ravel(offset)[0])
+    out[bad] = np.nan
+    return out
 
 
 def _read_raw(path: str) -> tuple[dict, dict, dict]:
     """Return ``(attrs, attr_desc, variables)`` for a granule."""
     ds, flavour = _open(path)
     try:
+        variables = {}
         if flavour == "nc4":
             raw_attrs = {k: ds.getncattr(k) for k in ds.ncattrs()}
-            variables = {}
             for name, v in ds.variables.items():
-                units = ""
-                if "units" in v.ncattrs():
-                    units = _to_str(v.getncattr("units"))
-                variables[name] = (np.asarray(v[:]).astype("float64", copy=False), units)
+                # Packing and fills are handled in _numeric, identically for
+                # both backends.
+                v.set_auto_maskandscale(False)
+                vattrs = {k: v.getncattr(k) for k in v.ncattrs()}
+                arr = _numeric(v[:], vattrs)
+                if arr is not None:
+                    variables[name] = (arr, _to_str(vattrs.get("units", "")))
         else:
             raw_attrs = dict(ds._attributes)
-            variables = {}
             for name, v in ds.variables.items():
-                units = _to_str(v._attributes.get("units", b""))
-                variables[name] = (np.asarray(v[:]).astype("float64"), units)
+                vattrs = dict(v._attributes)
+                arr = _numeric(v[:], vattrs)
+                if arr is not None:
+                    variables[name] = (arr, _to_str(vattrs.get("units", b"")))
     finally:
         try:
             ds.close()
@@ -430,14 +478,19 @@ def _read_scnlv2(path: str) -> Granule:
     meta = _base_meta(path, "scnLv2")
     iso, epoch = _iso(attrs.get("year"), attrs.get("month"), attrs.get("day"),
                       attrs.get("hour"), attrs.get("minute"), attrs.get("second"))
-    lat = attrs.get("lat_s4max_L1")
-    lon = attrs.get("lon_s4max_L1")
-    if lat is None or not np.isfinite(lat):
-        lat = attrs.get("lat_start")
-        lon = attrs.get("lon_start")
+    lat = scrub(attrs.get("lat_s4max_L1"))
+    lon = scrub(attrs.get("lon_s4max_L1"))
+    local_time = scrub(attrs.get("lct_s4max_L1"))
+    if lat is None or lon is None:
+        # No S4 maximum (the attributes hold the -999 sentinel): place the
+        # record at the start of the ray, with the local time of that point
+        # rather than the sentinel of the missing maximum.
+        lat = scrub(attrs.get("lat_start"))
+        lon = scrub(attrs.get("lon_start"))
+        local_time = _local_time(lon, epoch)
     meta.update(
         time_utc=iso, epoch=epoch, lat=lat, lon=lon,
-        local_time=attrs.get("lct_s4max_L1"),
+        local_time=local_time,
         mission=_to_str(attrs.get("missionId", "")),
         ref_sat=_to_str(attrs.get("refsatId", "")),
     )
@@ -482,8 +535,16 @@ def _read_ivml2m(path: str) -> Granule:
         lon=float(np.nanmedian(lon)) if lon is not None and np.isfinite(lon).any() else None,
         mission="COSMIC-2 IVM",
     )
-    meta["local_time"] = (float(np.nanmedian(data["mlt"]))
-                          if "mlt" in data and np.isfinite(data["mlt"]).any() else None)
+    # Local *solar* time of the first sample, the same instant as time_utc.
+    # (The file's "mlt" variable is magnetic local time, a different
+    # coordinate; using it here mislabelled day/night grouping and the
+    # local-time filter.  Its median is kept in extras.)
+    meta["local_time"] = None
+    if uts is not None and lon is not None:
+        ok = np.isfinite(uts) & np.isfinite(lon[:uts.size])
+        if ok.any():
+            i = int(np.flatnonzero(ok)[np.argmin(uts[ok])])
+            meta["local_time"] = _local_time(float(lon[i]), float(uts[i]))
     dens = data.get("ion_dens")
     meta["good"] = bool(dens is not None and np.isfinite(dens).sum() > 100)
     meta["bad_code"] = "0" if meta["good"] else "1"
@@ -495,6 +556,8 @@ def _read_ivml2m(path: str) -> Granule:
         and np.isfinite(data["alt"]).any() else None,
         "lat_range": [float(np.nanmin(lat)), float(np.nanmax(lat))]
         if lat is not None and np.isfinite(lat).any() else None,
+        "median_mlt_h": float(np.nanmedian(data["mlt"]))
+        if "mlt" in data and np.isfinite(data["mlt"]).any() else None,
     }
     g = Granule("ivmL2m", path, meta, attrs, desc, data, units,
                 vertical="alt", independent="uts")

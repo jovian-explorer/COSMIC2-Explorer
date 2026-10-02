@@ -339,6 +339,14 @@ VAR_INFO: dict[str, dict] = {
         doi="10.1007/s11214-016-0275-y", archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/",
         data_level="Level 2 Coordinate", algorithm="Magnetic local time derived from IGRF / Apex magnetic coordinates."
     ),
+    "slt": dict(
+        label="Local solar time", units="h",
+        plain="Clock time set by the Sun's position at the sample's longitude.", role=COORD,
+        formula=r"LT = (t_{UTC} + \lambda / 15^\circ) \bmod 24\,\mathrm{h}",
+        reference="Laundal, K. M., & Richmond, A. D. (2017), Space Sci. Rev., 206, 27-59",
+        doi="10.1007/s11214-016-0275-y", archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/",
+        data_level="Derived Coordinate", algorithm="Mean solar time from UTC and geographic longitude (computed by this application)."
+    ),
     "mlat": dict(
         label="Magnetic latitude", units="deg",
         plain="Latitude measured from the geomagnetic equator.", role=COORD,
