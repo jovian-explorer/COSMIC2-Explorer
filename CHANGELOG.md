@@ -35,6 +35,7 @@
 - Granules received before a cancelled or failed download are indexed (the dataset is marked incomplete); they used to stay on disk, unindexed.
 - A missing archive directory (for example today's, before CDAAC publishes) is re-checked after 5 minutes instead of being cached for 6 hours.
 - Re-indexing refreshes the quality code, satellite, PRN and stamp of existing entries.
+- A change to "concurrent downloads" takes effect for the next download instead of after a restart.
 - The Settings drawer's Save button works again (the DPI field's min/step made the browser refuse to submit the form). The default stream, "require good QC", temperature units and export grid settings are now saved and applied.
 - The Profiles tab's diagnostics panel no longer ends in a script error.
 

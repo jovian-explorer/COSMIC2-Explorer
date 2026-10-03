@@ -164,3 +164,13 @@ def test_granules_received_before_an_interruption_are_indexed(monkeypatch, mode)
         for d in store.datasets():
             if d["stream"] == "nrt-test":
                 store.delete_dataset(d["key"])
+
+
+def test_concurrent_downloads_setting_takes_effect_without_restart():
+    from cosmic2 import fetch
+    settings = types.SimpleNamespace(concurrent_downloads=1)
+    arc = types.SimpleNamespace()
+    mgr = fetch.DownloadManager(archive=arc, settings=settings)
+    assert mgr._executor()._max_workers == 1
+    settings.concurrent_downloads = 3
+    assert mgr._executor()._max_workers == 3

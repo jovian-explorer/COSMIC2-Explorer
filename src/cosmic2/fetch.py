@@ -160,6 +160,18 @@ class DownloadManager:
             max_workers=max(1, int(settings.concurrent_downloads)),
             thread_name_prefix="c2dl")
 
+    def _executor(self) -> ThreadPoolExecutor:
+        """The download pool, resized if 'concurrent downloads' was changed
+        in Settings (the size used to be fixed at start-up).  Jobs already
+        running on the old pool finish there."""
+        want = max(1, int(self.settings.concurrent_downloads))
+        with self._lock:
+            if self._pool._max_workers != want:
+                self._pool.shutdown(wait=False)
+                self._pool = ThreadPoolExecutor(max_workers=want,
+                                                thread_name_prefix="c2dl")
+            return self._pool
+
     # -- job table -------------------------------------------------------
     def _add(self, job: Job) -> Job:
         with self._lock:
@@ -216,13 +228,13 @@ class DownloadManager:
                  if p.label != product else f"{product} - {d.isoformat()}")
         job = self._add(Job(id=uuid.uuid4().hex[:12], kind="download",
                             title=title, params=params))
-        self._pool.submit(self._run_download, job)
+        self._executor().submit(self._run_download, job)
         return job
 
     def submit_reindex(self) -> Job:
         job = self._add(Job(id=uuid.uuid4().hex[:12], kind="reindex",
                             title="Rebuild local index", params={}))
-        self._pool.submit(self._run_reindex, job)
+        self._executor().submit(self._run_reindex, job)
         return job
 
     # -- workers ---------------------------------------------------------
