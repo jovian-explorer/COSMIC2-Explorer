@@ -54,3 +54,18 @@ def test_concurrent_exports_keep_their_own_dpi():
     for t in threads:
         t.join()
     assert len(sizes[60]) == 1 and len(sizes[200]) == 1
+
+
+def test_log_axis_is_skipped_for_data_without_positive_values():
+    import warnings
+    import numpy as np
+    items = [{"x": np.linspace(-80, 20, 50), "y": np.linspace(0, 30, 50),
+              "label": "a", "value": 1.0}]
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        fig = plotting.profile_figure(items, "Temp", "MSL_alt", logx=True,
+                                      x_units="C", dpi=72)
+        items[0]["x"] = -items[0]["x"] - 100        # all negative
+        fig2 = plotting.profile_figure(items, "Temp", "MSL_alt", logx=True, dpi=72)
+    assert fig.axes[0].get_xscale() == "log"         # some positive values
+    assert fig2.axes[0].get_xscale() == "linear"

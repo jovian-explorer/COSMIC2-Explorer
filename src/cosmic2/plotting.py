@@ -102,6 +102,19 @@ def _series_key(ax, labels, colors) -> None:
               labelspacing=0.35)
 
 
+def _log_x(ax) -> bool:
+    """Log x-axis only when the plotted data have positive values.
+
+    The log switch is shared across the Profiles tab, so it stays on after a
+    bending-angle view; applied to, say, temperature in deg C it produced an
+    empty exported panel.  The axis then stays linear.
+    """
+    if np.isfinite(ax.dataLim.x1) and ax.dataLim.x1 > 0:
+        ax.set_xscale("log")
+        return True
+    return False
+
+
 def _thin_ticks(ax, axis: str = "x", nbins: int = 4) -> None:
     """Fewer, pruned ticks so labels of abutting panels cannot collide."""
     loc = matplotlib.ticker.MaxNLocator(nbins=nbins, prune="both")
@@ -221,7 +234,7 @@ def profile_figure(series: Sequence[dict], x_var: str, y_var: str,
         ax.set_xlabel(vocab.axis_title(x_var, x_units))
         ax.set_ylabel(vocab.axis_title(y_var, y_units))
         if logx:
-            ax.set_xscale("log")
+            _log_x(ax)
         if invert_y:
             ax.invert_yaxis()
         if title:
@@ -267,7 +280,7 @@ def composite_figure(comp: dict, show: str = "mean", spread: str = "std",
         ax.set_xlabel(comp.get("field_label") or comp["field"])
         ax.set_ylabel(comp.get("vertical_label") or comp["vertical"])
         if logx:
-            ax.set_xscale("log")
+            _log_x(ax)
         ax.set_title(safe_mathtext(title or f"{show.title()} profile by group"), fontsize=SIZES[0])
         band = "+/-1 sigma" if spread == "std" else "10th-90th percentile"
         mc = comp.get("min_count", 3)
@@ -410,7 +423,7 @@ def panels_figure(panels: Sequence[dict], suptitle: str = "", caption: str = "",
                     np.asarray(p["y"], dtype="float64"), color=FOCAL)
             ax.set_xlabel(vocab.axis_title(p["x_var"], p.get("units", "")))
             if p.get("logx"):
-                ax.set_xscale("log")
+                _log_x(ax)
                 ax.xaxis.set_major_locator(
                     matplotlib.ticker.LogLocator(numticks=4))
             else:
