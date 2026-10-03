@@ -287,7 +287,7 @@ export function initExploreTab() {
   $('#btn-reset').addEventListener('click', () => {
     for (const id of ['f-latmin', 'f-latmax', 'f-lonmin', 'f-lonmax',
                       'f-ltmin', 'f-ltmax']) $(`#${id}`).value = '';
-    $('#f-good').checked = true;
+    $('#f-good').checked = state.meta.settings.qc_require_good !== false;
     $('#f-sat').value = '';
     $$('.preset-btn').forEach((b) => b.classList.remove('active'));
     runSearch();

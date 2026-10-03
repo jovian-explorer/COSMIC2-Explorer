@@ -103,6 +103,21 @@ function applySettings(settings) {
   } else if (settings.explain_mode !== undefined) {
     document.body.classList.toggle('no-curious', !settings.explain_mode);
   }
+  applyScienceDefaults(settings);
+}
+
+/** Science defaults from Settings into the working controls.  These settings
+ *  were saved before but nothing read them, so changing them had no effect. */
+function applyScienceDefaults(settings) {
+  const set = (sel, fn) => { const node = $(sel); if (node) fn(node); };
+  if (settings.qc_require_good !== undefined) {
+    set('#f-good', (n) => { n.checked = !!settings.qc_require_good; });
+  }
+  if (settings.units_temperature) {
+    set('#p-kelvin', (n) => { n.checked = settings.units_temperature === 'K'; });
+  }
+  if (settings.grid_top_km) set('#e-top', (n) => { n.value = settings.grid_top_km; });
+  if (settings.grid_step_km) set('#e-step', (n) => { n.value = settings.grid_step_km; });
 }
 
 function settingsBody() {
@@ -119,6 +134,8 @@ function settingsBody() {
       analysis_workers: Math.max(0, parseInt($('#s-workers').value, 10) || 0),
       units_temperature: $('#s-units-temp').value,
       qc_require_good: $('#s-qc').checked,
+      grid_top_km: Number($('#s-grid-top').value) || 60,
+      grid_step_km: Number($('#s-grid-step').value) || 0.2,
       default_stream: $('#s-stream').value
     };
     try {
@@ -189,6 +206,14 @@ function settingsBody() {
     el('label', {class: 'check'},
       el('input', {type: 'checkbox', id: 's-qc', checked: state.meta.settings.qc_require_good}),
       ' Require Good QC by default'
+    ),
+    el('label', {}, 'Export grid top (km) ',
+      el('input', {type: 'number', id: 's-grid-top', min: 1, step: 5,
+                   value: state.meta.settings.grid_top_km || 60})
+    ),
+    el('label', {}, 'Export grid step (km) ',
+      el('input', {type: 'number', id: 's-grid-step', min: 0.01, step: 0.05,
+                   value: state.meta.settings.grid_step_km || 0.2})
     ),
     el('hr'),
     el('h3', {}, 'Performance'),

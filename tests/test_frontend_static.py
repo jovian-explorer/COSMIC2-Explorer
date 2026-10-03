@@ -43,3 +43,14 @@ def test_ui_exports_are_used():
     unused = [sym for sym in exports
               if sym not in all_js.replace(f"export function {sym}", "").replace(f"export const {sym}", "")]
     assert not unused, f"ui.js exports never used: {unused}"
+
+
+def test_science_default_settings_are_applied_to_controls():
+    """Settings saved from the drawer must reach the controls they govern."""
+    js = _read(FRONTEND / "js" / "main.js")
+    body = js[js.index("function applyScienceDefaults"):]
+    body = body[:body.index("\n}\n")]
+    for key, target in (("qc_require_good", "#f-good"), ("units_temperature", "#p-kelvin"),
+                        ("grid_top_km", "#e-top"), ("grid_step_km", "#e-step")):
+        assert f"settings.{key}" in body and target in body, key
+    assert "applyScienceDefaults(settings)" in js
