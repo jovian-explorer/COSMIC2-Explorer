@@ -41,6 +41,7 @@
 - "Spread over 24 h" sampling no longer drops ivmL2m files: the `01` in their names is a file sequence, not an hour, so every satellite's whole-day file counted against the same hour (with 24 profiles requested, only one satellite of five was kept). Whole-day products are exempt from the hourly quota.
 - A change to "concurrent downloads" takes effect for the next download instead of after a restart.
 - The Settings drawer's Save button works again (the DPI field's min/step made the browser refuse to submit the form). The default stream, "require good QC", temperature units and export grid settings are now saved and applied.
+- The Profiles tab's diagnostics panel warns when an ionPrf profile has no F2 peak (its largest density is on the top or bottom level, as on profiles cut off below the peak) instead of presenting that maximum as NmF2/hmF2.
 - The Profiles tab's diagnostics panel no longer ends in a script error.
 
 ### Robustness and security

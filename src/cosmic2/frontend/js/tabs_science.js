@@ -284,6 +284,17 @@ async function showDiagnostics(gid) {
   if (!shown) grid.append(el('p', {class: 'hint'},
     'No scalar diagnostics apply to this product.'));
   body.append(grid);
+  // A density maximum on the first or last level is where the profile was
+  // cut, not an F2 peak: say so beside the numbers rather than in a flag
+  // nobody sees.
+  if (d.ionosphere && d.ionosphere.peak_at_profile_edge) {
+    const hm = d.ionosphere.hmF2_km;
+    const edge = Math.abs(hm - m.alt_max) < Math.abs(hm - m.alt_min) ? 'top' : 'bottom';
+    body.append(el('p', {class: 'pill warn'},
+      `No F2 peak: the largest density is on the ${edge} ` +
+      `level of the profile (${fmt(hm, 1)} km), so the peak values ` +
+      `above are the profile's maximum, not NmF2/hmF2.`));
+  }
 
   // Where our numbers can be checked against the archive's own, show both.
   const av = d.archive_values || {};
