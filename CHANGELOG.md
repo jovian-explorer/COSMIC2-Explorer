@@ -20,6 +20,10 @@
 - **Fill values**: each variable's own `_FillValue`/`missing_value` is masked and `scale_factor`/`add_offset` applied for both netCDF backends; the float32 netCDF default fill (9.96921e36) is now caught. Character variables no longer stop a granule from loading.
 - Granule longitudes are normalised to [-180, 180) so the longitude-box search finds products that use 0-360.
 
+### Interface
+
+- The Compare tab has a **Height** choice. Scintillation (scnLv2 S4, sigma-phi) can now be averaged against tangent-point height (`occheight`), for example S4 by day and night; choosing an S4 quantity switches the height to `occheight` automatically. When no selected profile carries the quantity on that height, the plot says so instead of "No group had enough profiles".
+
 ### Exports and figures
 
 - CSV cells and composite JSON are written at full double precision (they were rounded to 6 decimal places, leaving small fields such as N^2 with one or two significant digits).

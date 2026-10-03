@@ -351,6 +351,15 @@ function showAttributes(detail) {
 
 export function initCompositeTab() {
   fillSelect($('#c-field'), labelled(FIELD_CHOICES), 'Temp');
+  fillSelect($('#c-vertical'), labelled(VERTICAL_CHOICES), 'MSL_alt');
+  // Scintillation records have no MSL_alt; their height is the ray tangent
+  // height, so follow the quantity unless the user picked a height.
+  $('#c-field').addEventListener('change', () => {
+    const scint = ['s4_L1', 'sigma_phi_L1'].includes($('#c-field').value);
+    const v = $('#c-vertical');
+    if (scint && v.value === 'MSL_alt') v.value = 'occheight';
+    if (!scint && v.value === 'occheight') v.value = 'MSL_alt';
+  });
   fillSelect($('#c-groupby'), state.meta.group_by_options.map((g) =>
       ({value: g, label: g.replace(/_/g, ' ')})), 'lat_band');
   $('#btn-composite').addEventListener('click', (e) =>
@@ -369,7 +378,7 @@ function selection(selectedOnly) {
 async function drawComposite() {
   const req = Object.assign({
     field: $('#c-field').value,
-    vertical: 'MSL_alt',
+    vertical: $('#c-vertical').value,
     group_by: $('#c-groupby').value,
     top_km: Number($('#c-top').value) || 40,
     step_km: Number($('#c-step').value) || 0.5,
@@ -378,6 +387,13 @@ async function drawComposite() {
   }, selection($('#c-selected-only').checked));
   const res = await api.composite(req);
   const names = Object.keys(res.groups);
+  if (!res.n_profiles) {
+    emptyPlot('composite-plot',
+      `None of the ${res.selected} selected profiles carry ${req.field} on ` +
+      `${req.vertical} below ${req.top_km} km.`);
+    $('#composite-caption').textContent = '';
+    return;
+  }
   if (!names.length) {
     emptyPlot('composite-plot', 'No group had enough profiles to average.');
     return;
@@ -584,6 +600,18 @@ async function exportFigure() {
     x_field: $('#s-x').value || 'lat',
     y_field: $('#s-y').value || 'tropopause.height_km',
   }, selection($('#e-selected-only').checked));
+  if (kind === 'composite') {
+    // The figure reproduces the Compare tab's average as drawn there: its
+    // quantity, height, grid and Kelvin choice (the grid used to fall back to
+    // 0-60 km, which left an ionospheric composite empty).
+    Object.assign(req, {
+      field: $('#c-field').value,
+      vertical: $('#c-vertical').value || 'MSL_alt',
+      top_km: Number($('#c-top').value) || 40,
+      step_km: Number($('#c-step').value) || 0.5,
+      convert_kelvin: $('#c-field').value === 'Temp',
+    });
+  }
   
   // Attach current processing parameters for provenance
   req.outlier_method = $('#p-outlier-method') ? $('#p-outlier-method').value : 'none';
