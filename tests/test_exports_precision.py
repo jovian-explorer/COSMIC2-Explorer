@@ -44,3 +44,20 @@ def test_composite_json_is_not_rounded():
                  "std": vals, "p10": vals, "p90": vals}}, 3)
     out = comp.to_json()
     assert out["groups"]["all"]["mean"] == [1.23456789e-5, 2.5e-7]
+
+
+def test_netcdf_export_uses_udunits_strings():
+    import os
+    from netCDF4 import Dataset
+    meta = _wet_meta()
+    res = exporters.export_netcdf([meta], ["Temp", "density", "buoyancy_freq_sq", "sph"],
+                                  top_km=20.0, step_km=1.0, basename="cf_test")
+    try:
+        with Dataset(res["path"]) as ds:
+            assert ds["Temp"].units == "degree_Celsius"     # "C" is the coulomb
+            assert ds["density"].units == "kg m-3"
+            assert ds["buoyancy_freq_sq"].units == "s-2"
+            assert ds["sph"].units == "g kg-1"
+            assert ds["MSL_alt"].units == "km"
+    finally:
+        os.remove(res["path"])

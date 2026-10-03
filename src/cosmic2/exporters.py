@@ -175,6 +175,24 @@ def export_metadata_csv(granules: Sequence[dict],
             "mime": "text/csv", "rows": len(granules), "provenance": prov}
 
 
+# Display units (vocab) -> UDUNITS strings for the CF-1.8 netCDF export.
+# "C" in particular is the coulomb to UDUNITS (and to xarray/cf-units/pint),
+# so a temperature written with units="C" decodes as an electric charge.
+CF_UNITS = {
+    "C": "degree_Celsius", "K/km": "K km-1", "N-units": "1",
+    "N-units/km": "km-1", "N/cc": "cm-3", "el/cm3": "cm-3", "g/kg": "g kg-1",
+    "kg/m^3": "kg m-3", "s^-2": "s-2", "%": "percent", "-": "1",
+    "count": "1", "deg": "degree", "deg E": "degrees_east",
+    "deg N": "degrees_north", "TECU": "1e16 m-2", "0.1 V/V": "1",
+    "s since 1970-01-01": "seconds since 1970-01-01T00:00:00Z",
+}
+
+
+def cf_units(units: str) -> str:
+    """UDUNITS-parsable form of a display unit string."""
+    return CF_UNITS.get(units, units)
+
+
 def _regrid_granule(task: tuple) -> tuple[dict, dict[str, np.ndarray]] | None:
     """Read one granule and interpolate its profile variables onto ``grid``.
 
@@ -321,7 +339,7 @@ def export_netcdf(granules: Sequence[dict], fields: Sequence[str] | None = None,
             var = ds.createVariable(name, "f4", ("profile", "level"),
                                     fill_value=np.float32(-999.0), zlib=True,
                                     complevel=4)
-            var.units = vi["units"]
+            var.units = cf_units(vi["units"])
             var.long_name = vi["label"]
             if vi["plain"]:
                 var.comment = vi["plain"]
