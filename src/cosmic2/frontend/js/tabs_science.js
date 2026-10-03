@@ -100,6 +100,9 @@ async function drawProfiles() {
       `None of the selected profiles carry ${req.field} on ${req.vertical} ` +
       `(${why}).`);
     $('#profile-caption').textContent = '';
+    // Keep the diagnostics panel in step with the selection; it otherwise
+    // went on showing the previous selection's profile.
+    await showDiagnostics(ids[0]);
     return;
   }
   const many = res.series.length > 8;
