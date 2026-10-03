@@ -137,3 +137,13 @@ def test_inapplicable_savgol_is_not_recorded_as_applied():
                           smooth_kwargs={"window": 5, "polyorder": 6})
     np.testing.assert_array_equal(prof.v, v)
     assert "smoothing" not in [p.operation for p in prof.provenance]
+
+
+def test_provenance_records_the_running_version(monkeypatch):
+    from cosmic2 import pipeline
+    from cosmic2.config import APP_VERSION
+    prof = apply_pipeline(np.arange(10.0), np.arange(10.0), smooth_method="median",
+                          smooth_kwargs={"window": 3})
+    assert prof.provenance[0].software_version == APP_VERSION
+    assert pipeline.ProvenanceRecord.__dataclass_fields__["software_version"].default \
+        is APP_VERSION

@@ -8,12 +8,14 @@ import numpy as np
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
 
+from .config import APP_VERSION
+
 @dataclass
 class ProvenanceRecord:
     timestamp: str
     operation: str
     parameters: dict
-    software_version: str = "0.0.1"
+    software_version: str = APP_VERSION
 
 @dataclass
 class ProcessedProfile:
