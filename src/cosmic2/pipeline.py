@@ -135,6 +135,15 @@ def smooth_data(profile: ProcessedProfile, method: str, window: int = 5, **kwarg
 def compute_uncertainty(profile: ProcessedProfile, method: str = "standard_error", window: int = 5) -> dict:
     """Uncertainty support/error bar estimation.
     Methods: standard_deviation, standard_error, none
+
+    The spread is the local scatter *about the running mean*, not the raw
+    rolling standard deviation of the values.  A raw rolling std measures the
+    profile's own vertical gradient (a noise-free temperature or pressure
+    profile got error bars of several K or hPa simply because it changes with
+    height); removing the running mean leaves only the level-to-level noise.
+    For white noise of std sigma the estimate is unbiased:
+    sigma_hat^2 = <r^2> / (1 - 1/w), with r = v - running_mean_w(v).
+    ``standard_error`` divides that by sqrt(levels in the window).
     """
     valid = profile.mask & np.isfinite(profile.v)
     uncertainty = np.full_like(profile.v, np.nan)
@@ -144,12 +153,17 @@ def compute_uncertainty(profile: ProcessedProfile, method: str = "standard_error
          return {"method": "none"}
          
     import pandas as pd
+    w = max(int(window), 2)
     s = pd.Series(profile.v)
+    min_p = max(2, w // 2 + 1)
+    resid = s - s.rolling(w, min_periods=min_p, center=True).mean()
+    count = (resid.notna().astype(float)
+             .rolling(w, min_periods=1, center=True).sum().values)
+    msq = (resid ** 2).rolling(w, min_periods=min_p, center=True).mean().values
+    std = np.sqrt(msq / (1.0 - 1.0 / w))
     if method == "standard_deviation":
-        uncertainty = s.rolling(window, min_periods=1, center=True).std().values
+        uncertainty = std
     elif method == "standard_error":
-        count = s.rolling(window, min_periods=1, center=True).count().values
-        std = s.rolling(window, min_periods=1, center=True).std().values
         uncertainty = std / np.sqrt(np.where(count > 0, count, np.nan))
     else:
         raise ValueError(f"Unknown uncertainty method: {method}")

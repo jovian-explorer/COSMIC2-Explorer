@@ -49,9 +49,19 @@ def test_pipeline_uncertainty():
     prof = apply_pipeline(z, v, uncert_method="standard_deviation", uncert_kwargs={"window": 3})
     
     assert prof.uncertainty is not None
-    # For a straight line with slope 1, rolling std over 3 elements is 1.0 (since elements are spaced by 1)
-    # Using sample std (ddof=1) over [0,1,2] -> mean 1, diff [-1, 0, 1] -> var = (1+0+1)/2 = 1. std = 1
-    np.testing.assert_allclose(prof.uncertainty[1:9], 1.0, rtol=1e-5)
+    # A noise-free straight line has no scatter about its running mean, so
+    # its interior error bars are zero (the raw rolling std would be 1.0 here,
+    # i.e. the slope, not an uncertainty).
+    np.testing.assert_allclose(prof.uncertainty[2:8], 0.0, atol=1e-12)
+
+
+def test_pipeline_uncertainty_recovers_noise_on_a_steep_profile():
+    rng = np.random.default_rng(1)
+    z = np.arange(4000.0)
+    v = 300.0 - 0.5 * z + rng.normal(0.0, 0.5, z.size)   # gradient >> noise
+    prof = apply_pipeline(z, v, uncert_method="standard_deviation",
+                          uncert_kwargs={"window": 9})
+    assert np.nanmedian(prof.uncertainty) == pytest.approx(0.5, rel=0.1)
 
 def test_pipeline_filtering_median():
     z = np.arange(100.0)
@@ -109,12 +119,12 @@ def test_pipeline_smoothing_moving_average():
     assert np.isclose(prof.v[50], 20.8)
 
 def test_pipeline_uncertainty_standard_error():
-    z = np.arange(10.0)
-    v = np.arange(10.0)
-    
-    prof = apply_pipeline(z, v, uncert_method="standard_error", uncert_kwargs={"window": 3})
-    
+    rng = np.random.default_rng(2)
+    z = np.arange(4000.0)
+    v = np.arange(4000.0) + rng.normal(0.0, 1.0, z.size)
+
+    prof = apply_pipeline(z, v, uncert_method="standard_error", uncert_kwargs={"window": 9})
+
     assert prof.uncertainty is not None
-    # For a straight line with slope 1, rolling std over 3 elements is 1.0. 
-    # sqrt(3) is ~1.732. std_err = 1.0 / 1.732 = 0.57735
-    np.testing.assert_allclose(prof.uncertainty[1:9], 1.0 / np.sqrt(3), rtol=1e-4)
+    # sigma = 1 noise, 9 levels per window: standard error ~ 1/3
+    assert np.nanmedian(prof.uncertainty) == pytest.approx(1.0 / 3.0, rel=0.1)

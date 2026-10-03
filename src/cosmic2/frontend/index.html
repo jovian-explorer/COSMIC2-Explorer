@@ -143,7 +143,7 @@
       <ul class="guide-list">
         <li><strong>Outlier Removal:</strong> Filter noisy spikes using Sigma Clipping (Gaussian assumption), MAD Robust Filtering (Median Absolute Deviation), IQR Filter, or Percentile Truncation.</li>
         <li><strong>Smoothing Algorithms:</strong> Apply Savitzky-Golay polynomial smoothing (preserves peak shapes, tropopause sharp gradients, and structural features), Gaussian kernel filtering, or Rolling Moving Averages.</li>
-        <li><strong>Uncertainty Envelopes:</strong> Generate rolling standard deviation or standard error confidence bands along the profile.</li>
+        <li><strong>Uncertainty Envelopes:</strong> Generate rolling standard deviation or standard error bands along the profile, computed about the running mean so the vertical gradient is not mistaken for noise.</li>
         <li><strong>Mathematical Provenance:</strong> Every conditioning transformation records its operational parameters to guarantee reproducible science.</li>
       </ul>
       <div class="guide-formula-box" style="margin: 10px 0; padding: 8px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px;">
@@ -639,7 +639,7 @@
       <label title="Select how to represent the statistical confidence or spread of the data.">Uncertainty 
         <select id="p-uncert-method">
           <option value="none">None</option>
-          <option value="standard_deviation" title="Shows the rolling standard deviation, representing data spread/variability">Rolling Std Dev</option>
+          <option value="standard_deviation" title="Level-to-level scatter about the running mean (the profile's own vertical gradient is removed first)">Rolling Std Dev</option>
           <option value="standard_error" title="Shows the standard error of the mean, representing confidence in the smoothed value">Standard Error</option>
         </select>
       </label>
