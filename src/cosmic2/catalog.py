@@ -17,6 +17,7 @@ import datetime as dt
 import re
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Iterable
 
@@ -264,6 +265,11 @@ def collection_url(stream: str, level: str) -> str:
     return f"{CDAAC_BASE}/cosmic2/{stream}/{level}"
 
 
+# Parallel HTTP requests used to build a day manifest (kept modest: this is
+# a public archive).
+MANIFEST_WORKERS = 8
+
+
 def day_url(stream: str, level: str, year: int, doy: int) -> str:
     return f"{collection_url(stream, level)}/{year}/{doy:03d}"
 
@@ -360,28 +366,38 @@ class Archive:
 
     def day_manifest(self, date: dt.date, streams: Iterable[str] | None = None,
                      with_sizes: bool = True) -> list[dict]:
-        """Everything available for one calendar day, across collections."""
+        """Everything available for one calendar day, across collections.
+
+        The collection listings and the per-file HEAD requests (for sizes)
+        are independent round trips, so they run on a small thread pool: a
+        day with ~40 files took ~50 sequential requests before.
+        """
         year, doy = date_to_doy(date)
         wanted = set(streams) if streams else None
-        rows: list[dict] = []
-        for stream, level in COLLECTIONS:
-            if wanted and stream not in wanted:
-                continue
+        colls = [(s, l) for s, l in COLLECTIONS if not wanted or s in wanted]
+
+        def listing(coll):
             try:
-                found = self.files(stream, level, year, doy)
+                return self.files(coll[0], coll[1], year, doy)
             except requests.RequestException:
-                continue
-            for f in found:
-                p = describe_product(f.product)
-                size = self.head_size(f.url) if with_sizes else None
-                rows.append({
-                    "stream": stream, "level": level, "product": f.product,
-                    "label": p.label, "kind": p.kind, "blurb": p.blurb,
-                    "plain": p.plain, "readable": bool(p.reader),
-                    "key_vars": list(p.key_vars), "size_class": p.size_class,
-                    "name": f.name, "url": f.url, "size_bytes": size,
-                    "year": year, "doy": doy, "date": date.isoformat(),
-                })
+                return []
+
+        with ThreadPoolExecutor(max_workers=MANIFEST_WORKERS) as pool:
+            found = list(pool.map(listing, colls))
+            entries = [(s, l, f) for (s, l), fs in zip(colls, found) for f in fs]
+            sizes = (list(pool.map(lambda e: self.head_size(e[2].url), entries))
+                     if with_sizes else [None] * len(entries))
+        rows: list[dict] = []
+        for (stream, level, f), size in zip(entries, sizes):
+            p = describe_product(f.product)
+            rows.append({
+                "stream": stream, "level": level, "product": f.product,
+                "label": p.label, "kind": p.kind, "blurb": p.blurb,
+                "plain": p.plain, "readable": bool(p.reader),
+                "key_vars": list(p.key_vars), "size_class": p.size_class,
+                "name": f.name, "url": f.url, "size_bytes": size,
+                "year": year, "doy": doy, "date": date.isoformat(),
+            })
         return rows
 
     def latest_available(self, stream: str = "nrt", level: str = "level2",
