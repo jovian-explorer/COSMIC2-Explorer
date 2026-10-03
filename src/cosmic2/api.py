@@ -183,15 +183,17 @@ def variables_endpoint() -> dict:
 
 
 class SettingsPatch(BaseModel):
-    max_profiles_per_download: int | None = None
-    concurrent_downloads: int | None = None
-    cache_quota_gb: float | None = None
-    warn_download_mb: int | None = None
-    listing_cache_hours: int | None = None
+    # Bounds keep a typo from being persisted and then breaking every later
+    # composite or export (a zero grid step used to be accepted and saved).
+    max_profiles_per_download: int | None = Field(default=None, ge=0)
+    concurrent_downloads: int | None = Field(default=None, ge=1, le=16)
+    cache_quota_gb: float | None = Field(default=None, ge=0)
+    warn_download_mb: int | None = Field(default=None, ge=0)
+    listing_cache_hours: int | None = Field(default=None, ge=0)
     qc_require_good: bool | None = None
-    grid_top_km: float | None = None
-    grid_step_km: float | None = None
-    plot_dpi: int | None = None
+    grid_top_km: float | None = Field(default=None, gt=0)
+    grid_step_km: float | None = Field(default=None, gt=0)
+    plot_dpi: int | None = Field(default=None, ge=50, le=1200)
     plot_theme: str | None = None
     ui_theme: str | None = None
     ui_font_size: int | None = None
@@ -580,10 +582,10 @@ class CompositeRequest(BaseModel):
     field: str = "Temp"
     vertical: str = "MSL_alt"
     group_by: str = "lat_band"
-    top_km: float = 60.0
-    step_km: float = 0.5
+    top_km: float = Field(default=60.0, gt=0)
+    step_km: float = Field(default=0.5, gt=0)
     good_only: bool = True
-    min_count: int = 3
+    min_count: int = Field(default=3, ge=1)
     convert_kelvin: bool = True
     max_profiles: int = 2000
 
@@ -670,8 +672,8 @@ class ExportRequest(BaseModel):
     variables: list[str] | None = None
     field: str = "Temp"
     vertical: str = "MSL_alt"
-    top_km: float = 60.0
-    step_km: float = 0.2
+    top_km: float = Field(default=60.0, gt=0)
+    step_km: float = Field(default=0.2, gt=0)
     basename: str = "cosmic2"
     max_profiles: int = 2000
     outlier_method: str = "none"
@@ -746,7 +748,7 @@ class FigureRequest(BaseModel):
     title: str = ""
     caption: str = ""
     fmt: Literal["png", "pdf", "svg", "eps", "jpg"] = "png"
-    dpi: int | None = None
+    dpi: int | None = Field(default=None, ge=50, le=1200)
     logx: bool = False
     spread: Literal["std", "p10p90"] = "std"
     convert_kelvin: bool = False
@@ -773,6 +775,14 @@ def export_figure(req: FigureRequest) -> dict:
     return _clean(res)
 
 
+def _latlon(meta: dict) -> str:
+    """'12.3N 45.6E', or '' when the granule has no position."""
+    lat, lon = meta.get("lat"), meta.get("lon")
+    if lat is None or lon is None:
+        return ""
+    return f"{lat:.1f}N {lon:.1f}E"
+
+
 def _build_figure(req: FigureRequest, rows: list[dict]):
     if req.kind == "coverage":
         return plotting.coverage_figure(store.coverage(), title=req.title)
@@ -797,8 +807,7 @@ def _build_figure(req: FigureRequest, rows: list[dict]):
                    "logx": n in ("ref", "Ref", "ELEC_dens")} for n in names]
         return plotting.panels_figure(
             panels, suptitle=req.title or
-            f"{g.meta['product']} {g.meta['time_utc']} "
-            f"{g.meta['lat']:.1f}N {g.meta['lon']:.1f}E",
+            f"{g.meta['product']} {g.meta['time_utc'] or ''} {_latlon(g.meta)}",
             caption=req.caption)
     if req.kind == "scatter":
         tbl = diagnostics_table(DiagnosticsTableRequest(

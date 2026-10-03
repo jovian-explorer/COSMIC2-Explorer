@@ -55,3 +55,38 @@ def test_foreign_web_origin_is_refused_by_cors():
 def test_loopback_origin_is_allowed_by_cors():
     status, allow = _preflight("http://127.0.0.1:5173")
     assert status == 200 and allow == "http://127.0.0.1:5173"
+
+
+def _status(path, body):
+    try:
+        return _req(path, body).status
+    except urllib.error.HTTPError as e:
+        return e.code
+
+
+def test_zero_grid_step_is_rejected_not_a_server_error():
+    assert _status("/api/composite", {"search": {"limit": 3}, "field": "Temp",
+                                      "step_km": 0}) == 422
+
+
+def test_invalid_settings_are_not_persisted():
+    assert _status("/api/settings", {"grid_step_km": 0}) == 422
+    meta = json.loads(_req("/api/meta").read())
+    assert meta["settings"]["grid_step_km"] > 0
+
+
+def test_panels_figure_for_a_granule_without_position(tmp_path):
+    import numpy as np
+    from scipy.io import netcdf_file
+    from cosmic2 import api
+    p = tmp_path / "atmPrf_C2E1.2026.200.01.02.G01_0001.0001_nc"
+    f = netcdf_file(str(p), "w")
+    f.year, f.month, f.day, f.hour, f.minute, f.second = 2026, 7, 19, 1, 2, 3.0
+    f.createDimension("n", 3)
+    for name, vals in (("MSL_alt", [1.0, 2.0, 3.0]), ("Temp", [10.0, 5.0, 0.0])):
+        v = f.createVariable(name, "d", ("n",))
+        v[:] = vals
+    f.close()
+    req = api.FigureRequest(kind="panels", panels=["Temp"])
+    fig = api._build_figure(req, [{"path": str(p), "product": "atmPrf"}])
+    assert fig is not None
