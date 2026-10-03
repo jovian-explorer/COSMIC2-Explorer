@@ -230,3 +230,11 @@ def test_diagnostics_guard_only_dry_temperature(product, expected_km):
                         {"Temp": "C"})
     tp = analysis.diagnostics(g)["tropopause"]
     assert tp["height_km"] == pytest.approx(expected_km, abs=0.2)
+
+
+def test_fields_with_derives_only_when_asked():
+    g = readers.load(str(next(sampledata_dir().glob("wetPf2_*"))))
+    native = analysis.fields_with(g, "Temp", "MSL_alt")
+    assert "theta" not in native and "Temp" in native
+    derived = analysis.fields_with(g, "theta", "MSL_alt")
+    np.testing.assert_array_equal(derived["theta"], analysis.derived_fields(g)["theta"])

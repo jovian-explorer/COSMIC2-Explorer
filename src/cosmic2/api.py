@@ -544,8 +544,7 @@ def plot_profiles(req: PlotRequest) -> dict:
         except Exception as exc:  # noqa: BLE001
             skipped.append({"file": row["file_name"], "why": str(exc)})
             continue
-        src = dict(g.data)
-        src.update(analysis.derived_fields(g))
+        src = analysis.fields_with(g, req.field, req.vertical)
         if req.field not in src or req.vertical not in src:
             skipped.append({"file": row["file_name"],
                             "why": f"no {req.field} on {req.vertical}"})

@@ -499,6 +499,16 @@ def derived_fields(g: readers.Granule) -> dict[str, np.ndarray]:
     return out
 
 
+def fields_with(g: readers.Granule, *names: str) -> dict[str, np.ndarray]:
+    """The granule's arrays, plus the derived fields only when one of
+    ``names`` is not a native variable.  Deriving every field costs ~10 % of
+    a composite or profile plot of a native quantity such as Temp."""
+    src = dict(g.data)
+    if any(n not in src for n in names):
+        src.update(derived_fields(g))
+    return src
+
+
 R_VAPOUR = 461.5       # J kg-1 K-1, specific gas constant for water vapour
 
 
@@ -706,8 +716,7 @@ def _composite_column(task: tuple) -> tuple[str, np.ndarray, str] | None:
         g = readers.load(path, meta.get("product"))
     except Exception:
         return None
-    src = dict(g.data)
-    src.update(derived_fields(g))
+    src = fields_with(g, field, vertical)
     if field not in src or vertical not in src:
         return None
     v = src[field]
