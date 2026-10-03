@@ -38,3 +38,22 @@ def test_coverage_bins_negative_coordinates_without_sql_floor(tmp_path):
         conn = store.connect()
         with conn:
             conn.execute("DELETE FROM granules WHERE stream='t-cov'")
+
+
+def test_date_range_covers_observations_before_the_archive_day(tmp_path):
+    # A 2026-07-19 day file whose first granule was observed at 23:59:50
+    # the day before: the default From date must include it.
+    store.upsert_granules([dict(path=str(tmp_path / "tdate_0"), product="tdate",
+                                stream="t-date", level="level2", date="2026-07-19",
+                                time_utc="2026-07-18T23:59:50Z", epoch=1784419190.0,
+                                good=True)])
+    try:
+        f = store.facets()
+        assert f["date_min"] <= "2026-07-18"
+        hits = store.query_granules(products=["tdate"], start=f["date_min"],
+                                    end=f"{f['date_max']}T23:59:59Z")
+        assert hits["total"] == 1
+    finally:
+        conn = store.connect()
+        with conn:
+            conn.execute("DELETE FROM granules WHERE stream='t-date'")

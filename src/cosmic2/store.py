@@ -385,10 +385,20 @@ def facets() -> dict:
             f"SELECT DISTINCT {name} FROM granules WHERE {name} IS NOT NULL "
             f"AND {name} != '' ORDER BY {name}").fetchall()]
 
-    rng = conn.execute("SELECT MIN(date) a, MAX(date) b FROM granules").fetchone()
+    # The date filter applies to the observation time, and a CDAAC day file
+    # starts with occultations from the last minute of the previous UTC day
+    # (every ivmL2m day file does).  The range therefore spans observation
+    # dates as well as archive days, or the default search hid those
+    # granules (all of a single day's ivmL2m files).
+    rng = conn.execute(
+        "SELECT MIN(date) a, MAX(date) b, MIN(substr(time_utc, 1, 10)) c, "
+        "MAX(substr(time_utc, 1, 10)) d FROM granules").fetchone()
+    lows = [v for v in (rng["a"], rng["c"]) if v]
+    highs = [v for v in (rng["b"], rng["d"]) if v]
     return {"products": col("product"), "streams": col("stream"),
             "sats": col("sat"), "prns": col("occ_prn"),
-            "date_min": rng["a"], "date_max": rng["b"]}
+            "date_min": min(lows) if lows else None,
+            "date_max": max(highs) if highs else None}
 
 
 def cache_bytes() -> int:
