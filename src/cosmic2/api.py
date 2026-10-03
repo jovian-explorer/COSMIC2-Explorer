@@ -674,18 +674,33 @@ class ExportRequest(BaseModel):
     uncert_method: str = "none"
 
 
+def _display_processing(req) -> dict:
+    """Provenance entry for the Profiles-tab processing settings.
+
+    Exports are written from the archive values (plus derived fields); the
+    outlier, smoothing and uncertainty settings shape only the on-screen
+    plot.  Recording the settings without saying so would suggest the file
+    holds filtered data, so the entry states it explicitly.
+    """
+    return {
+        "processing_parameters": {
+            "outlier_method": req.outlier_method,
+            "smooth_method": req.smooth_method,
+            "uncert_method": req.uncert_method,
+            "applied_to_exported_values": False,
+            "note": ("These are the interactive plot settings at export time. "
+                     "Exported values are unfiltered archive values and "
+                     "derived fields."),
+        }
+    }
+
+
 @app.post("/api/export/data")
 def export_data(req: ExportRequest) -> dict:
     rows = _resolve_selection(req.granule_ids, req.search, req.max_profiles)
     if not rows:
         raise HTTPException(400, "No local profiles match that selection")
-    extra_prov = {
-        "processing_parameters": {
-            "outlier_method": req.outlier_method,
-            "smooth_method": req.smooth_method,
-            "uncert_method": req.uncert_method,
-        }
-    }
+    extra_prov = _display_processing(req)
     try:
         if req.kind == "profiles_csv":
             res = exporters.export_profiles_csv(rows, req.variables,
@@ -748,13 +763,7 @@ def export_figure(req: FigureRequest) -> dict:
         raise HTTPException(400, f"Cannot build that figure: {exc}") from exc
     res = exporters.export_figure(fig, req.fmt, req.title or f"cosmic2_{req.kind}",
                                   req.dpi)
-    extra_prov = {
-        "processing_parameters": {
-            "outlier_method": req.outlier_method,
-            "smooth_method": req.smooth_method,
-            "uncert_method": req.uncert_method,
-        }
-    }
+    extra_prov = _display_processing(req)
     res["provenance"] = exporters.provenance(rows, extra_prov)
     return _clean(res)
 
