@@ -20,6 +20,36 @@ const FIELD_CHOICES = [
 ];
 const VERTICAL_CHOICES = ['MSL_alt', 'gph', 'Impact_height', 'occheight', 'alt'];
 
+// What each product can draw ([quantities], [heights]); the first of each is
+// the default when a selection of that product cannot show the current pick.
+const THERMO_DERIVED = ['theta', 'dtheta_dz', 'lapse_rate', 'dNdz', 'buoyancy_freq_sq',
+                        'buoyancy_period', 'speed_of_sound', 'density', 'scale_height'];
+const PRODUCT_AXES = {
+  atmPrf: [['Temp', 'Pres', 'Ref', 'Bend_ang', ...THERMO_DERIVED],
+           ['MSL_alt', 'Impact_height']],
+  wetPf2: [['Temp', 'temp_dry', 'Pres', 'sph', 'rh', 'Vp', 'ref', ...THERMO_DERIVED],
+           ['MSL_alt', 'gph']],
+  ionPrf: [['ELEC_dens', 'TEC_cal'], ['MSL_alt']],
+  scnLv2: [['s4_L1', 'sigma_phi_L1'], ['occheight']],
+  ivmL2m: [['ion_dens', 'ion_temp', 'iv_zon', 'iv_mer'], ['alt']],
+};
+
+/** When every selected profile is one product that cannot draw the chosen
+ *  quantity or height (Temp for an ionPrf selection, say), switch to that
+ *  product's default instead of drawing an empty plot. */
+function fitAxesToSelection() {
+  const products = new Set(selectedIds().map((id) => state.selected.get(id).product));
+  if (products.size !== 1) return;
+  const axes = PRODUCT_AXES[[...products][0]];
+  if (!axes) return;
+  const [fields, verticals] = axes;
+  if (!fields.includes($('#p-field').value)) {
+    $('#p-field').value = fields[0];
+    $('#p-logx').checked = false;
+  }
+  if (!verticals.includes($('#p-vertical').value)) $('#p-vertical').value = verticals[0];
+}
+
 function labelled(names) {
   return names.map((n) => ({value: n, label: `${vocabInfo(n).label} (${n})`,
                             title: vocabInfo(n).plain}));
@@ -33,7 +63,7 @@ export function initProfileTab() {
   $('#btn-view-thermo').addEventListener('click', () => quickView('thermo'));
   $('#btn-view-bending').addEventListener('click', () => quickView('bending'));
   $('#btn-view-iono').addEventListener('click', () => quickView('iono'));
-  document.addEventListener('selection-changed', renderChips);
+  document.addEventListener('selection-changed', () => { renderChips(); fitAxesToSelection(); });
   renderChips();
 }
 
