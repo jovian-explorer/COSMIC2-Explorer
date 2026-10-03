@@ -69,3 +69,13 @@ def test_log_axis_is_skipped_for_data_without_positive_values():
         fig2 = plotting.profile_figure(items, "Temp", "MSL_alt", logx=True, dpi=72)
     assert fig.axes[0].get_xscale() == "log"         # some positive values
     assert fig2.axes[0].get_xscale() == "linear"
+
+
+def test_figures_use_product_aware_axis_titles():
+    import numpy as np
+    fig = _profile_fig(x_label="Dry temperature [C]")
+    assert fig.axes[0].get_xlabel() == "Dry temperature [C]"
+    z = np.linspace(0, 30, 50)
+    fig = plotting.panels_figure([{"x": z, "y": z, "x_var": "Temp", "units": "C",
+                                   "y_var": "MSL_alt", "product": "atmPrf"}], dpi=100)
+    assert fig.axes[0].get_xlabel().startswith("Dry temperature")

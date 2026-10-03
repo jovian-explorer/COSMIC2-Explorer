@@ -774,6 +774,7 @@ def _build_figure(req: FigureRequest, rows: list[dict]):
             raise ValueError(f"none of {req.panels} exist in {g.product}")
         panels = [{"x": src[n], "y": src[req.vertical], "x_var": n,
                    "units": g.units.get(n, ""), "y_var": req.vertical,
+                   "product": g.product,
                    "logx": n in ("ref", "Ref", "ELEC_dens")} for n in names]
         return plotting.panels_figure(
             panels, suptitle=req.title or
@@ -807,7 +808,8 @@ def _build_figure(req: FigureRequest, rows: list[dict]):
         raise ValueError("no profile carried the requested field")
     return plotting.profile_figure(
         items, req.field, req.vertical, title=req.title,
-        x_units=series["units"], color_by="Lat", logx=req.logx,
+        x_units=series["units"], x_label=series["field_label"],
+        color_by="Lat", logx=req.logx,
         caption=req.caption or f"{len(items)} COSMIC-2 profiles.")
 
 

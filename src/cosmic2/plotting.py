@@ -184,8 +184,11 @@ def profile_figure(series: Sequence[dict], x_var: str, y_var: str,
                    color_by: str | None = None, logx: bool = False,
                    invert_y: bool = False, caption: str = "",
                    figsize: tuple[float, float] = (3.6, 4.4),
-                   dpi: int | None = None) -> Figure:
+                   dpi: int | None = None, x_label: str = "") -> Figure:
     """Overlay vertical profiles.
+
+    ``x_label`` overrides the generic axis title (the API passes its
+    product-aware one, e.g. "Dry temperature" for atmPrf ``Temp``).
 
     ``series`` items are ``{"x": [...], "y": [...], "label": str,
     "value": float|None}``.  Up to six series are direct-labelled at the end
@@ -231,7 +234,7 @@ def profile_figure(series: Sequence[dict], x_var: str, y_var: str,
             if len(series) > 1:
                 _series_key(ax, labels, colors)
 
-        ax.set_xlabel(vocab.axis_title(x_var, x_units))
+        ax.set_xlabel(x_label or vocab.axis_title(x_var, x_units))
         ax.set_ylabel(vocab.axis_title(y_var, y_units))
         if logx:
             _log_x(ax)
@@ -421,7 +424,8 @@ def panels_figure(panels: Sequence[dict], suptitle: str = "", caption: str = "",
         for i, (ax, p) in enumerate(zip(axes, panels)):
             ax.plot(np.asarray(p["x"], dtype="float64"),
                     np.asarray(p["y"], dtype="float64"), color=FOCAL)
-            ax.set_xlabel(vocab.axis_title(p["x_var"], p.get("units", "")))
+            ax.set_xlabel(vocab.axis_title(p["x_var"], p.get("units", ""),
+                                           p.get("product")))
             if p.get("logx"):
                 _log_x(ax)
                 ax.xaxis.set_major_locator(
