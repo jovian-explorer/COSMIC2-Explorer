@@ -439,26 +439,38 @@ def reindex_cache(product_hint: str | None = None) -> dict:
     """Rebuild the index from whatever is on disk (recovery path)."""
     from . import readers  # local import keeps module import cheap
     from .parallel import pmap
-    jobs: list[tuple[str, str | None, str | None]] = []
+    jobs: list[tuple[str, str | None, str | None, dt.date | None]] = []
     for root, _dirs, files in os.walk(CACHE_DIR):
         rel = Path(root).relative_to(CACHE_DIR).parts
         stream = rel[0] if len(rel) > 0 else None
         level = "/".join(rel[1:-3]) if len(rel) > 4 else (rel[1] if len(rel) > 1 else None)
+        # Downloads live in <stream>/<level>/<product>/<YYYY>/<DDD>: that is
+        # the archive day the granule belongs to (and the dataset it is
+        # deleted with), even for the occultations from 23:59 of the day
+        # before that open every CDAAC day file.
+        day = None
+        if len(rel) >= 2 and rel[-2].isdigit() and rel[-1].isdigit():
+            try:
+                day = dt.date(int(rel[-2]), 1, 1) + dt.timedelta(days=int(rel[-1]) - 1)
+            except ValueError:
+                day = None
         for f in files:
             if f.endswith("_nc") or f.endswith(".nc"):
-                jobs.append((os.path.join(root, f), stream, level))
+                jobs.append((os.path.join(root, f), stream, level, day))
     # Reading metadata is the slow part (thousands of files), so it runs on
     # the worker pool; the SQLite writes stay in this process.
-    results = pmap(readers.quick_meta_safe, [(p, product_hint) for p, _, _ in jobs])
+    results = pmap(readers.quick_meta_safe, [(p, product_hint) for p, _, _, _ in jobs])
     added, failed = 0, 0
     batch = []
-    for (p, stream, level), (m, _err) in zip(jobs, results):
+    for (p, stream, level, day), (m, _err) in zip(jobs, results):
         if m is None:
             failed += 1
             continue
         m.update(stream=stream, level=level)
-        if m.get("epoch"):
+        d = day
+        if d is None and m.get("epoch"):
             d = dt.datetime.fromtimestamp(m["epoch"], dt.timezone.utc).date()
+        if d is not None:
             m.update(year=d.year, doy=d.timetuple().tm_yday, date=d.isoformat())
         batch.append(m)
         if len(batch) >= 500:

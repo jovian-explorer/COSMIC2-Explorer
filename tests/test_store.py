@@ -57,3 +57,22 @@ def test_date_range_covers_observations_before_the_archive_day(tmp_path):
         conn = store.connect()
         with conn:
             conn.execute("DELETE FROM granules WHERE stream='t-date'")
+
+
+def test_reindex_keeps_the_archive_day_of_the_cache_folder(tmp_path, monkeypatch):
+    import shutil
+    from cosmic2.config import sampledata_dir
+    src = next(sampledata_dir().glob("wetPf2_*"))          # observed on day 200
+    day_dir = tmp_path / "t-reidx" / "level2" / "wetPf2" / "2026" / "201"
+    day_dir.mkdir(parents=True)
+    shutil.copy(src, day_dir / src.name)
+    monkeypatch.setattr(store, "CACHE_DIR", tmp_path)
+    try:
+        assert store.reindex_cache()["indexed"] == 1
+        row = store.connect().execute(
+            "SELECT date, year, doy FROM granules WHERE stream='t-reidx'").fetchone()
+        assert (row["date"], row["year"], row["doy"]) == ("2026-07-20", 2026, 201)
+    finally:
+        conn = store.connect()
+        with conn:
+            conn.execute("DELETE FROM granules WHERE stream='t-reidx'")

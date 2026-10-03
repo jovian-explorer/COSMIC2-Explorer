@@ -46,6 +46,7 @@
 - Granules received before a cancelled or failed download are indexed (the dataset is marked incomplete); they used to stay on disk, unindexed.
 - A missing archive directory (for example today's, before CDAAC publishes) is re-checked after 5 minutes instead of being cached for 6 hours.
 - The Explore tab's default date range now includes granules observed in the last seconds of the previous UTC day. Every CDAAC day file starts with a few of these (5 of 460 atmPrf on 2026-06-20), and every ivmL2m day file starts at about 23:59:50, so with a single day downloaded its ivmL2m files never appeared in a search.
+- "Rebuild index" keeps each granule's archive day (from its cache folder). It used the observation date instead, which moved the granules observed just before midnight to the previous day: deleting that day's dataset then left them on disk and in the index, and grouping by date split them off.
 - Re-indexing refreshes the quality code, satellite, PRN and stamp of existing entries.
 - "Spread over 24 h" sampling no longer drops ivmL2m files: the `01` in their names is a file sequence, not an hour, so every satellite's whole-day file counted against the same hour (with 24 profiles requested, only one satellite of five was kept). Whole-day products are exempt from the hourly quota.
 - A change to "concurrent downloads" takes effect for the next download instead of after a restart.
