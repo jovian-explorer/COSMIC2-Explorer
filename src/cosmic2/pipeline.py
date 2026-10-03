@@ -116,10 +116,15 @@ def smooth_data(profile: ProcessedProfile, method: str, window: int = 5, **kwarg
         polyorder = kwargs.get("polyorder", 2)
         win = window if window % 2 == 1 else window + 1
         v_interp = np.copy(profile.v)
-        if valid.sum() > win and polyorder < win:
-            v_interp[~valid] = np.interp(np.flatnonzero(~valid), np.flatnonzero(valid), profile.v[valid])
-            v_clean = savgol_filter(v_interp, window_length=win, polyorder=polyorder)
-            v_clean[~valid] = np.nan
+        if not (valid.sum() > win and polyorder < win):
+            # Not applicable: leave the data alone and do not record a
+            # smoothing step that never happened.
+            return {"method": "none", "skipped": "savgol",
+                    "reason": f"needs more than {win} valid levels and "
+                              f"polyorder < window"}
+        v_interp[~valid] = np.interp(np.flatnonzero(~valid), np.flatnonzero(valid), profile.v[valid])
+        v_clean = savgol_filter(v_interp, window_length=win, polyorder=polyorder)
+        v_clean[~valid] = np.nan
     else:
         raise ValueError(f"Unknown smoothing method: {method}")
 

@@ -128,3 +128,12 @@ def test_pipeline_uncertainty_standard_error():
     assert prof.uncertainty is not None
     # sigma = 1 noise, 9 levels per window: standard error ~ 1/3
     assert np.nanmedian(prof.uncertainty) == pytest.approx(1.0 / 3.0, rel=0.1)
+
+
+def test_inapplicable_savgol_is_not_recorded_as_applied():
+    z = np.arange(20.0)
+    v = np.sin(z)
+    prof = apply_pipeline(z, v, smooth_method="savgol",
+                          smooth_kwargs={"window": 5, "polyorder": 6})
+    np.testing.assert_array_equal(prof.v, v)
+    assert "smoothing" not in [p.operation for p in prof.provenance]
