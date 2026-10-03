@@ -330,18 +330,31 @@ def export_netcdf(granules: Sequence[dict], fields: Sequence[str] | None = None,
         gv.long_name = "Source CDAAC granule filename"
         for i, (m, _) in enumerate(loaded):
             gv[i] = m["file_name"]
+        pv = ds.createVariable("product", str, ("profile",))
+        pv.long_name = "CDAAC product of the source granule"
+        for i, (m, _) in enumerate(loaded):
+            pv[i] = m.get("product") or ""
         qv = ds.createVariable("quality_good", "i1", ("profile",))
         qv.long_name = "1 if the granule passed the CDAAC quality flag"
         qv[:] = [1 if m.get("good", True) else 0 for m, _ in loaded]
 
+        products = sorted({m.get("product") or "" for m, _ in loaded})
         for name in names:
-            vi = vocab.info(name)
+            # Describe the variable as stored in these products (atmPrf
+            # "Temp" is the dry temperature); if the rows mix products where
+            # the name means different quantities, say which rows are which.
+            qtys = {vocab.quantity(name, p) for p in products}
+            vi = vocab.info(name, products[0] if len(qtys) == 1 else None)
             var = ds.createVariable(name, "f4", ("profile", "level"),
                                     fill_value=np.float32(-999.0), zlib=True,
                                     complevel=4)
             var.units = cf_units(vi["units"])
             var.long_name = vi["label"]
-            if vi["plain"]:
+            if len(qtys) > 1:
+                var.comment = "; ".join(
+                    f"rows with product={p}: {vocab.info(name, p)['label']}"
+                    for p in products) + ". See the 'product' variable."
+            elif vi["plain"]:
                 var.comment = vi["plain"]
             block = np.full((len(loaded), grid.size), np.nan)
             for i, (meta, data) in enumerate(loaded):

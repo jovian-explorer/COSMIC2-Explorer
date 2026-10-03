@@ -61,3 +61,23 @@ def test_netcdf_export_uses_udunits_strings():
             assert ds["MSL_alt"].units == "km"
     finally:
         os.remove(res["path"])
+
+
+def test_netcdf_states_the_meaning_of_temp_per_product():
+    import os
+    from netCDF4 import Dataset
+    metas = [readers.quick_meta(str(p)) for p in sorted(sampledata_dir().iterdir())
+             if p.name.startswith(("atmPrf", "wetPf2"))]
+    atm = [m for m in metas if m["product"] == "atmPrf"]
+    res = exporters.export_netcdf(atm, ["Temp"], top_km=20.0, step_km=1.0, basename="q1")
+    res2 = exporters.export_netcdf(metas, ["Temp"], top_km=20.0, step_km=1.0, basename="q2")
+    try:
+        with Dataset(res["path"]) as ds:
+            assert ds["Temp"].long_name == "Dry temperature"
+            assert list(ds["product"][:]) == ["atmPrf", "atmPrf"]
+        with Dataset(res2["path"]) as ds:
+            assert "product=atmPrf: Dry temperature" in ds["Temp"].comment
+            assert "product=wetPf2: Temperature" in ds["Temp"].comment
+    finally:
+        os.remove(res["path"])
+        os.remove(res2["path"])
