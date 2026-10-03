@@ -135,6 +135,15 @@ def _fmt(v) -> str:
     return "" if not np.isfinite(f) else repr(f)
 
 
+def _licence_text(lic) -> str:
+    """One readable line for the software licence (it is a dict in
+    DATA_LICENSES, which was printed into CSV headers as a Python repr)."""
+    if isinstance(lic, dict):
+        bits = [lic.get("name") or "MIT License", lic.get("copyright"), lic.get("url")]
+        return "; ".join(b for b in bits if b)
+    return str(lic or "MIT License")
+
+
 def _header_lines(prov: dict) -> list[str]:
     lines = [
         f"{prov['generated_by']} - exported {prov['generated_at_utc']}",
@@ -143,7 +152,7 @@ def _header_lines(prov: dict) -> list[str]:
         f"Granules: {prov['n_granules']}; time range {prov['time_first_utc']} .. {prov['time_last_utc']}",
         f"Cite as: {prov['data_citation']}",
         f"Data Availability: {prov.get('data_availability', '')}",
-        f"Software License: {prov.get('licenses', {}).get('software', 'MIT License')}",
+        f"Software License: {_licence_text(prov.get('licenses', {}).get('software'))}",
         "Blank cells are missing or quality-rejected values.",
     ]
     return [l for l in lines if l]

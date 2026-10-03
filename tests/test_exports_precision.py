@@ -81,3 +81,13 @@ def test_netcdf_states_the_meaning_of_temp_per_product():
     finally:
         os.remove(res["path"])
         os.remove(res2["path"])
+
+
+def test_csv_header_licence_is_readable_text():
+    from cosmic2 import exporters
+    from cosmic2.config import DATA_LICENSES
+    line = next(l for l in exporters._header_lines(exporters.provenance([]))
+                if l.startswith("Software License"))
+    assert "{" not in line and "'" not in line
+    if isinstance(DATA_LICENSES.get("software"), dict):
+        assert DATA_LICENSES["software"]["name"] in line
