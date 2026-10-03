@@ -285,6 +285,11 @@ class Archive:
     def _ttl(self) -> float:
         return max(0.0, self.settings.listing_cache_hours) * 3600.0
 
+    # A missing or empty directory is remembered only briefly: today's
+    # directory 404s until CDAAC publishes its first file, and caching that
+    # answer for the full listing TTL (6 h by default) hid new data for hours.
+    NEGATIVE_TTL_S = 300.0
+
     def list_dir(self, url: str, use_cache: bool = True) -> list[str]:
         """Return the entry names of an Apache-style directory index."""
         if not url.endswith("/"):
@@ -292,8 +297,10 @@ class Archive:
         now = time.time()
         with self._lock:
             hit = self._cache.get(url)
-            if use_cache and hit and now - hit[0] < self._ttl():
-                return hit[1]
+            if use_cache and hit:
+                ttl = self._ttl() if hit[1] else min(self._ttl(), self.NEGATIVE_TTL_S)
+                if now - hit[0] < ttl:
+                    return hit[1]
         r = self._session.get(url, timeout=self.settings.request_timeout_s)
         if r.status_code == 404:
             entries: list[str] = []
