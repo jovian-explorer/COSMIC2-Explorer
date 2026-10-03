@@ -177,7 +177,8 @@ def tropopause_wmo(z_km: np.ndarray, temp_k: np.ndarray,
                    pres_hpa: np.ndarray | None = None,
                    z_min: float = 5.0, z_max: float = 40.0,
                    threshold: float = 2.0, layer_km: float = 2.0,
-                   p_max_hpa: float = 500.0) -> dict:
+                   p_max_hpa: float = 500.0,
+                   t_max_k: float | None = None) -> dict:
     """WMO lapse-rate tropopause.
 
     The lowest level where the lapse rate drops below ``threshold`` K/km
@@ -193,8 +194,14 @@ def tropopause_wmo(z_km: np.ndarray, temp_k: np.ndarray,
     tropical profiles.  With no pressure profile supplied the weaker height
     floor ``z_min`` applies instead.
 
-    Checked against the CDAAC ``trhwmo`` attribute on COSMIC-2 atmPrf
-    granules; agreement was within one 0.1 km grid step.
+    ``t_max_k`` skips candidate levels warmer than that temperature.  It is
+    needed for *dry* temperature (atmPrf ``Temp``), which equals the real
+    temperature only where water vapour is negligible: in moist tropical air
+    its lapse rate drops below 2 K/km near 6 km (~450-500 hPa), and without
+    a guard 220 of 570 COSMIC-2 profiles (2026-06-20 and 2026-09-30) got a
+    tropopause there, up to 12 km below CDAAC's ``trhwmo``.  With
+    ``DRY_TROPOPAUSE_T_MAX_K`` 568 of 570 agree with ``trhwmo`` within
+    0.3 km; CDAAC's own tropopause temperatures never exceeded 233.7 K.
     """
     grid = make_grid(z_max, 0.1, max(z_min - 1.0, 0.0))
     t = interp_to_grid(z_km, temp_k, grid)
@@ -205,10 +212,14 @@ def tropopause_wmo(z_km: np.ndarray, temp_k: np.ndarray,
     # WMO: "2 K/km or less".  The tolerance absorbs rounding in the
     # finite differences so a layer at exactly the threshold qualifies.
     limit = threshold + 1e-9
+    method = "WMO lapse-rate 2 K/km" + (
+        f", levels colder than {t_max_k:g} K" if t_max_k is not None else "")
     for i, zi in enumerate(grid):
         if zi < z_min or not np.isfinite(lr[i]) or lr[i] > limit:
             continue
         if p is not None and np.isfinite(p[i]) and p[i] > p_max_hpa:
+            continue
+        if t_max_k is not None and t[i] > t_max_k:
             continue
         top = i + span
         if top > grid.size - 1:
@@ -221,10 +232,16 @@ def tropopause_wmo(z_km: np.ndarray, temp_k: np.ndarray,
             mean_lr = -(seg_t[1:] - seg_t[0]) / (seg_z[1:] - seg_z[0])
         if np.all(mean_lr <= limit):
             return {"height_km": float(zi), "temp_K": float(t[i]),
-                    "temp_C": float(t[i] - 273.15), "method": "WMO lapse-rate 2 K/km",
+                    "temp_C": float(t[i] - 273.15), "method": method,
                     "found": True}
     return {"height_km": None, "temp_K": None, "temp_C": None,
-            "method": "WMO lapse-rate 2 K/km", "found": False}
+            "method": method, "found": False}
+
+
+# Warmest level accepted as a WMO tropopause on a *dry* temperature profile
+# (see tropopause_wmo).  Real tropopauses within COSMIC-2's +/-45 deg of
+# latitude are colder; the moist-layer artefact sits at 237-258 K.
+DRY_TROPOPAUSE_T_MAX_K = 235.0
 
 
 def cold_point(z_km: np.ndarray, temp_k: np.ndarray,
@@ -516,7 +533,11 @@ def diagnostics(g: readers.Granule) -> dict:
         if z is not None and tname in d:
             tk = to_kelvin(d[tname], g.units.get(tname, "C"))
             pres = d.get("Pres", d.get("pres_dry"))
-            res["tropopause"] = tropopause_wmo(z, tk, pres)
+            # atmPrf "Temp" is dry temperature (wetPf2's is the moist
+            # retrieval): guard against the moist-layer artefact.
+            dry = g.product == "atmPrf" or tname == "temp_dry"
+            res["tropopause"] = tropopause_wmo(
+                z, tk, pres, t_max_k=DRY_TROPOPAUSE_T_MAX_K if dry else None)
             res["cold_point"] = cold_point(z, tk)
             res["gravity_waves"] = gravity_wave_energy(z, tk)
         if z is not None and nname in d:

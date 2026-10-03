@@ -89,6 +89,7 @@ Work that reads many granules (composites, the diagnostics table, regridded CSV 
 ### Notes on the science
 
 * In `atmPrf`, the variables `Temp` and `Pres` are the **dry** temperature and pressure (refractivity inverted with no water vapour). In `wetPf2` the same names hold the 1D-Var moist retrieval. The app labels them accordingly and never averages one with the other in a composite.
+* The WMO tropopause on `atmPrf` dry temperature only considers levels colder than 235 K: lower down, water vapour makes the dry temperature's lapse rate fall below 2 K/km and the test would fire near 6 km in the tropics. On `wetPf2` the moist temperature is used as it is.
 * Pressure, density, vapour pressure, specific humidity and electron density are interpolated in log space when profiles are put on a common grid.
 * Profile error bars are the running scatter of the values about their running mean (an estimate of level-to-level noise), not a retrieval uncertainty.
 * The integrated water vapour starts at the lowest retrieved level; the height of that level is given alongside the value.

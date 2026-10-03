@@ -196,9 +196,37 @@ def test_negative_bottomside_densities_do_not_subtract_tec():
 
 
 def test_profile_tec_matches_cdaac_tec0_on_bundled_sample():
-    from cosmic2 import readers
-    from cosmic2.config import sampledata_dir
     g = readers.load(str(next(sampledata_dir().glob("ionPrf_*"))))
     res = analysis.ionosphere_peak(g.data["MSL_alt"], g.data["ELEC_dens"])
     assert res["vtec_profile_TECU"] == pytest.approx(
         g.meta["extras"]["tec_profile_TECU"], rel=0.03)
+
+
+def _moist_artefact_profile():
+    """Dry-temperature-like profile: a spurious near-isothermal layer at
+    6-8.5 km (~250 K, the signature of water vapour in atmPrf "Temp") below
+    a real tropical tropopause at 16 km."""
+    z = np.arange(0.0, 30.0, 0.05)
+    t = np.interp(z, [0.0, 6.0, 8.5, 16.0, 30.0],
+                  [285.0, 252.0, 249.0, 195.0, 215.0])
+    p = 1013.25 * np.exp(-z / 7.5)
+    return z, t, p
+
+
+def test_dry_temperature_guard_skips_the_moist_layer_artefact():
+    z, t, p = _moist_artefact_profile()
+    bare = analysis.tropopause_wmo(z, t, p)
+    assert bare["height_km"] == pytest.approx(6.0, abs=0.2)
+    guarded = analysis.tropopause_wmo(z, t, p, t_max_k=analysis.DRY_TROPOPAUSE_T_MAX_K)
+    assert guarded["height_km"] == pytest.approx(16.0, abs=0.2)
+    assert "235 K" in guarded["method"]
+
+
+@pytest.mark.parametrize("product, expected_km", [("atmPrf", 16.0), ("wetPf2", 6.0)])
+def test_diagnostics_guard_only_dry_temperature(product, expected_km):
+    z, t, p = _moist_artefact_profile()
+    g = readers.Granule(product, "x", {"extras": {}}, {}, {},
+                        {"MSL_alt": z, "Temp": t - 273.15, "Pres": p},
+                        {"Temp": "C"})
+    tp = analysis.diagnostics(g)["tropopause"]
+    assert tp["height_km"] == pytest.approx(expected_km, abs=0.2)
