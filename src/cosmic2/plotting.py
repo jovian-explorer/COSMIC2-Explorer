@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import io
 import json
+import threading
+from contextlib import contextmanager
 from functools import lru_cache
 from typing import Iterable, Sequence
 
@@ -62,6 +64,18 @@ def apply_style(dpi: int | None = None, theme: str | None = None) -> dict:
         "savefig.bbox": "tight", "savefig.pad_inches": 0.03,
         "pdf.fonttype": 42, "ps.fonttype": 42,  # editable text in vector output
     }
+
+
+# rcParams are process-global and FastAPI serves requests on a thread pool,
+# so two figure exports at once could build or save with each other's DPI,
+# theme or fonts.  One lock serialises the (short) styled sections.
+_STYLE_LOCK = threading.RLock()
+
+
+@contextmanager
+def _styled(dpi: int | None = None):
+    with _STYLE_LOCK, plt.rc_context(apply_style(dpi)):
+        yield
 
 
 def safe_mathtext(text: str) -> str:
@@ -165,7 +179,7 @@ def profile_figure(series: Sequence[dict], x_var: str, y_var: str,
     of the line; beyond that they are coloured by ``value`` (typically
     latitude) with a colourbar, since a legend of 40 entries is unreadable.
     """
-    with plt.rc_context(apply_style(dpi)):
+    with _styled(dpi):
         fig, ax = plt.subplots(figsize=figsize)
         xs, ys, labels, colors = [], [], [], []
         many = len(series) > 6 and color_by is not None
@@ -229,7 +243,7 @@ def composite_figure(comp: dict, show: str = "mean", spread: str = "std",
     ``comp`` is :meth:`analysis.Composite.to_json` output.  ``spread`` is
     ``"std"`` (mean +/- 1 sigma) or ``"p10p90"`` (10th-90th percentile).
     """
-    with plt.rc_context(apply_style(dpi)):
+    with _styled(dpi):
         fig, ax = plt.subplots(figsize=figsize)
         grid = np.array(comp["grid"], dtype="float64")
         xs, ys, labels, colors = [], [], [], []
@@ -278,7 +292,7 @@ def map_figure(points: Sequence[dict], color_by: str | None = None,
                figsize: tuple[float, float] = (6.6, 3.6),
                dpi: int | None = None) -> Figure:
     """Occultation locations on an equirectangular map."""
-    with plt.rc_context(apply_style(dpi)):
+    with _styled(dpi):
         fig, ax = plt.subplots(figsize=figsize)
         _draw_basemap(ax, resolution)
         lon = np.array([p.get("lon") for p in points], dtype="float64")
@@ -304,7 +318,7 @@ def map_figure(points: Sequence[dict], color_by: str | None = None,
 
 def coverage_figure(cov: dict, title: str = "", dpi: int | None = None) -> Figure:
     """Three-panel sampling summary: map density, latitude, local time."""
-    with plt.rc_context(apply_style(dpi)):
+    with _styled(dpi):
         fig = plt.figure(figsize=(6.8, 5.2), layout="constrained")
         gs = fig.add_gridspec(2, 2, height_ratios=[1.35, 1.0], hspace=0.10,
                               wspace=0.10)
@@ -351,7 +365,7 @@ def scatter_figure(x: Sequence[float], y: Sequence[float], x_var: str, y_var: st
                    figsize: tuple[float, float] = (4.2, 3.4),
                    dpi: int | None = None) -> Figure:
     """Generic relationship plot (e.g. tropopause height vs latitude)."""
-    with plt.rc_context(apply_style(dpi)):
+    with _styled(dpi):
         fig, ax = plt.subplots(figsize=figsize)
         xa = np.asarray(x, dtype="float64")
         ya = np.asarray(y, dtype="float64")
@@ -387,7 +401,7 @@ def panels_figure(panels: Sequence[dict], suptitle: str = "", caption: str = "",
     temperature, humidity and refractivity side by side.
     """
     n = max(1, len(panels))
-    with plt.rc_context(apply_style(dpi)):
+    with _styled(dpi):
         fig, axes = plt.subplots(1, n, sharey=True,
                                  figsize=(panel_size[0] * n, panel_size[1]))
         axes = np.atleast_1d(axes)
@@ -432,7 +446,12 @@ def render(fig: Figure, fmt: str = "png", dpi: int | None = None) -> bytes:
     if fmt not in MIME:
         raise ValueError(f"Unsupported format {fmt!r}; choose from {sorted(MIME)}")
     buf = io.BytesIO()
-    fig.savefig(buf, format=fmt, dpi=dpi or SETTINGS.plot_dpi)
+    # The savefig.* and pdf/ps font settings are read when the file is
+    # written, so the publication style must be active here too.  Saving
+    # outside it clipped every caption (placed below the axes, recovered only
+    # by the tight bounding box) and embedded Type 3 fonts in PDF/EPS.
+    with _styled(dpi):
+        fig.savefig(buf, format=fmt, dpi=dpi or SETTINGS.plot_dpi)
     plt.close(fig)
     return buf.getvalue()
 
