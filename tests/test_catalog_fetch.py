@@ -174,3 +174,62 @@ def test_concurrent_downloads_setting_takes_effect_without_restart():
     assert mgr._executor()._max_workers == 1
     settings.concurrent_downloads = 3
     assert mgr._executor()._max_workers == 3
+
+
+# whole-day products and the per-hour "spread" quota
+# ---------------------------------------------------------------------------
+
+def test_ivm_filename_sequence_is_not_an_hour():
+    from cosmic2 import readers
+    meta = readers.parse_filename("ivmL2m_C2E1.2026.273.01_0001.0001_nc")
+    assert meta["sat"] == "C2E1" and meta["nominal_doy"] == 273
+    assert "nominal_hour" not in meta
+
+
+def test_spread_sampling_keeps_every_whole_day_ivm_file():
+    import io
+    import tarfile
+    from cosmic2 import fetch, store
+    from cosmic2.config import sampledata_dir
+    src = next(sampledata_dir().glob("ivmL2m_*"))
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w:gz", compresslevel=1) as tf:
+        for sat in ("C2E1", "C2E2", "C2E4"):
+            tf.add(str(src), arcname=f"ivmL2m/ivmL2m_{sat}.2026.200.01_0001.0001_nc")
+    data = buf.getvalue()
+
+    class Resp:
+        status_code, headers = 200, {}
+        raw = io.BytesIO(data)
+
+        def raise_for_status(self):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    remote = catalog.RemoteFile("ivmL2m", "rapid", 2026, 200,
+                                "ivmL2m_rapid_2026_200.tar.gz", "https://x/ivm.tar.gz")
+    arc = types.SimpleNamespace(
+        files=lambda *a: [remote], head_size=lambda url: len(data),
+        session=lambda: types.SimpleNamespace(get=lambda *a, **k: Resp()))
+    settings = types.SimpleNamespace(concurrent_downloads=1, max_profiles_per_download=0,
+                                     cache_quota_gb=0, request_timeout_s=5)
+    mgr = fetch.DownloadManager(archive=arc, settings=settings)
+    # 24 profiles spread over 24 h is a quota of one per hour; before the fix
+    # the three satellites' day files all counted against "hour 01".
+    job = fetch.Job(id="t", kind="download", title="t",
+                    params=dict(stream="rapid-test", level="level2", product="ivmL2m",
+                                date="2026-07-19", year=2026, doy=200,
+                                max_profiles=24, sampling="spread", good_only=False))
+    try:
+        mgr._run_download(job)
+        assert job.state == "completed", job.error
+        assert job.extracted == 3 and job.skipped == 0
+    finally:
+        for d in store.datasets():
+            if d["stream"] == "rapid-test":
+                store.delete_dataset(d["key"])

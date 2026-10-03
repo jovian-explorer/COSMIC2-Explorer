@@ -36,10 +36,11 @@ BULK_VAR_RE = re.compile(r"^(OL_vec\d*|OL_par|OL_ipar|ies|hes|wes)$")
 # Filename stamps seen in the archive:
 #   atmPrf_C2E1.2026.200.00.00.E23_0001.0001_nc
 #   scnLv2_2026.200.006.01.01.R16.SC001_0001.0001_nc
-#   ivmL2m_C2E1.2026.200.01_0001.0001_nc
+#   ivmL2m_C2E1.2026.200.01_0001.0001_nc   (one file per satellite per day;
+#                                            the "01" is a file sequence, not an hour)
 _NAME_RE = re.compile(r"^(?P<product>[A-Za-z0-9]+)_(?P<stamp>.+?)_(?P<v1>\d{4})\.(?P<v2>\d{4})(?:_nc|\.nc)?$")
 _RO_STAMP = re.compile(r"^(?P<sat>C2E\d|[A-Z0-9]{4})\.(?P<year>\d{4})\.(?P<doy>\d{3})\.(?P<hh>\d{2})\.(?P<mm>\d{2})\.(?P<prn>[A-Z]\d{2})$")
-_IVM_STAMP = re.compile(r"^(?P<sat>C2E\d)\.(?P<year>\d{4})\.(?P<doy>\d{3})\.(?P<hh>\d{2})$")
+_IVM_STAMP = re.compile(r"^(?P<sat>C2E\d)\.(?P<year>\d{4})\.(?P<doy>\d{3})\.(?P<seq>\d{2})$")
 _SCN_STAMP = re.compile(r"^(?P<year>\d{4})\.(?P<doy>\d{3})\.(?P<leo>\d{3})\.(?P<a>\d{2})\.(?P<b>\d{2})\.(?P<prn>[A-Z]\d{2})\.(?P<ant>SC\d+)$")
 
 

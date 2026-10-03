@@ -358,7 +358,12 @@ class DownloadManager:
         # day rather than only its first minutes.  The nominal hour is encoded
         # in every CDAAC filename, so for most products the decision is made
         # before a single byte of the member is written to disk.
-        per_hour = max(1, -(-target // 24)) if (sampling == "spread" and target) else None
+        # Products shipped as one whole-day file per satellite (ivmL2m) have
+        # no hour to spread over: a quota would keep one satellite per
+        # "hour" and drop the rest.
+        whole_day = describe_product(p["product"]).kind == "insitu"
+        per_hour = (max(1, -(-target // 24))
+                    if (sampling == "spread" and target and not whole_day) else None)
         job.per_hour_quota = per_hour
         hour_counts: dict[int, int] = {}
 
