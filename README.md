@@ -17,9 +17,10 @@ A production-quality scientific desktop GUI and analysis environment for UCAR/CD
 
 1. **Complete Offline-First Architecture**: 100% offline mathematical typesetting via bundled KaTeX fonts and engine, local TopoJSON map rendering, and bundled Plotly.js plotting.
 2. **Robust Multi-Product Ingestion**: Supports FORMOSAT-7 / COSMIC-2 products (`wetPf2`, `atmPrf`, `ionPrf`, `scnLv2`, `ivmL2m`) from UCAR CDAAC and NOAA NCEI.
-3. **Advanced Scientific Diagnostics**: Computes Abel transform inversion, cold point tropopause height/temperature, WMO lapse-rate tropopause (with 500 hPa floor guard), atmospheric density ($\rho$), atmospheric scale height ($H$), potential temperature ($\theta$), Brunt-Vaisala frequency ($N_{BV}^2$), and vertical TEC.
+3. **Advanced Scientific Diagnostics**: Starting from CDAAC's retrieved (Abel-inverted) profiles, computes cold point tropopause height/temperature, WMO lapse-rate tropopause (with 500 hPa floor guard), atmospheric density ($\rho$, including water vapour where available), atmospheric scale height ($H$), potential temperature ($\theta$), Brunt-Vaisala frequency ($N_{BV}^2$), F2 and E layer peaks, vertical TEC, integrated water vapour, ducting layers, boundary-layer height and gravity-wave potential energy.
 4. **Interactive Filtering and Visualisation**: Visualise raw versus processed profiles, filter outliers (Sigma, MAD, IQR, Percentile), smooth soundings (Gaussian, Median, Savitzky-Golay), and compute composite latitudinal bands.
-5. **Publication-Ready Exports**: Generates 300 dpi publication raster/vector figures (PNG, PDF, SVG, EPS), regridded NetCDF-4 files with CF-1.8 metadata, CSV tables, JSON bundles, and complete provenance tracking.
+5. **Parallel Processing**: Composites, diagnostics tables, regridded exports and indexing run on a user-chosen number of CPU worker processes.
+6. **Publication-Ready Exports**: Generates 300 dpi publication raster/vector figures (PNG, PDF, SVG, EPS), regridded NetCDF-4 files with CF-1.8 metadata, CSV tables, JSON bundles, and complete provenance tracking.
 
 ---
 
@@ -64,6 +65,7 @@ cosmic2-explorer                 # native window (pywebview)
 cosmic2-explorer --browser       # open in the default browser instead
 cosmic2-explorer --no-window     # server only; open the printed URL yourself
 cosmic2-explorer-server --port 8765   # backend only, fixed port, with API docs at /api/docs
+cosmic2-explorer --workers 4     # use up to 4 worker processes this session
 python -m cosmic2                # same as cosmic2-explorer
 ```
 
@@ -79,6 +81,18 @@ Your data (downloads, index, exports, settings, logs) lives in a per-user folder
 | Linux | `$XDG_DATA_HOME/COSMIC2Explorer` (default `~/.local/share/COSMIC2Explorer`) |
 
 Set `COSMIC2_EXPLORER_HOME` to use another folder.
+
+### CPU workers
+
+Work that reads many granules (composites, the diagnostics table, regridded CSV and netCDF exports, importing files, "Rebuild index") is spread over worker processes when a job has 24 or more granules. Choose the number in **Settings > Performance > CPU workers**: `0` (default) uses one fewer than the number of CPUs, `1` runs everything in the main process, any other number caps the pool. `--workers N` on the command line overrides the setting for one session. Results are identical to a serial run; if the pool fails for any reason the job is rerun serially.
+
+### Notes on the science
+
+* In `atmPrf`, the variables `Temp` and `Pres` are the **dry** temperature and pressure (refractivity inverted with no water vapour). In `wetPf2` the same names hold the 1D-Var moist retrieval. The app labels them accordingly and never averages one with the other in a composite.
+* Pressure, density, vapour pressure, specific humidity and electron density are interpolated in log space when profiles are put on a common grid.
+* Profile error bars are the running scatter of the values about their running mean (an estimate of level-to-level noise), not a retrieval uncertainty.
+* The integrated water vapour starts at the lowest retrieved level; the height of that level is given alongside the value.
+* Exports contain the archive values and derived fields. The outlier, smoothing and uncertainty settings on the Profiles tab affect the on-screen plot only, and the export provenance says so.
 
 ### Platform notes
 
@@ -112,6 +126,7 @@ COSMIC2-Explorer/
 │   ├── fetch.py              Streaming download and job manager
 │   ├── readers.py            netCDF readers to normalised Granule objects
 │   ├── pipeline.py           Outlier removal, smoothing, uncertainty
+│   ├── parallel.py           Worker-process pool for per-granule work
 │   ├── store.py              SQLite metadata index
 │   ├── analysis.py           Science layer (tropopause, diagnostics, composites)
 │   ├── plotting.py           Matplotlib publication figures
@@ -166,12 +181,18 @@ Streams: `nrt` (near-real-time, within hours), `rapid` (~24 h), `postProc` (fina
 
 ```bash
 python -m pytest
+COSMIC2_NETWORK_TESTS=1 python -m pytest tests/test_network.py   # live CDAAC download
 ```
+
+See [CHANGELOG.md](CHANGELOG.md) for what changed between versions.
 
 The test suite validates:
 * Variable labels and unit normalisation (`Celsius_degree` to `deg C`, etc.)
 * NetCDF readers, metadata extraction, sentinel filtering
-* Abel inversion, tropopause identification, derived scale height and density
+* Tropopause identification, ionospheric peak and TEC, water vapour, density and interpolation, checked against synthetic profiles with known answers
+* Reader handling of fill values, packing, local times and longitudes
+* Full-precision CSV/netCDF exports with UDUNITS unit strings, and figure rendering (captions, fonts, themes)
+* Worker-process results identical to serial runs
 * FastAPI endpoints and export pipelines (against a server on a free port with a throwaway data folder)
 * Frontend DOM targets and module exports
 * Strict zero em/en-dash compliance and local asset integrity
