@@ -1,0 +1,46 @@
+"""Exported numbers must read back at full precision."""
+import csv
+
+import numpy as np
+
+from cosmic2 import analysis, exporters, readers
+from cosmic2.config import sampledata_dir
+
+
+def _wet_meta():
+    p = next(sampledata_dir().glob("wetPf2_*E23*"))
+    return readers.quick_meta(str(p), "wetPf2")
+
+
+def test_fmt_round_trips_small_values():
+    for v in (1.234567891e-5, 3.2743671931e-4, 287.0578, -0.000012345678):
+        assert float(exporters._fmt(v)) == v
+    assert exporters._fmt(float("nan")) == ""
+
+
+def test_profiles_csv_keeps_full_precision_of_derived_fields():
+    meta = _wet_meta()
+    res = exporters.export_profiles_csv([meta], ["buoyancy_freq_sq"],
+                                        basename="precision_test")
+    try:
+        with open(res["path"], encoding="utf-8") as fh:
+            rows = list(csv.reader(line for line in fh if not line.startswith("#")))
+        col = rows[0].index("buoyancy_freq_sq")
+        got = np.array([float(r[col]) if r[col] else np.nan for r in rows[1:]])
+        g = readers.load(meta["path"], "wetPf2")
+        want = analysis.derived_fields(g)["buoyancy_freq_sq"][:got.size]
+        np.testing.assert_array_equal(got, want)
+    finally:
+        import os
+        os.remove(res["path"])
+
+
+def test_composite_json_is_not_rounded():
+    grid = np.array([0.0, 1.0])
+    vals = np.array([1.23456789e-5, 2.5e-7])
+    comp = analysis.Composite(
+        "buoyancy_freq_sq", "MSL_alt", grid,
+        {"all": {"n": 3, "count": np.array([3, 3]), "mean": vals, "median": vals,
+                 "std": vals, "p10": vals, "p90": vals}}, 3)
+    out = comp.to_json()
+    assert out["groups"]["all"]["mean"] == [1.23456789e-5, 2.5e-7]

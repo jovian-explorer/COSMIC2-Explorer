@@ -616,7 +616,9 @@ class Composite:
 
     def to_json(self) -> dict:
         def _l(a):
-            return [None if (v is None or not np.isfinite(v)) else round(float(v), 6)
+            # Full precision: fixed decimal rounding erased small fields
+            # such as N^2 or density at 60 km.
+            return [None if (v is None or not np.isfinite(v)) else float(v)
                     for v in np.asarray(a, dtype="float64")]
         return {
             "field": self.field, "vertical": self.vertical,

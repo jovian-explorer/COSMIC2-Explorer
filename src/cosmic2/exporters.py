@@ -128,7 +128,10 @@ def export_profiles_csv(granules: Sequence[dict], variables: Sequence[str] | Non
 
 def _fmt(v) -> str:
     f = float(v)
-    return "" if not np.isfinite(f) else repr(round(f, 6))
+    # Shortest text that reads back as the same double.  Rounding to a fixed
+    # number of decimals (as before) left small quantities such as N^2
+    # (~1e-5 s-2) or upper-stratosphere density with one or two digits.
+    return "" if not np.isfinite(f) else repr(f)
 
 
 def _header_lines(prov: dict) -> list[str]:
@@ -263,7 +266,7 @@ def export_netcdf(granules: Sequence[dict], fields: Sequence[str] | None = None,
         ds.createDimension("profile", len(loaded))
         ds.createDimension("level", grid.size)
 
-        zv = ds.createVariable(vertical, "f4", ("level",))
+        zv = ds.createVariable(vertical, "f8", ("level",))
         zv.units = "km"
         zv.long_name = vocab.info(vertical)["label"]
         zv.axis = "Z"
