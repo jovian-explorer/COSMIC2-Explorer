@@ -106,3 +106,19 @@ def test_settings_drawer_offers_only_real_streams():
     js = (Path(__file__).resolve().parents[1] / "src" / "cosmic2" / "frontend"
           / "js" / "main.js").read_text(encoding="utf-8")
     assert "value: 'postcal'" not in js
+
+
+def test_profile_figure_export_uses_every_level(monkeypatch):
+    from cosmic2 import api, plotting, store
+    rows = [r for r in store.query_granules(products=["atmPrf"], limit=5)["granules"]]
+    assert rows
+    seen = {}
+    real = plotting.profile_figure
+
+    def spy(items, *a, **k):
+        seen["n"] = max(len(i["x"]) for i in items)
+        return real(items, *a, **k)
+
+    monkeypatch.setattr(plotting, "profile_figure", spy)
+    api._build_figure(api.FigureRequest(kind="profiles", field="Ref"), rows)
+    assert seen["n"] > 3000          # atmPrf has ~3800 levels; display cap is 900

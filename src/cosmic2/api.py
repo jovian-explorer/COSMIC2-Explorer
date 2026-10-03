@@ -818,9 +818,12 @@ def _build_figure(req: FigureRequest, rows: list[dict]):
             color_var=req.color_field or "", title=req.title,
             caption=req.caption or f"n = {len(tbl)} profiles.")
     # default: overlay of profiles
+    # max_points=0: a publication figure is drawn from every level, not from
+    # the ~900-point subsample sent to the browser (atmPrf has ~3800 levels).
     series = plot_profiles(PlotRequest(granule_ids=[r["id"] for r in rows],
                                        field=req.field, vertical=req.vertical,
-                                       convert_kelvin=req.convert_kelvin))
+                                       convert_kelvin=req.convert_kelvin,
+                                       max_points=0))
     items = [{"x": s["x"], "y": s["y"], "label": s["label"], "value": s["lat"]}
              for s in series["series"]]
     if not items:
