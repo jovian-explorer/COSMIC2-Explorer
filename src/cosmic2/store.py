@@ -121,8 +121,12 @@ def upsert_granules(rows: Iterable[dict]) -> int:
             "sat,occ_prn,antenna,time_utc,epoch,lat,lon,local_time,good,bad_code,"
             "n_levels,alt_min,alt_max,size_bytes,extras,added_at) "
             "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
+            # Every derived column is refreshed on re-index, so a reader fix
+            # (or a re-download) is reflected without deleting the index.
             "ON CONFLICT(id) DO UPDATE SET "
             "product=excluded.product, stream=excluded.stream, level=excluded.level, "
+            "stamp=excluded.stamp, sat=excluded.sat, occ_prn=excluded.occ_prn, "
+            "antenna=excluded.antenna, bad_code=excluded.bad_code, "
             "year=excluded.year, doy=excluded.doy, date=excluded.date, "
             "time_utc=excluded.time_utc, epoch=excluded.epoch, lat=excluded.lat, "
             "lon=excluded.lon, local_time=excluded.local_time, good=excluded.good, "
