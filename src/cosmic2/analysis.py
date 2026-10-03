@@ -43,8 +43,8 @@ def _clean_pair(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
 
 def interp_to_grid(z: np.ndarray, v: np.ndarray, grid: np.ndarray,
-                   max_gap: float | None = None) -> np.ndarray:
-    """Linearly interpolate ``v(z)`` onto ``grid``.
+                   max_gap: float | None = None, log: bool = False) -> np.ndarray:
+    """Linearly interpolate ``v(z)`` onto ``grid`` (in ``ln v`` if ``log``).
 
     Points outside the profile's own range become NaN (never extrapolated).
     If ``max_gap`` is given, grid points sitting inside a data gap wider than
@@ -56,6 +56,14 @@ def interp_to_grid(z: np.ndarray, v: np.ndarray, grid: np.ndarray,
     if zc.size < 2:
         return np.full(grid.shape, np.nan)
     out = np.interp(grid, zc, vc, left=np.nan, right=np.nan)
+    if log:
+        # Interpolate ln(v) between strictly positive neighbours; any interval
+        # touching a zero or negative value (noise in Ne, for example) keeps
+        # the linear result.
+        with np.errstate(invalid="ignore", divide="ignore"):
+            lv = np.where(vc > 0, np.log(np.where(vc > 0, vc, 1.0)), np.nan)
+            lg = np.exp(np.interp(grid, zc, lv, left=np.nan, right=np.nan))
+        out = np.where(np.isfinite(lg), lg, out)
     if max_gap:
         idx = np.searchsorted(zc, grid).clip(1, zc.size - 1)
         gap = zc[idx] - zc[idx - 1]
@@ -63,8 +71,27 @@ def interp_to_grid(z: np.ndarray, v: np.ndarray, grid: np.ndarray,
     return out
 
 
+# Quantities that fall off roughly exponentially with height.  Between two
+# levels they are interpolated in ln(v), which is exact for an isothermal
+# layer; straight-line interpolation overestimates them in every gap (by ~1 %
+# across a 2 km gap in pressure, more for steep electron-density bottomsides).
+LOG_INTERP_FIELDS = frozenset({
+    "Pres", "pres_dry", "density", "Vp", "sph", "ELEC_dens", "ion_dens",
+})
+
+
+def interp_field(z: np.ndarray, v: np.ndarray, grid: np.ndarray, field: str,
+                 max_gap: float | None = None) -> np.ndarray:
+    """:func:`interp_to_grid`, in log space for the fields that need it."""
+    return interp_to_grid(z, v, grid, max_gap=max_gap,
+                          log=field in LOG_INTERP_FIELDS)
+
+
 def make_grid(top_km: float = 60.0, step_km: float = 0.2,
               bottom_km: float = 0.0) -> np.ndarray:
+    if not (step_km > 0) or not (top_km > bottom_km):
+        raise ValueError(f"grid needs step > 0 and top > bottom "
+                         f"(got step {step_km}, {bottom_km}..{top_km} km)")
     n = int(round((top_km - bottom_km) / step_km)) + 1
     return bottom_km + step_km * np.arange(n)
 
@@ -88,14 +115,24 @@ def _smooth(y: np.ndarray, window: int) -> np.ndarray:
 
 
 def _gradient(z: np.ndarray, v: np.ndarray) -> np.ndarray:
-    """d v / d z with NaN-safe one-sided differences at the ends."""
+    """d v / d z with NaN-safe one-sided differences at the ends.
+
+    Works for top-down (atmPrf) and bottom-up (wetPf2) profiles alike.  Levels
+    are sorted by height first, and repeated heights (which occur in
+    atmPrf near the surface) are collapsed, so the derivative never divides
+    by a zero height step.
+    """
     z = np.asarray(z, dtype="float64")
     v = np.asarray(v, dtype="float64")
     out = np.full(v.shape, np.nan)
     ok = np.isfinite(z) & np.isfinite(v)
     if ok.sum() < 2:
         return out
-    out[ok] = np.gradient(v[ok], z[ok])
+    zs, idx = np.unique(z[ok], return_index=True)   # sorted, first of repeats
+    if zs.size < 2:
+        return out
+    gs = np.gradient(v[ok][idx], zs)
+    out[ok] = np.interp(z[ok], zs, gs)
     return out
 
 
@@ -161,25 +198,28 @@ def tropopause_wmo(z_km: np.ndarray, temp_k: np.ndarray,
     """
     grid = make_grid(z_max, 0.1, max(z_min - 1.0, 0.0))
     t = interp_to_grid(z_km, temp_k, grid)
-    p = interp_to_grid(z_km, pres_hpa, grid) if pres_hpa is not None else None
+    p = interp_to_grid(z_km, pres_hpa, grid, log=True) if pres_hpa is not None else None
     lr = lapse_rate(grid, t)
     step = grid[1] - grid[0]
     span = int(round(layer_km / step))
+    # WMO: "2 K/km or less".  The tolerance absorbs rounding in the
+    # finite differences so a layer at exactly the threshold qualifies.
+    limit = threshold + 1e-9
     for i, zi in enumerate(grid):
-        if zi < z_min or not np.isfinite(lr[i]) or lr[i] >= threshold:
+        if zi < z_min or not np.isfinite(lr[i]) or lr[i] > limit:
             continue
         if p is not None and np.isfinite(p[i]) and p[i] > p_max_hpa:
             continue
-        top = min(i + span, grid.size - 1)
-        if top <= i + 1:
-            break
+        top = i + span
+        if top > grid.size - 1:
+            break  # the full 2 km test layer no longer fits below z_max
         seg_t, seg_z = t[i:top + 1], grid[i:top + 1]
         if not np.isfinite(seg_t).all():
             continue
         # mean lapse rate from zi up to each level in the layer
         with np.errstate(invalid="ignore", divide="ignore"):
             mean_lr = -(seg_t[1:] - seg_t[0]) / (seg_z[1:] - seg_z[0])
-        if np.all(mean_lr < threshold):
+        if np.all(mean_lr <= limit):
             return {"height_km": float(zi), "temp_K": float(t[i]),
                     "temp_C": float(t[i] - 273.15), "method": "WMO lapse-rate 2 K/km",
                     "found": True}
@@ -309,15 +349,23 @@ def ionosphere_peak(z_km: np.ndarray, ne_cm3: np.ndarray,
     zz, nn = z[sel], ne[sel]
     i = int(np.argmax(nn))
     hm, nm = float(zz[i]), float(nn[i])
-    if 0 < i < zz.size - 1:  # parabolic refinement
+    # A maximum on the first or last level is where the profile was cut, not
+    # a layer peak (e.g. a profile that ends below the F2 peak).
+    at_edge = i == 0 or i == zz.size - 1
+    if not at_edge:
+        # Vertex of the parabola through the three levels around the maximum,
+        # valid for the uneven level spacing of ionPrf.
+        x0, x1, x2 = zz[i - 1], zz[i], zz[i + 1]
         y0, y1, y2 = nn[i - 1], nn[i], nn[i + 1]
-        denom = y0 - 2 * y1 + y2
-        if denom != 0:
-            shift = 0.5 * (y0 - y2) / denom
-            if abs(shift) <= 1:
-                dz = float(np.mean(np.diff(zz[max(i - 1, 0):i + 2])))
-                hm = float(zz[i] + shift * dz)
-                nm = float(y1 - 0.25 * (y0 - y2) * shift)
+        d0, d2 = x0 - x1, x2 - x1
+        den = d0 * d2 * (d0 - d2)
+        a = (d2 * (y0 - y1) - d0 * (y2 - y1)) / den if den else 0.0
+        b = (d0 * d0 * (y2 - y1) - d2 * d2 * (y0 - y1)) / den if den else 0.0
+        if a < 0:
+            dx = -b / (2 * a)
+            if d0 <= dx <= d2:
+                hm = float(x1 + dx)
+                nm = float(y1 + b * dx + a * dx * dx)
     scale_h = None
     top = (zz > hm + 50) & (zz < hm + 150) & (nn > 0)
     if top.sum() >= 5:
@@ -327,14 +375,24 @@ def ionosphere_peak(z_km: np.ndarray, ne_cm3: np.ndarray,
     e_layer = None
     esel = (z >= 90) & (z <= 150) & (ne > 0)
     if esel.sum() >= 5:
-        j = int(np.argmax(ne[esel]))
-        e_layer = {"NmE_el_cm3": float(ne[esel][j]), "hmE_km": float(z[esel][j])}
+        ze, nee = z[esel], ne[esel]
+        j = int(np.argmax(nee))
+        # Only a genuine local maximum inside 90-150 km is an E layer; a
+        # maximum on the window edge is just the F-region bottomside rising
+        # through 150 km.
+        if 0 < j < nee.size - 1:
+            e_layer = {"NmE_el_cm3": float(nee[j]), "hmE_km": float(ze[j])}
+    # Vertical TEC from the bottom of the profile up to hmF2.  Every level is
+    # used, not only those above z_min (which would drop the E and lower F
+    # region from the column).
+    below = z <= hm
     return {"NmF2_el_cm3": nm, "hmF2_km": hm,
             "foF2_MHz": float(PLASMA_FREQ_COEFF * math.sqrt(nm)) if nm > 0 else None,
             "topside_scale_height_km": scale_h,
             "E_layer": e_layer,
-            "vtec_below_peak_TECU": _column_tec(zz[zz <= hm], nn[zz <= hm]),
-            "found": True}
+            "vtec_below_peak_TECU": _column_tec(z[below], ne[below]),
+            "peak_at_profile_edge": at_edge,
+            "found": not at_edge}
 
 
 def _column_tec(z_km: np.ndarray, ne_cm3: np.ndarray) -> float | None:
@@ -396,9 +454,14 @@ def derived_fields(g: readers.Granule) -> dict[str, np.ndarray]:
             if pname in d:
                 out["theta"] = potential_temperature(tk, d[pname])
                 out["dtheta_dz"] = _gradient(z, out["theta"])
-                # Density rho = P / (R_dry * T)
-                # Pressure is in hPa (100 Pa)
-                out["density"] = (d[pname] * 100.0) / (R_DRY * tk)
+                # Ideal-gas density, pressure in hPa (x100 for Pa).  Where
+                # the product carries water-vapour pressure (wetPf2 "Vp"),
+                # the vapour is counted with its own gas constant:
+                #   rho = (p - e) / (R_d T) + e / (R_v T)
+                # which is ~1 % lighter than dry air in the humid tropics.
+                p_pa = d[pname] * 100.0
+                e_pa = d["Vp"] * 100.0 if pname == "Pres" and "Vp" in d else None
+                out["density"] = moist_air_density(p_pa, tk, e_pa)
         if zname in d and nname in d:
             out["dNdz"] = refractivity_gradient(d[zname], d[nname])
     elif g.product == "ivmL2m" and "uts" in d and "lon" in d:
@@ -407,6 +470,22 @@ def derived_fields(g: readers.Granule) -> dict[str, np.ndarray]:
         n = min(d["uts"].size, d["lon"].size)
         out["slt"] = solar_local_time(d["uts"][:n], d["lon"][:n])
     return out
+
+
+R_VAPOUR = 461.5       # J kg-1 K-1, specific gas constant for water vapour
+
+
+def moist_air_density(p_pa: np.ndarray, temp_k: np.ndarray,
+                      e_pa: np.ndarray | None = None) -> np.ndarray:
+    """Air density in kg m-3 from total pressure, temperature and (optionally)
+    water-vapour partial pressure, all in SI units."""
+    p = np.asarray(p_pa, dtype="float64")
+    t = np.asarray(temp_k, dtype="float64")
+    with np.errstate(invalid="ignore", divide="ignore"):
+        if e_pa is None:
+            return p / (R_DRY * t)
+        e = np.asarray(e_pa, dtype="float64")
+        return (p - e) / (R_DRY * t) + e / (R_VAPOUR * t)
 
 
 def solar_local_time(epoch_s: np.ndarray, lon_deg: np.ndarray) -> np.ndarray:
@@ -437,7 +516,12 @@ def diagnostics(g: readers.Granule) -> dict:
             q = d["sph"]
             ok = np.isfinite(q) & np.isfinite(z)
             if ok.sum() > 5:
-                res["column_water_vapour_mm"] = _iwv_mm(z[ok], q[ok], d.get("Pres"))
+                pres = d.get("Pres")
+                res["column_water_vapour_mm"] = _iwv_mm(
+                    z[ok], q[ok], None if pres is None else pres[ok])
+                # The integral starts at the lowest retrieved level, so the
+                # column below it is missing; state where that was.
+                res["column_water_vapour_bottom_km"] = float(np.min(z[ok]))
     elif g.product == "ionPrf":
         if "MSL_alt" in d and "ELEC_dens" in d:
             res["ionosphere"] = ionosphere_peak(d["MSL_alt"], d["ELEC_dens"])
@@ -466,6 +550,7 @@ def _iwv_mm(z_km: np.ndarray, q_g_kg: np.ndarray,
     """Integrated water vapour in mm, from specific humidity and pressure.
 
     IWV = (1/g) * integral q dp.  Falls back to None without pressure.
+    ``pres_hpa`` must be aligned level-for-level with ``q_g_kg``.
     """
     if pres_hpa is None:
         return None
@@ -586,7 +671,7 @@ def composite(granule_paths: Sequence[tuple[str, dict]], field: str,
             units = "K"
         else:
             units = units or g.units.get(field, "") or vocab.info(field)["units"]
-        col = interp_to_grid(src[vertical], v, grid, max_gap=2.0)
+        col = interp_field(src[vertical], v, grid, field, max_gap=2.0)
         if not np.isfinite(col).any():
             continue
         buckets.setdefault(_group_key(g.meta, group_by), []).append(col)

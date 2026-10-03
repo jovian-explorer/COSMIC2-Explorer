@@ -546,13 +546,13 @@ VAR_INFO: dict[str, dict] = {
     ),
     "density": dict(
         label="Atmospheric Density", units="kg/m^3",
-        plain="Mass of the air per cubic metre, derived from dry temperature and pressure.", role=FIELD,
-        formula=r"\rho = \frac{P}{R_{dry} T}",
+        plain="Mass of the air per cubic metre, from temperature, pressure and (wetPf2) water-vapour pressure.", role=FIELD,
+        formula=r"\rho = \frac{P - e}{R_{dry} T} + \frac{e}{R_v T}",
         reference="US Standard Atmosphere (1976), NOAA-S/T 76-1562",
         doi="10.1029/97RG02808",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/",
         data_level="Derived Geophysical Diagnostic",
-        algorithm="Dry atmospheric air density evaluated using the ideal gas law."
+        algorithm="Ideal gas law for dry air plus water vapour (e = wetPf2 Vp; e = 0 for atmPrf, which has no humidity)."
     ),
     "scale_height": dict(
         label="Scale Height", units="km",

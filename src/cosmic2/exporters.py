@@ -196,8 +196,8 @@ def export_grid_csv(granules: Sequence[dict], field: str, vertical: str = "MSL_a
         if field not in src or vertical not in src:
             continue
         cols.append((g.meta["file_name"],
-                     analysis.interp_to_grid(src[vertical], src[field], grid,
-                                             max_gap=2.0)))
+                     analysis.interp_field(src[vertical], src[field], grid, field,
+                                           max_gap=2.0)))
     with path.open("w", newline="", encoding="utf-8") as fh:
         for line in _header_lines(prov):
             fh.write(f"# {line}\n")
@@ -311,8 +311,8 @@ def export_netcdf(granules: Sequence[dict], fields: Sequence[str] | None = None,
             block = np.full((len(loaded), grid.size), np.nan)
             for i, (meta, data) in enumerate(loaded):
                 if name in data:
-                    block[i] = analysis.interp_to_grid(data[vertical], data[name],
-                                                       grid, max_gap=2.0)
+                    block[i] = analysis.interp_field(data[vertical], data[name],
+                                                     grid, name, max_gap=2.0)
             var[:] = np.where(np.isfinite(block), block, -999.0).astype(np.float32)
 
         for k, v in prov.items():
