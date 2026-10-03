@@ -604,6 +604,11 @@ def load(path: str, product: str | None = None) -> Granule:
     g.meta["extras"] = scrub(g.meta["extras"])
     for k in ("lat", "lon", "local_time", "alt_min", "alt_max"):
         g.meta[k] = scrub(g.meta[k])
+    # One longitude convention, [-180, 180), for the index: the map, the
+    # longitude-box search and the antimeridian logic all assume it, and some
+    # products declare 0-360 (wetPf2 valid_range is -180..360).
+    if g.meta["lon"] is not None:
+        g.meta["lon"] = ((float(g.meta["lon"]) + 180.0) % 360.0) - 180.0
     return g
 
 

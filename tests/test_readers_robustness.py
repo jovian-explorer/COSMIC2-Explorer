@@ -107,3 +107,11 @@ def test_ivm_derived_solar_local_time():
     assert slt.shape == g.data["uts"].shape
     assert np.nanmin(slt) >= 0 and np.nanmax(slt) < 24
     assert slt[0] == pytest.approx(((g.data["uts"][0] % 86400) / 3600 + g.data["lon"][0] / 15) % 24)
+
+
+def test_longitude_is_normalised_to_plus_minus_180(tmp_path):
+    attrs = dict(_atm_attrs(), lon=350.0)
+    p = _write(tmp_path / "atmPrf_C2E1.2026.200.01.02.G01_0001.0001_nc", attrs, {
+        "MSL_alt": (np.array([1.0, 2.0]), {"units": "km"}),
+    })
+    assert readers.load(p).meta["lon"] == pytest.approx(-10.0)
