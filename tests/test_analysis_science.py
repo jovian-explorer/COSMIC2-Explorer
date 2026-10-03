@@ -180,3 +180,25 @@ def test_composite_spread_of_a_single_profile_is_undefined_not_zero():
     g = comp.groups["all"]
     assert np.isfinite(g["mean"]).any()
     assert not np.isfinite(g["std"]).any()
+
+
+def test_negative_bottomside_densities_do_not_subtract_tec():
+    # Abel-inversion artefact: a long negative bottomside (seen on real ionPrf
+    # profiles) must count as zero, as in CDAAC's own tec0.
+    z = np.arange(50.0, 600.0, 2.0)
+    ne = _chapman(z)
+    noisy = np.where(z < 150.0, -4e4, ne)
+    res = analysis.ionosphere_peak(z, noisy)
+    clean = np.where(z < 150.0, 0.0, ne)
+    expected = np.trapezoid(clean * 1e6, z * 1e3) / 1e16
+    assert res["vtec_profile_TECU"] == pytest.approx(expected, rel=1e-9)
+    assert res["vtec_below_peak_TECU"] > 0
+
+
+def test_profile_tec_matches_cdaac_tec0_on_bundled_sample():
+    from cosmic2 import readers
+    from cosmic2.config import sampledata_dir
+    g = readers.load(str(next(sampledata_dir().glob("ionPrf_*"))))
+    res = analysis.ionosphere_peak(g.data["MSL_alt"], g.data["ELEC_dens"])
+    assert res["vtec_profile_TECU"] == pytest.approx(
+        g.meta["extras"]["tec_profile_TECU"], rel=0.03)

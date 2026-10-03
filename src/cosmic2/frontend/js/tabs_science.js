@@ -234,6 +234,10 @@ const DIAG_SPECS = [
   ['ionosphere.foF2_MHz', 'Critical frequency', 'MHz',
    'Radio below this bounces off the ionosphere; above it escapes to space.'],
   ['ionosphere.topside_scale_height_km', 'Topside scale height', 'km', ''],
+  ['ionosphere.vtec_below_peak_TECU', 'Vertical TEC below the peak', 'TECU',
+   'All the free electrons in a 1 m\u00b2 column up to the F2 peak.'],
+  ['ionosphere.vtec_profile_TECU', 'Vertical TEC of the profile', 'TECU',
+   'The same column from the bottom of the profile to its top.'],
   ['scintillation.s4_max', 'Peak S4', '',
    'How hard the signal flickered. Above 0.4 means strong turbulence.'],
   ['scintillation.severity', 'Scintillation class', '', ''],
@@ -288,6 +292,7 @@ async function showDiagnostics(gid) {
     ['cold_point.height_km', 'cold_point_height_km', 'Cold point height', 'km'],
     ['ionosphere.NmF2_el_cm3', 'NmF2_el_cm3', 'Peak electron density', 'el/cm\u00b3'],
     ['ionosphere.hmF2_km', 'hmF2_km', 'Height of the peak', 'km'],
+    ['ionosphere.vtec_profile_TECU', 'tec_profile_TECU', 'Vertical TEC of the profile', 'TECU'],
     ['scintillation.s4_max', 's4max_L1', 'Peak S4', ''],
   ].filter(([ours, theirs]) => dig(d, ours) !== null && av[theirs] !== null &&
                                av[theirs] !== undefined);

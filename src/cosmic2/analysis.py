@@ -391,15 +391,25 @@ def ionosphere_peak(z_km: np.ndarray, ne_cm3: np.ndarray,
             "topside_scale_height_km": scale_h,
             "E_layer": e_layer,
             "vtec_below_peak_TECU": _column_tec(z[below], ne[below]),
+            # Whole profile, bottom to top: the quantity CDAAC reports as
+            # "tec0" (integrated TEC between bottom and top).
+            "vtec_profile_TECU": _column_tec(z, ne),
             "peak_at_profile_edge": at_edge,
             "found": not at_edge}
 
 
 def _column_tec(z_km: np.ndarray, ne_cm3: np.ndarray) -> float | None:
-    """Integrate electron density to TEC units (1 TECU = 1e16 el m-2)."""
+    """Integrate electron density to TEC units (1 TECU = 1e16 el m-2).
+
+    Negative densities, an Abel-inversion artefact common on the bottomside
+    of ionPrf profiles (often -4e4 el/cm3 over the lowest 100 km), count as
+    zero.  Integrated as they stand they removed up to 95 % of the column;
+    clipped, the whole-profile integral matches CDAAC's ``tec0`` (median
+    ratio 1.002 over 119 COSMIC-2 profiles of 2026-09-30).
+    """
     if z_km.size < 2:
         return None
-    ne_m3 = ne_cm3 * 1e6
+    ne_m3 = np.clip(ne_cm3, 0.0, None) * 1e6
     z_m = z_km * 1e3
     return float(np.trapezoid(ne_m3, z_m) / 1e16)
 

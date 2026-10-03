@@ -460,8 +460,11 @@ def _read_ionprf(path: str) -> Granule:
         "hmF2_km": attrs.get("edmaxalt"),
         "foF2_MHz": attrs.get("critfreq"),
         "scale_height_km": attrs.get("hscale"),
-        "tec_below_edmax_TECU": attrs.get("tec0"),
-        "tec_residual_TECU": attrs.get("tec1"),
+        # CDAAC ionPrf format: tec0 is the TEC integrated between the bottom
+        # and the top of the profile (not below the peak), tec1 the
+        # extrapolated TEC above the top.
+        "tec_profile_TECU": attrs.get("tec0"),
+        "tec_above_top_TECU": attrs.get("tec1"),
         "profile_top_km": attrs.get("topalt"),
         "profile_bottom_km": attrs.get("botalt"),
         "calibration_flag": attrs.get("icalib"),
