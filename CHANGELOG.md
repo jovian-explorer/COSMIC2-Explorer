@@ -49,4 +49,5 @@
 
 - The local API accepts cross-origin requests only from loopback origins; previously any web page open in the browser could call it (including the delete endpoints).
 - Grid, DPI and settings values are validated (a zero grid step returned a server error, and could be saved as a setting).
+- The coverage summary (the Explore overview and the "Sampling summary" figure) no longer needs SQLite's optional `FLOOR` function, which is absent from SQLite builds without math functions (for example the system SQLite 3.34 of RHEL/Rocky 9).
 - The test suite removes its temporary data folder when it finishes.

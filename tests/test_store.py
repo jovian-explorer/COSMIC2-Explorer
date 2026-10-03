@@ -19,3 +19,22 @@ def test_reindex_refreshes_quality_code_and_identifiers(tmp_path):
         conn = store.connect()
         with conn:
             conn.execute("DELETE FROM granules WHERE stream='t-store'")
+
+
+def test_coverage_bins_negative_coordinates_without_sql_floor(tmp_path):
+    import inspect
+    assert "FLOOR(" not in inspect.getsource(store.coverage)
+    pts = [(-2.5, -177.5, 23.9), (-5.0, 0.0, 0.0), (7.4, 179.9, 12.5)]
+    rows = [dict(path=str(tmp_path / f"tcov_{i}"), product="tcov", stream="t-cov",
+                 level="level2", lat=lat, lon=lon, local_time=lt, good=True)
+            for i, (lat, lon, lt) in enumerate(pts)]
+    store.upsert_granules(rows)
+    try:
+        cov = store.coverage(products=["tcov"], bin_deg=5.0)
+        cells = sorted((c["lat"], c["lon"]) for c in cov["cells"])
+        assert cells == [(-2.5, -177.5), (-2.5, 2.5), (7.5, 177.5)]
+        assert sorted(h["hour"] for h in cov["local_time_hist"]) == [0.5, 12.5, 23.5]
+    finally:
+        conn = store.connect()
+        with conn:
+            conn.execute("DELETE FROM granules WHERE stream='t-cov'")

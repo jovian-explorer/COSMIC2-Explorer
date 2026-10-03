@@ -333,6 +333,13 @@ def summary() -> dict:
     }
 
 
+def _floor_int(expr: str) -> str:
+    """SQL for ``floor(expr)`` as an integer.  SQLite has ``FLOOR`` only when
+    built with its math functions (3.35+, enabled by the build), so it is
+    missing from, for example, the system SQLite of RHEL/Rocky 9 (3.34)."""
+    return f"(CAST({expr} AS INT) - ({expr} < CAST({expr} AS INT)))"
+
+
 def coverage(products: list[str] | None = None, good_only: bool = False,
              bin_deg: float = 5.0) -> dict:
     """Aggregates for the overview panel: map bins, latitude and local-time
@@ -348,13 +355,13 @@ def coverage(products: list[str] | None = None, good_only: bool = False,
     w = " WHERE " + " AND ".join(where)
     b = float(bin_deg)
     cells = conn.execute(
-        f"SELECT CAST(FLOOR(lat/{b}) AS INT) iy, CAST(FLOOR(lon/{b}) AS INT) ix, "
+        f"SELECT {_floor_int(f'lat/{b}')} iy, {_floor_int(f'lon/{b}')} ix, "
         f"COUNT(*) n FROM granules{w} GROUP BY iy, ix", args).fetchall()
     lat_hist = conn.execute(
-        f"SELECT CAST(FLOOR(lat/5.0) AS INT) iy, COUNT(*) n FROM granules{w} "
+        f"SELECT {_floor_int('lat/5.0')} iy, COUNT(*) n FROM granules{w} "
         f"GROUP BY iy ORDER BY iy", args).fetchall()
     lt_hist = conn.execute(
-        f"SELECT CAST(FLOOR(local_time) AS INT) h, COUNT(*) n FROM granules{w} "
+        f"SELECT {_floor_int('local_time')} h, COUNT(*) n FROM granules{w} "
         f"AND local_time IS NOT NULL GROUP BY h ORDER BY h", args).fetchall()
     day_hist = conn.execute(
         f"SELECT date, COUNT(*) n FROM granules{w} GROUP BY date ORDER BY date", args
