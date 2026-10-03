@@ -175,7 +175,13 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--port", type=int, default=0)
     ap.add_argument("--no-window", action="store_true",
                     help="run the server only (no GUI)")
+    ap.add_argument("--workers", type=int, default=None, metavar="N",
+                    help="worker processes for per-granule analysis for this "
+                         "session (0 = automatic, 1 = serial); overrides Settings")
     args = ap.parse_args(argv)
+    if args.workers is not None:
+        from .config import SETTINGS
+        SETTINGS.analysis_workers = max(0, args.workers)  # not saved
 
     _log(f"Starting {APP_TITLE} {APP_VERSION} | exe={sys.executable} "
          f"| cwd={os.getcwd()} | frozen={getattr(sys, 'frozen', False)} "

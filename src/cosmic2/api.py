@@ -22,7 +22,7 @@ from pydantic import BaseModel, Field
 
 from contextlib import asynccontextmanager
 
-from . import analysis, exporters, fetch, plotting, readers, store, vocab
+from . import analysis, exporters, fetch, parallel, plotting, readers, store, vocab
 from .catalog import (COLLECTIONS, PRODUCTS, STREAMS, Archive, date_to_doy,
                       describe_product, doy_to_date)
 from .config import (APP_TITLE, APP_VERSION, CACHE_DIR, EXPORT_DIR, SETTINGS,
@@ -151,6 +151,8 @@ def meta() -> dict:
         "group_by_options": ["all", "lat_band", "hemisphere", "day_night", "date",
                              "product", "satellite"],
         "settings": vars(SETTINGS),
+        "cpu_count": parallel.cpu_count(),
+        "effective_workers": parallel.resolve_workers(),
         "sample_data_available": sampledata_dir().is_dir(),
     })
 
@@ -194,6 +196,7 @@ class SettingsPatch(BaseModel):
     grid_top_km: float | None = Field(default=None, gt=0)
     grid_step_km: float | None = Field(default=None, gt=0)
     plot_dpi: int | None = Field(default=None, ge=50, le=1200)
+    analysis_workers: int | None = Field(default=None, ge=0, le=512)
     plot_theme: str | None = None
     ui_theme: str | None = None
     ui_font_size: int | None = None
@@ -642,28 +645,10 @@ def diagnostics_table(req: DiagnosticsTableRequest) -> dict:
     peak electron density against local time, across a whole day.
     """
     rows = _resolve_selection(req.granule_ids, req.search, req.max_profiles)
-    table, failed = [], 0
-    for r in rows:
-        try:
-            g = readers.load(r["path"], r["product"])
-            d = analysis.diagnostics(g)
-        except Exception:
-            failed += 1
-            continue
-        flat = {"granule_id": r["id"], "file_name": r["file_name"],
-                "product": r["product"], "time_utc": r["time_utc"],
-                "lat": r["lat"], "lon": r["lon"], "local_time": r["local_time"],
-                "sat": r["sat"], "good": r["good"]}
-        for key, val in d.items():
-            if key in ("product", "archive_values"):
-                continue
-            if isinstance(val, dict):
-                for k2, v2 in val.items():
-                    if isinstance(v2, (int, float, str, bool)) or v2 is None:
-                        flat[f"{key}.{k2}"] = v2
-            else:
-                flat[key] = val
-        table.append(flat)
+    from .parallel import pmap
+    results = pmap(analysis.diagnostics_row, rows)
+    table = [r for r in results if r is not None]
+    failed = len(results) - len(table)
     columns = sorted({k for row in table for k in row})
     return _clean({"rows": table, "columns": columns, "n": len(table),
                    "unreadable": failed})

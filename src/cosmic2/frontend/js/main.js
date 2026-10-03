@@ -116,6 +116,7 @@ function settingsBody() {
       ui_mode: $('#s-mode').value,
       plot_theme: $('#s-plot-theme').value,
       plot_dpi: parseInt($('#s-plot-dpi').value, 10),
+      analysis_workers: Math.max(0, parseInt($('#s-workers').value, 10) || 0),
       units_temperature: $('#s-units-temp').value,
       qc_require_good: $('#s-qc').checked,
       default_stream: $('#s-stream').value
@@ -189,6 +190,17 @@ function settingsBody() {
       el('input', {type: 'checkbox', id: 's-qc', checked: state.meta.settings.qc_require_good}),
       ' Require Good QC by default'
     ),
+    el('hr'),
+    el('h3', {}, 'Performance'),
+    el('label', {}, `CPU workers (0 = automatic; this computer has ${state.meta.cpu_count || '?'} CPUs) `,
+      el('input', {type: 'number', id: 's-workers', min: 0,
+                   max: state.meta.cpu_count || 64, step: 1,
+                   value: state.meta.settings.analysis_workers ?? 0})
+    ),
+    el('p', {class: 'hint'},
+      'Composites, the diagnostics table, regridded exports and indexing read ' +
+      'granules on this many processes when the selection is large (24 or more ' +
+      'profiles). 1 runs everything in the main process.'),
     el('hr'),
     el('button', {class: 'primary', type: 'submit'}, 'Save Settings')
   );

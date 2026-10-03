@@ -39,7 +39,13 @@ def main(argv: list[str] | None = None) -> int:
                     help="0 selects the first free port from 8765")
     ap.add_argument("--log-level", default="info")
     ap.add_argument("--reload", action="store_true", help="development autoreload")
+    ap.add_argument("--workers", type=int, default=None, metavar="N",
+                    help="worker processes for per-granule analysis for this "
+                         "session (0 = automatic, 1 = serial); overrides Settings")
     args = ap.parse_args(argv)
+    if args.workers is not None:
+        from .config import SETTINGS
+        SETTINGS.analysis_workers = max(0, args.workers)  # not saved
 
     ensure_dirs()
     port = args.port or free_port()

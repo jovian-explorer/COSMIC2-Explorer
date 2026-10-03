@@ -192,6 +192,9 @@ class Settings:
     qc_require_good: bool = True
     grid_top_km: float = 60.0
     grid_step_km: float = 0.2
+    # Worker processes for per-granule work (composites, diagnostics table,
+    # regridded exports, indexing): 0 = automatic (CPUs - 1), 1 = serial.
+    analysis_workers: int = 0
     # Presentation
     plot_dpi: int = 300
     plot_theme: str = "light"

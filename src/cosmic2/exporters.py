@@ -19,6 +19,7 @@ from typing import Iterable, Sequence
 import numpy as np
 
 from . import analysis, plotting, readers, vocab
+from .parallel import pmap
 from .config import (
     APP_TITLE,
     APP_VERSION,
@@ -174,6 +175,33 @@ def export_metadata_csv(granules: Sequence[dict],
             "mime": "text/csv", "rows": len(granules), "provenance": prov}
 
 
+def _regrid_granule(task: tuple) -> tuple[dict, dict[str, np.ndarray]] | None:
+    """Read one granule and interpolate its profile variables onto ``grid``.
+
+    ``task`` is ``(index_row, vertical, grid, names)``; ``names=None`` means
+    every variable sampled on the vertical coordinate.  Returns
+    ``(granule metadata, {name: gridded column})``, or ``None`` if the
+    granule is unreadable or lacks the vertical coordinate.  Module-level so
+    it can run in a worker process (see :mod:`.parallel`).
+    """
+    gmeta, vertical, grid, names = task
+    try:
+        g = readers.load(gmeta["path"], gmeta.get("product"))
+    except Exception:
+        return None
+    src = dict(g.data)
+    src.update(analysis.derived_fields(g))
+    if vertical not in src:
+        return None
+    z = src[vertical]
+    wanted = names if names is not None else [
+        k for k, v in src.items() if v.size == z.size and k != vertical
+        and not readers.BULK_VAR_RE.match(k)]
+    out = {k: analysis.interp_field(z, src[k], grid, k, max_gap=2.0)
+           for k in wanted if k in src and src[k].size == z.size}
+    return g.meta, out
+
+
 def export_grid_csv(granules: Sequence[dict], field: str, vertical: str = "MSL_alt",
                     top_km: float = 60.0, step_km: float = 0.2,
                     basename: str = "cosmic2_grid", extra_prov: dict | None = None) -> dict:
@@ -188,19 +216,11 @@ def export_grid_csv(granules: Sequence[dict], field: str, vertical: str = "MSL_a
                    "field": field, "vertical": vertical}
     if extra_prov: prov_extras.update(extra_prov)
     prov = provenance(granules, prov_extras)
-    cols: list[tuple[str, np.ndarray]] = []
-    for gmeta in granules:
-        try:
-            g = readers.load(gmeta["path"], gmeta.get("product"))
-        except Exception:
-            continue
-        src = dict(g.data)
-        src.update(analysis.derived_fields(g))
-        if field not in src or vertical not in src:
-            continue
-        cols.append((g.meta["file_name"],
-                     analysis.interp_field(src[vertical], src[field], grid, field,
-                                           max_gap=2.0)))
+    tasks = [(gmeta, vertical, grid, [field]) for gmeta in granules]
+    cols: list[tuple[str, np.ndarray]] = [
+        (meta["file_name"], gridded[field])
+        for res in pmap(_regrid_granule, tasks) if res is not None
+        for meta, gridded in [res] if field in gridded]
     with path.open("w", newline="", encoding="utf-8") as fh:
         for line in _header_lines(prov):
             fh.write(f"# {line}\n")
@@ -234,18 +254,12 @@ def export_netcdf(granules: Sequence[dict], fields: Sequence[str] | None = None,
         raise RuntimeError("netCDF export needs the netCDF4 package") from exc
 
     grid = analysis.make_grid(top_km, step_km)
-    loaded: list[tuple[dict, dict]] = []
-    for gmeta in granules:
-        try:
-            g = readers.load(gmeta["path"], gmeta.get("product"))
-        except Exception:
-            continue
-        src = dict(g.data)
-        src.update(analysis.derived_fields(g))
-        if vertical not in src:
-            continue
-        loaded.append((g.meta, {k: v for k, v in src.items()
-                                if v.size == src[vertical].size}))
+    # Each worker returns the granule already interpolated onto the grid, so
+    # only small arrays travel back from the worker processes.
+    tasks = [(gmeta, vertical, grid, list(fields) if fields else None)
+             for gmeta in granules]
+    loaded: list[tuple[dict, dict]] = [r for r in pmap(_regrid_granule, tasks)
+                                       if r is not None]
     if not loaded:
         raise ValueError("No readable granules with the requested vertical coordinate")
 
@@ -314,8 +328,7 @@ def export_netcdf(granules: Sequence[dict], fields: Sequence[str] | None = None,
             block = np.full((len(loaded), grid.size), np.nan)
             for i, (meta, data) in enumerate(loaded):
                 if name in data:
-                    block[i] = analysis.interp_field(data[vertical], data[name],
-                                                     grid, name, max_gap=2.0)
+                    block[i] = data[name]
             var[:] = np.where(np.isfinite(block), block, -999.0).astype(np.float32)
 
         for k, v in prov.items():

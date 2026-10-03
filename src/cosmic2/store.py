@@ -421,26 +421,32 @@ def prune_missing() -> dict:
 def reindex_cache(product_hint: str | None = None) -> dict:
     """Rebuild the index from whatever is on disk (recovery path)."""
     from . import readers  # local import keeps module import cheap
-    added, failed = 0, 0
+    from .parallel import pmap
+    jobs: list[tuple[str, str | None, str | None]] = []
     for root, _dirs, files in os.walk(CACHE_DIR):
         rel = Path(root).relative_to(CACHE_DIR).parts
         stream = rel[0] if len(rel) > 0 else None
         level = "/".join(rel[1:-3]) if len(rel) > 4 else (rel[1] if len(rel) > 1 else None)
-        batch = []
         for f in files:
-            if not (f.endswith("_nc") or f.endswith(".nc")):
-                continue
-            p = os.path.join(root, f)
-            try:
-                m = readers.quick_meta(p, product_hint)
-            except Exception:
-                failed += 1
-                continue
-            m.update(stream=stream, level=level)
-            if m.get("epoch"):
-                d = dt.datetime.fromtimestamp(m["epoch"], dt.timezone.utc).date()
-                m.update(year=d.year, doy=d.timetuple().tm_yday, date=d.isoformat())
-            batch.append(m)
-        if batch:
+            if f.endswith("_nc") or f.endswith(".nc"):
+                jobs.append((os.path.join(root, f), stream, level))
+    # Reading metadata is the slow part (thousands of files), so it runs on
+    # the worker pool; the SQLite writes stay in this process.
+    results = pmap(readers.quick_meta_safe, [(p, product_hint) for p, _, _ in jobs])
+    added, failed = 0, 0
+    batch = []
+    for (p, stream, level), (m, _err) in zip(jobs, results):
+        if m is None:
+            failed += 1
+            continue
+        m.update(stream=stream, level=level)
+        if m.get("epoch"):
+            d = dt.datetime.fromtimestamp(m["epoch"], dt.timezone.utc).date()
+            m.update(year=d.year, doy=d.timetuple().tm_yday, date=d.isoformat())
+        batch.append(m)
+        if len(batch) >= 500:
             added += upsert_granules(batch)
+            batch = []
+    if batch:
+        added += upsert_granules(batch)
     return {"indexed": added, "failed": failed}

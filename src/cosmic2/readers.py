@@ -613,3 +613,17 @@ def quick_meta(path: str, product: str | None = None) -> dict:
     m = dict(g.meta)
     m["size_bytes"] = os.path.getsize(path)
     return m
+
+
+def quick_meta_safe(task: tuple) -> tuple[dict | None, str]:
+    """``(metadata, "")`` or ``(None, error text)`` for ``(path, product)``.
+
+    Never raises, so a batch of files can be indexed on worker processes
+    (see :mod:`.parallel`) without one bad file aborting the rest.
+    """
+    path, product = task
+    try:
+        return quick_meta(path, product), ""
+    except Exception as exc:  # noqa: BLE001
+        return None, str(exc)
+

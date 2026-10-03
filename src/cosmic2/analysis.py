@@ -545,6 +545,31 @@ def diagnostics(g: readers.Granule) -> dict:
     return res
 
 
+def diagnostics_row(r: dict) -> dict | None:
+    """Flat ``{column: scalar}`` diagnostics for one index row (``None`` if
+    the granule cannot be read).  Module-level so it can run in a worker
+    process."""
+    try:
+        g = readers.load(r["path"], r["product"])
+        d = diagnostics(g)
+    except Exception:
+        return None
+    flat = {"granule_id": r["id"], "file_name": r["file_name"],
+            "product": r["product"], "time_utc": r["time_utc"],
+            "lat": r["lat"], "lon": r["lon"], "local_time": r["local_time"],
+            "sat": r["sat"], "good": r["good"]}
+    for key, val in d.items():
+        if key in ("product", "archive_values"):
+            continue
+        if isinstance(val, dict):
+            for k2, v2 in val.items():
+                if isinstance(v2, (int, float, str, bool)) or v2 is None:
+                    flat[f"{key}.{k2}"] = v2
+        else:
+            flat[key] = val
+    return flat
+
+
 def _iwv_mm(z_km: np.ndarray, q_g_kg: np.ndarray,
             pres_hpa: np.ndarray | None) -> float | None:
     """Integrated water vapour in mm, from specific humidity and pressure.
@@ -639,48 +664,64 @@ class Composite:
         }
 
 
+def _composite_column(task: tuple) -> tuple[str, np.ndarray, str] | None:
+    """One profile of a composite: ``(group key, gridded column, units)``.
+
+    Module-level so it can run in a worker process (see :mod:`.parallel`).
+    """
+    path, meta, field, vertical, grid, group_by, convert_kelvin = task
+    try:
+        g = readers.load(path, meta.get("product"))
+    except Exception:
+        return None
+    src = dict(g.data)
+    src.update(derived_fields(g))
+    if field not in src or vertical not in src:
+        return None
+    v = src[field]
+    if convert_kelvin and field in ("Temp", "temp_dry"):
+        v = to_kelvin(v, g.units.get(field, "C"))
+        units = "K"
+    else:
+        units = g.units.get(field, "") or vocab.info(field)["units"]
+    col = interp_field(src[vertical], v, grid, field, max_gap=2.0)
+    if not np.isfinite(col).any():
+        return None
+    # The granule's own metadata, completed by the index row: "date"
+    # (and the processing stream) exist only in the index, so grouping by
+    # date put every profile under "unknown" before.
+    gmeta = {**meta, **{k: v for k, v in g.meta.items() if v is not None}}
+    return _group_key(gmeta, group_by), col, units
+
+
 def composite(granule_paths: Sequence[tuple[str, dict]], field: str,
               vertical: str = "MSL_alt", group_by: str = "all",
               top_km: float = 60.0, step_km: float = 0.5,
               good_only: bool = True, min_count: int = 3,
-              convert_kelvin: bool = False) -> Composite:
+              convert_kelvin: bool = False,
+              workers: int | None = None) -> Composite:
     """Mean/median/spread profile on a common grid, optionally grouped.
 
     ``granule_paths`` is a sequence of ``(path, index_metadata)``.  Each
     profile is interpolated onto the shared grid before averaging, which is
     the correct order of operations: averaging raw levels of different
-    profiles would mix heights.
+    profiles would mix heights.  Granules are read on ``workers`` processes
+    (``None``: the Settings value; see :mod:`.parallel`).
     """
+    from .parallel import pmap
     grid = make_grid(top_km, step_km)
+    tasks = [(path, meta, field, vertical, grid, group_by, convert_kelvin)
+             for path, meta in granule_paths
+             if not (good_only and not meta.get("good", True))]
     buckets: dict[str, list[np.ndarray]] = {}
     units = ""
     used = 0
-    for path, meta in granule_paths:
-        if good_only and not meta.get("good", True):
+    for res in pmap(_composite_column, tasks, workers=workers):
+        if res is None:
             continue
-        try:
-            g = readers.load(path, meta.get("product"))
-        except Exception:
-            continue
-        extra = derived_fields(g)
-        src = dict(g.data)
-        src.update(extra)
-        if field not in src or vertical not in src:
-            continue
-        v = src[field]
-        if convert_kelvin and field in ("Temp", "temp_dry"):
-            v = to_kelvin(v, g.units.get(field, "C"))
-            units = "K"
-        else:
-            units = units or g.units.get(field, "") or vocab.info(field)["units"]
-        col = interp_field(src[vertical], v, grid, field, max_gap=2.0)
-        if not np.isfinite(col).any():
-            continue
-        # The granule's own metadata, completed by the index row: "date"
-        # (and the processing stream) exist only in the index, so grouping by
-        # date put every profile under "unknown" before.
-        gmeta = {**meta, **{k: v for k, v in g.meta.items() if v is not None}}
-        buckets.setdefault(_group_key(gmeta, group_by), []).append(col)
+        key, col, u = res
+        units = units or u
+        buckets.setdefault(key, []).append(col)
         used += 1
 
     groups: dict[str, dict] = {}

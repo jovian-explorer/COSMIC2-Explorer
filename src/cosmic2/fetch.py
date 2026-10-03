@@ -442,12 +442,12 @@ def manager() -> DownloadManager:
 
 def import_local_files(paths: list[str], product: str | None = None) -> dict:
     """Index granules the user already has (e.g. from a manual CDAAC pull)."""
+    from .parallel import pmap
     metas, failed = [], []
-    for p in paths:
-        try:
-            m = readers.quick_meta(p, product)
-        except Exception as exc:  # noqa: BLE001
-            failed.append({"path": p, "error": str(exc)})
+    results = pmap(readers.quick_meta_safe, [(p, product) for p in paths])
+    for p, (m, err) in zip(paths, results):
+        if m is None:
+            failed.append({"path": p, "error": err})
             continue
         if m.get("epoch"):
             d = dt.datetime.fromtimestamp(m["epoch"], dt.timezone.utc).date()
