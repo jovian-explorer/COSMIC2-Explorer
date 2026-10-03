@@ -179,7 +179,7 @@ async function drawProfiles() {
   const base = layoutBase();
   const layout = layoutBase({
     title: {
-      text: cleanPlotlyMath(`${vocabInfo(req.field).label} vs ${vocabInfo(req.vertical).label}`),
+      text: cleanPlotlyMath(`${bareLabel(res.field_label)} vs ${vocabInfo(req.vertical).label}`),
       font: { size: Math.round(14 * fontScale), color: document.documentElement.dataset.theme === 'dark' ? '#f8fafc' : '#0f172a' },
     },
     xaxis: Object.assign(base.xaxis, {
@@ -234,6 +234,12 @@ async function drawProfiles() {
   $('#profile-caption').textContent = parts.join(' ');
   if (res.series.length === 1) await showDiagnostics(res.series[0].granule_id);
   else await showDiagnostics(ids[0]);
+}
+
+/** The server's axis title without its unit: product-aware, so atmPrf
+ *  "Temp" reads "Dry temperature" rather than "Temperature". */
+function bareLabel(axisLabel) {
+  return (axisLabel || '').replace(/\s*\[[^\]]*\]\s*$/, '');
 }
 
 function colourByLat(lat) {
@@ -462,7 +468,7 @@ async function drawComposite() {
   const base = layoutBase();
   Plotly.react('composite-plot', traces, layoutBase({
     title: {
-      text: cleanPlotlyMath(`Average ${vocabInfo(res.field).label} by ${$('#c-groupby').value.replace(/_/g, ' ')}`),
+      text: cleanPlotlyMath(`Average ${bareLabel(res.field_label)} by ${$('#c-groupby').value.replace(/_/g, ' ')}`),
       font: { size: Math.round(14 * fontScale), color: isDark ? '#f8fafc' : '#0f172a' }
     },
     xaxis: Object.assign(base.xaxis, {
@@ -488,7 +494,7 @@ async function drawComposite() {
   }
   $('#composite-caption').textContent = cap;
   $('#composite-title').textContent =
-    `Average ${vocabInfo(res.field).label} by ` +
+    `Average ${bareLabel(res.field_label)} by ` +
     `${$('#c-groupby').value.replace(/_/g, ' ')}`;
 }
 
