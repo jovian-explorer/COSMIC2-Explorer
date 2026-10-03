@@ -200,3 +200,68 @@ def apply_pipeline(z: np.ndarray, v: np.ndarray,
     compute_uncertainty(prof, uncert_method, **uncert_kwargs)
     
     return prof
+
+
+def decimate(a: np.ndarray, max_points: int) -> np.ndarray:
+    """Even subsample for display. Plot fidelity beyond ~1000 points on a
+    1000-px axis is invisible, and the JSON cost is real."""
+    if max_points <= 0 or a.size <= max_points:
+        return a
+    idx = np.linspace(0, a.size - 1, max_points).round().astype(int)
+    return a[idx]
+
+
+def profile_series(task: tuple) -> dict:
+    """One profile of the Profiles-tab overlay: load, run the pipeline,
+    decimate.  ``task`` is ``(index row, request dict)``.
+
+    Returns ``{"skip": reason}`` when the profile cannot be drawn.
+    Module-level so the API can run it on worker processes (see
+    :mod:`.parallel`).
+    """
+    import os
+    from . import analysis, readers, vocab
+    row, req = task
+    if not os.path.exists(row["path"]):
+        return {"skip": "file missing from cache"}
+    try:
+        g = readers.load(row["path"], row["product"])
+    except Exception as exc:  # noqa: BLE001
+        return {"skip": str(exc)}
+    field, vertical = req["field"], req["vertical"]
+    src = analysis.fields_with(g, field, vertical)
+    if field not in src or vertical not in src:
+        return {"skip": f"no {field} on {vertical}"}
+    y, x = src[vertical], src[field]
+    if req["convert_kelvin"] and field in ("Temp", "temp_dry"):
+        x = analysis.to_kelvin(x, g.units.get(field, "C"))
+        units = "K"
+    else:
+        units = g.units.get(field, "") or vocab.info(field)["units"]
+    n = min(x.size, y.size)
+    prof = apply_pipeline(y[:n], x[:n],
+                          outlier_method=req["outlier_method"],
+                          outlier_kwargs=req["outlier_kwargs"],
+                          smooth_method=req["smooth_method"],
+                          smooth_kwargs=req["smooth_kwargs"],
+                          uncert_method=req["uncert_method"],
+                          uncert_kwargs=req["uncert_kwargs"])
+    mp = req["max_points"]
+    return {
+        "units": units, "product": g.product,
+        "series": {
+            "granule_id": row["id"],
+            "label": f"{g.meta['sat'] or '?'} {g.meta['occ_prn'] or ''} "
+                     f"{(g.meta['time_utc'] or '')[11:16]}Z",
+            "file_name": g.meta["file_name"],
+            "x": decimate(prof.v, mp),
+            "original_x": decimate(prof.original_v, mp),
+            "y": decimate(prof.z, mp),
+            "uncertainty": (decimate(prof.uncertainty, mp)
+                            if prof.uncertainty is not None else None),
+            "provenance": [p.__dict__ for p in prof.provenance],
+            "lat": g.meta["lat"], "lon": g.meta["lon"],
+            "local_time": g.meta["local_time"],
+            "good": g.meta["good"],
+        },
+    }

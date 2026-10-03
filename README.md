@@ -84,7 +84,7 @@ Set `COSMIC2_EXPLORER_HOME` to use another folder.
 
 ### CPU workers
 
-Work that reads many granules (composites, the diagnostics table, regridded CSV and netCDF exports, importing files, "Rebuild index") is spread over worker processes when a job has 24 or more granules. Choose the number in **Settings > Performance > CPU workers**: `0` (default) uses one fewer than the number of CPUs, `1` runs everything in the main process, any other number caps the pool. `--workers N` on the command line overrides the setting for one session. Results are identical to a serial run; if the pool fails for any reason the job is rerun serially.
+Work that reads many granules (composites, profile plots, the diagnostics table, regridded CSV and netCDF exports, importing files, "Rebuild index") is spread over worker processes when a job has 24 or more granules. Choose the number in **Settings > Performance > CPU workers**: `0` (default) uses one fewer than the number of CPUs, `1` runs everything in the main process, any other number caps the pool. `--workers N` on the command line overrides the setting for one session. Results are identical to a serial run; if the pool fails for any reason the job is rerun serially.
 
 ### Notes on the science
 

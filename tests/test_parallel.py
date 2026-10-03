@@ -89,3 +89,20 @@ def test_quick_meta_safe_reports_errors(tmp_path):
     bad.write_bytes(b"not netcdf")
     m, err = readers.quick_meta_safe((str(bad), None))
     assert m is None and err
+
+
+def test_profile_series_parallel_matches_serial(force_parallel):
+    from cosmic2.pipeline import profile_series
+    req = dict(field="Temp", vertical="MSL_alt", max_points=300, convert_kelvin=True,
+               outlier_method="mad", outlier_kwargs={}, smooth_method="gaussian",
+               smooth_kwargs={}, uncert_method="standard_deviation", uncert_kwargs={})
+    tasks = [(r, req) for r in _rows()]
+    serial = parallel.pmap(profile_series, tasks, workers=1)
+    par = parallel.pmap(profile_series, tasks, workers=force_parallel)
+    assert [("skip" in s) for s in serial] == [("skip" in p) for p in par]
+    drawn = [(s, p) for s, p in zip(serial, par) if "skip" not in s]
+    assert len(drawn) == 4                       # 2 atmPrf + 2 wetPf2 samples
+    for s, p in drawn:
+        assert s["units"] == p["units"] == "K"
+        np.testing.assert_array_equal(s["series"]["x"], p["series"]["x"])
+        np.testing.assert_array_equal(s["series"]["uncertainty"], p["series"]["uncertainty"])

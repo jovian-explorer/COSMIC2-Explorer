@@ -84,12 +84,8 @@ def _clean(v: Any) -> Any:
 
 
 def _decimate(a: np.ndarray, max_points: int) -> np.ndarray:
-    """Even subsample for display. Plot fidelity beyond ~1000 points on a
-    1000-px axis is invisible, and the JSON cost is real."""
-    if max_points <= 0 or a.size <= max_points:
-        return a
-    idx = np.linspace(0, a.size - 1, max_points).round().astype(int)
-    return a[idx]
+    from .pipeline import decimate
+    return decimate(a, max_points)
 
 
 def _granule_or_404(gid: str) -> dict:
@@ -535,51 +531,20 @@ def plot_profiles(req: PlotRequest) -> dict:
     out, skipped = [], []
     units = ""
     products: set[str] = set()
-    for row in rows:
-        if not os.path.exists(row["path"]):
-            skipped.append({"file": row["file_name"], "why": "file missing from cache"})
+    # Reading and filtering each granule is independent work: a page of 100+
+    # atmPrf profiles is drawn on the worker processes (see .parallel).
+    from .parallel import pmap
+    from .pipeline import profile_series
+    params = req.model_dump(exclude={"granule_ids"})
+    for row, res in zip(rows, pmap(profile_series, [(r, params) for r in rows])):
+        if "skip" in res:
+            skipped.append({"file": row["file_name"], "why": res["skip"]})
             continue
-        try:
-            g = readers.load(row["path"], row["product"])
-        except Exception as exc:  # noqa: BLE001
-            skipped.append({"file": row["file_name"], "why": str(exc)})
-            continue
-        src = analysis.fields_with(g, req.field, req.vertical)
-        if req.field not in src or req.vertical not in src:
-            skipped.append({"file": row["file_name"],
-                            "why": f"no {req.field} on {req.vertical}"})
-            continue
-        y = src[req.vertical]
-        x = src[req.field]
-        if req.convert_kelvin and req.field in ("Temp", "temp_dry"):
-            x = analysis.to_kelvin(x, g.units.get(req.field, "C"))
-            units = "K"
-        else:
-            units = units or g.units.get(req.field, "") or vocab.info(req.field)["units"]
-        n = min(x.size, y.size)
-        products.add(g.product)
-        
-        # Apply pipeline
-        from .pipeline import apply_pipeline
-        prof = apply_pipeline(y[:n], x[:n], 
-                              outlier_method=req.outlier_method, outlier_kwargs=req.outlier_kwargs,
-                              smooth_method=req.smooth_method, smooth_kwargs=req.smooth_kwargs,
-                              uncert_method=req.uncert_method, uncert_kwargs=req.uncert_kwargs)
-        
-        out.append({
-            "granule_id": row["id"],
-            "label": f"{g.meta['sat'] or '?'} {g.meta['occ_prn'] or ''} "
-                     f"{(g.meta['time_utc'] or '')[11:16]}Z",
-            "file_name": g.meta["file_name"],
-            "x": _clean(_decimate(prof.v, req.max_points)),
-            "original_x": _clean(_decimate(prof.original_v, req.max_points)),
-            "y": _clean(_decimate(prof.z, req.max_points)),
-            "uncertainty": _clean(_decimate(prof.uncertainty, req.max_points)) if prof.uncertainty is not None else None,
-            "provenance": [p.__dict__ for p in prof.provenance],
-            "lat": g.meta["lat"], "lon": g.meta["lon"],
-            "local_time": g.meta["local_time"],
-            "good": g.meta["good"],
-        })
+        # Kelvin conversion labels every series "K"; otherwise the first
+        # profile's units stand for the overlay.
+        units = res["units"] if res["units"] == "K" else (units or res["units"])
+        products.add(res["product"])
+        out.append(res["series"])
     return _clean({
         "field": req.field, "vertical": req.vertical, "units": units,
         "field_label": vocab.axis_title(
