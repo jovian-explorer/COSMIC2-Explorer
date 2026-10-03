@@ -34,8 +34,14 @@ META_GREY = "#64748b"
 CATEGORICAL = ["#0284c7", "#f97316", "#10b981", "#8b5cf6", "#f43f5e", "#06b6d4", "#eab308", "#ec4899"]
 
 
-def apply_style(dpi: int | None = None, theme: str = "light") -> dict:
-    """Return rcParams for a publication figure."""
+def apply_style(dpi: int | None = None, theme: str | None = None) -> dict:
+    """Return rcParams for a publication figure.
+
+    ``theme`` defaults to the "Plot Theme" setting (which no figure read
+    before, so choosing Dark had no effect on exports).
+    """
+    if theme is None:
+        theme = getattr(SETTINGS, "plot_theme", "light")
     base, ann, tick = SIZES
     fg = "#0f172a" if theme == "light" else "#f1f5f9"
     bg = "white" if theme == "light" else "#0b0f17"
