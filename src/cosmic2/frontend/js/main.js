@@ -171,9 +171,12 @@ function settingsBody() {
     el('hr'),
     el('h3', {}, 'Science Defaults'),
     el('label', {}, 'Default Stream ',
+      // Built from the archive's own stream list ('postcal' was offered
+      // here before, which is not a CDAAC stream).
       el('select', {id: 's-stream'},
-        el('option', {value: 'nrt', selected: state.meta.settings.default_stream === 'nrt'}, 'Near Real-Time (nrt)'),
-        el('option', {value: 'postcal', selected: state.meta.settings.default_stream === 'postcal'}, 'Post-Processed (postcal)')
+        ...Object.entries(state.meta.streams).map(([code, s]) =>
+          el('option', {value: code, selected: state.meta.settings.default_stream === code},
+             `${s.label} (${code})`))
       )
     ),
     el('label', {}, 'Temperature Units ',

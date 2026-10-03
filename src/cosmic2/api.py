@@ -200,10 +200,18 @@ class SettingsPatch(BaseModel):
     ui_mode: str | None = None
     units_temperature: str | None = None
     explain_mode: bool | None = None
+    # Sent by the Settings drawer but missing from this model before, so the
+    # choice was silently dropped.
+    default_stream: str | None = None
+    default_product: str | None = None
 
 
 @app.post("/api/settings")
 def update_settings(patch: SettingsPatch) -> dict:
+    if patch.default_stream is not None and patch.default_stream not in STREAMS:
+        raise HTTPException(422, f"default_stream must be one of {sorted(STREAMS)}")
+    if patch.default_product is not None and patch.default_product not in PRODUCTS:
+        raise HTTPException(422, f"default_product must be one of {sorted(PRODUCTS)}")
     SETTINGS.update(**{k: v for k, v in patch.model_dump().items() if v is not None})
     return _clean(vars(SETTINGS))
 

@@ -90,3 +90,19 @@ def test_panels_figure_for_a_granule_without_position(tmp_path):
     req = api.FigureRequest(kind="panels", panels=["Temp"])
     fig = api._build_figure(req, [{"path": str(p), "product": "atmPrf"}])
     assert fig is not None
+
+
+def test_default_stream_setting_is_saved_and_validated():
+    try:
+        res = post("/api/settings", {"default_stream": "rapid"})
+        assert res["default_stream"] == "rapid"
+        assert _status("/api/settings", {"default_stream": "postcal"}) == 422
+    finally:
+        post("/api/settings", {"default_stream": "nrt"})
+
+
+def test_settings_drawer_offers_only_real_streams():
+    from pathlib import Path
+    js = (Path(__file__).resolve().parents[1] / "src" / "cosmic2" / "frontend"
+          / "js" / "main.js").read_text(encoding="utf-8")
+    assert "value: 'postcal'" not in js
