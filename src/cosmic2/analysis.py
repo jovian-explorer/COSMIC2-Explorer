@@ -638,6 +638,7 @@ class Composite:
     units: str = ""
     min_count: int = 3
     dropped_groups: dict = field(default_factory=dict)
+    quantity: str = ""   # vocabulary key when it differs from the name
 
     def to_json(self) -> dict:
         def _l(a):
@@ -651,7 +652,7 @@ class Composite:
             "grid": _l(self.grid),
             "min_count": self.min_count,
             "dropped_groups": self.dropped_groups,
-            "field_label": vocab.axis_title(self.field, self.units),
+            "field_label": vocab.axis_title(self.quantity or self.field, self.units),
             "vertical_label": vocab.axis_title(self.vertical),
             "groups": {
                 name: {
@@ -691,7 +692,7 @@ def _composite_column(task: tuple) -> tuple[str, np.ndarray, str] | None:
     # (and the processing stream) exist only in the index, so grouping by
     # date put every profile under "unknown" before.
     gmeta = {**meta, **{k: v for k, v in g.meta.items() if v is not None}}
-    return _group_key(gmeta, group_by), col, units
+    return _group_key(gmeta, group_by), col, units, vocab.quantity(field, g.product)
 
 
 def composite(granule_paths: Sequence[tuple[str, dict]], field: str,
@@ -716,10 +717,15 @@ def composite(granule_paths: Sequence[tuple[str, dict]], field: str,
     buckets: dict[str, list[np.ndarray]] = {}
     units = ""
     used = 0
-    for res in pmap(_composite_column, tasks, workers=workers):
-        if res is None:
-            continue
-        key, col, u = res
+    results = [r for r in pmap(_composite_column, tasks, workers=workers)
+               if r is not None]
+    # Never average different quantities that share a variable name (atmPrf
+    # dry "Temp" with wetPf2 moist "Temp"): if the selection holds both, each
+    # group is split and labelled by quantity.
+    quantities = {r[3] for r in results}
+    for key, col, u, qty in results:
+        if len(quantities) > 1:
+            key = f"{key} - {vocab.info(qty)['label']}"
         units = units or u
         buckets.setdefault(key, []).append(col)
         used += 1
@@ -750,7 +756,8 @@ def composite(granule_paths: Sequence[tuple[str, dict]], field: str,
     groups = {n: g for n, g in groups.items() if n not in dropped}
     ordered = dict(sorted(groups.items(), key=lambda kv: -kv[1]["n"]))
     return Composite(field, vertical, grid, ordered, used, units,
-                     min_count=min_count, dropped_groups=dropped)
+                     min_count=min_count, dropped_groups=dropped,
+                     quantity=next(iter(quantities)) if len(quantities) == 1 else "")
 
 
 def anomaly_against(reference: np.ndarray, grid: np.ndarray,

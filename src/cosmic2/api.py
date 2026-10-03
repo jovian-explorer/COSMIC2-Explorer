@@ -502,8 +502,8 @@ def profile_data(gid: str, vars: str | None = None, max_points: int = 1200,
         series[name] = {
             "values": _clean(arr),
             "units": g.units.get(name) or vocab.info(name)["units"],
-            "label": vocab.info(name)["label"],
-            "plain": vocab.info(name)["plain"],
+            "label": vocab.info(name, g.product)["label"],
+            "plain": vocab.info(name, g.product)["plain"],
             "decimated": src[name].size > arr.size,
             "n_original": int(src[name].size),
         }
@@ -534,6 +534,7 @@ def plot_profiles(req: PlotRequest) -> dict:
     rows = store.get_granules(req.granule_ids)
     out, skipped = [], []
     units = ""
+    products: set[str] = set()
     for row in rows:
         if not os.path.exists(row["path"]):
             skipped.append({"file": row["file_name"], "why": "file missing from cache"})
@@ -557,6 +558,7 @@ def plot_profiles(req: PlotRequest) -> dict:
         else:
             units = units or g.units.get(req.field, "") or vocab.info(req.field)["units"]
         n = min(x.size, y.size)
+        products.add(g.product)
         
         # Apply pipeline
         from .pipeline import apply_pipeline
@@ -581,7 +583,8 @@ def plot_profiles(req: PlotRequest) -> dict:
         })
     return _clean({
         "field": req.field, "vertical": req.vertical, "units": units,
-        "field_label": vocab.axis_title(req.field, units),
+        "field_label": vocab.axis_title(
+            req.field, units, next(iter(products)) if len(products) == 1 else None),
         "vertical_label": vocab.axis_title(req.vertical),
         "series": out, "skipped": skipped,
     })

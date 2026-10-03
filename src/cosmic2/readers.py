@@ -263,7 +263,7 @@ class Granule:
         for name, arr in self.data.items():
             if not include_bulk and BULK_VAR_RE.match(name):
                 continue
-            vi = vocab.info(name)
+            vi = vocab.info(name, self.product)
             finite = np.isfinite(arr)
             out.append({
                 "name": name,

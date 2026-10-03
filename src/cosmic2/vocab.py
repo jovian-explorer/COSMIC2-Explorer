@@ -613,9 +613,26 @@ DEFAULT_VERTICAL = {
 }
 
 
-def info(name: str) -> dict:
-    """Vocabulary entry for ``name``, with a safe fallback."""
-    d = VAR_INFO.get(name)
+# The same variable name means a different quantity in different products:
+# in atmPrf, "Temp" and "Pres" are the *dry* temperature and pressure (the
+# files' own long_name says so), while in wetPf2 they are the 1D-Var moist
+# retrieval.  In the lower troposphere the two differ by tens of kelvin.
+PRODUCT_ALIASES: dict[tuple[str, str], str] = {
+    ("atmPrf", "Temp"): "temp_dry",
+    ("atmPrf", "Pres"): "pres_dry",
+}
+
+
+def quantity(name: str, product: str | None = None) -> str:
+    """The vocabulary key describing ``name`` as stored in ``product``."""
+    return PRODUCT_ALIASES.get((product or "", name), name)
+
+
+def info(name: str, product: str | None = None) -> dict:
+    """Vocabulary entry for ``name`` (as stored in ``product``, if given),
+    with a safe fallback.  The returned ``name`` is always the variable
+    name itself."""
+    d = VAR_INFO.get(quantity(name, product))
     if d:
         return dict(d, name=name)
     return dict(name=name, label=name, units="", plain="", role=FIELD,
@@ -661,7 +678,8 @@ def normalise_units(raw: str) -> str:
     return _UNIT_MAP.get(raw, raw)
 
 
-def axis_title(name: str, units: str | None = None) -> str:
-    d = info(name)
+def axis_title(name: str, units: str | None = None,
+               product: str | None = None) -> str:
+    d = info(name, product)
     u = normalise_units(units if units is not None else d["units"])
     return f"{d['label']} [{u}]" if u and u != "-" else d["label"]

@@ -148,3 +148,26 @@ def test_composite_grouped_by_date_uses_the_index_date():
             for p in paths]
     comp = analysis.composite(rows, "Temp", group_by="date", min_count=1)
     assert list(comp.groups) == ["2026-07-19"]
+
+
+def test_atmprf_temp_is_labelled_dry_and_never_averaged_with_wetpf2_temp():
+    from cosmic2 import vocab
+    assert vocab.info("Temp", "atmPrf")["label"] == "Dry temperature"
+    assert vocab.info("Temp", "wetPf2")["label"] == "Temperature"
+    assert vocab.info("Temp", "atmPrf")["name"] == "Temp"
+    rows = [(str(p), {"product": p.name[:6], "good": True})
+            for p in sorted(sampledata_dir().iterdir())
+            if p.name.startswith(("atmPrf", "wetPf2"))]
+    comp = analysis.composite(rows, "Temp", group_by="all", min_count=1)
+    assert len(comp.groups) == 2
+    assert all(g["n"] == 2 for g in comp.groups.values())
+    only_atm = [r for r in rows if r[1]["product"] == "atmPrf"]
+    c2 = analysis.composite(only_atm, "Temp", group_by="all", min_count=1)
+    assert list(c2.groups) == ["all"]
+    assert c2.to_json()["field_label"].startswith("Dry temperature")
+
+
+def test_granule_variable_list_uses_product_meaning():
+    g = readers.load(str(next(sampledata_dir().glob("atmPrf_*"))))
+    labels = {v["name"]: v["label"] for v in g.variables()}
+    assert labels["Temp"] == "Dry temperature" and labels["Pres"] == "Dry pressure"
