@@ -46,9 +46,14 @@ app = FastAPI(
     openapi_url="/api/openapi.json",
     lifespan=lifespan,
 )
+# The API has no authentication, so a wildcard CORS policy would let any web
+# page open in the user's browser read the index or delete datasets and
+# exports through it.  The frontend is served from this same origin and
+# needs no CORS at all; other loopback origins (a dev server on another port)
+# stay allowed.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origin_regex=r"^https?://(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$",
     allow_methods=["*"],
     allow_headers=["*"],
 )

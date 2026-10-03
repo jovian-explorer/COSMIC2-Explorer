@@ -35,3 +35,23 @@ def test_export_provenance_says_plot_processing_was_not_applied():
     pp = res["provenance"]["processing_parameters"]
     assert pp["outlier_method"] == "mad"
     assert pp["applied_to_exported_values"] is False
+
+
+def _preflight(origin):
+    try:
+        r = _req("/api/exports/x.csv", method="OPTIONS", headers={
+            "Origin": origin, "Access-Control-Request-Method": "DELETE"})
+        return r.status, r.headers.get("access-control-allow-origin")
+    except urllib.error.HTTPError as e:
+        return e.code, e.headers.get("access-control-allow-origin")
+
+
+def test_foreign_web_origin_is_refused_by_cors():
+    status, allow = _preflight("https://example.com")
+    assert allow is None
+    assert status >= 400
+
+
+def test_loopback_origin_is_allowed_by_cors():
+    status, allow = _preflight("http://127.0.0.1:5173")
+    assert status == 200 and allow == "http://127.0.0.1:5173"
