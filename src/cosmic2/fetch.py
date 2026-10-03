@@ -14,9 +14,14 @@ Two sampling strategies:
     Take granules in archive order (chronological) and stop.  Cheapest;
     covers only the first part of the UTC day.
 ``spread``
-    Estimate the total member count live from the compression ratio observed
-    so far, then keep every *n*-th granule so the sample spans the whole day.
-    Costs more bandwidth than ``first`` but still aborts once the quota is met.
+    Fill a per-UTC-hour quota (ceil(N / 24) granules per hour, judged from the
+    hour in each filename, or the granule's own time when the name has none),
+    so the sample spans the whole day.  Costs more bandwidth than ``first``
+    but still aborts once the quota is met.
+
+If the transfer is cancelled or the connection fails part-way, the granules
+already written are still indexed (and the dataset marked incomplete), so
+nothing on disk is left invisible to searches.
 """
 from __future__ import annotations
 
@@ -264,45 +269,75 @@ class DownloadManager:
             dest = self._dest_dir(p)
             dest.mkdir(parents=True, exist_ok=True)
             job.phase, job.message = "downloading", "Streaming from CDAAC..."
-            n_bytes, metas = self._stream_extract(job, match.url, dest)
-
-            job.phase, job.message = "indexing", "Reading metadata..."
-            for m in metas:
-                m.update(stream=p["stream"], level=p["level"],
-                         year=p["year"], doy=p["doy"], date=p["date"])
-            if metas:
-                job.indexed = store.upsert_granules(metas)
-            # "complete" means the whole day is on disk: we never hit the cap,
-            # never decimated, and were not interrupted.
-            cap = p["max_profiles"]
-            reached_cap = cap is not None and job.extracted >= cap
-            complete = (not reached_cap) and job.skipped == 0 and not job.stopped()
-            key = store.record_dataset(
-                p["stream"], p["level"], p["product"], p["year"], p["doy"],
-                match.url, job.extracted, n_bytes, complete, p["max_profiles"],
-                note=f"sampling={p['sampling']}")
-            job.result.update(dataset_key=key, granules=job.extracted,
-                              bytes=n_bytes, complete=complete,
-                              directory=str(dest))
+            metas: list[dict] = []
+            try:
+                self._stream_extract(job, match.url, dest, metas)
+            except BaseException:
+                # Granules already written must not be orphaned on disk
+                # (counted against the quota but invisible to every search),
+                # so index what arrived before the cancel or network error.
+                try:
+                    self._index(job, match.url, dest, metas, interrupted=True)
+                except Exception:  # noqa: BLE001 - report the original error
+                    pass
+                raise
+            self._index(job, match.url, dest, metas, interrupted=job.stopped())
             job.state = "cancelled" if job.stopped() else "completed"
             job.phase = "done"
+            n_bytes = job.result.get("bytes", 0)
             job.message = (f"{job.extracted} granules ready "
                            f"({n_bytes / 1024 ** 2:.1f} MB on disk"
                            + (f", {job.bytes_done / 1024 ** 2:.1f} MB transferred)"
                               if job.bytes_done else ")"))
         except Cancelled:
             job.state, job.phase = "cancelled", "done"
-            job.message = f"Cancelled after {job.extracted} granules"
+            job.message = (f"Cancelled after {job.extracted} granules"
+                           + (" (kept and indexed)" if job.indexed else ""))
         except requests.RequestException as exc:
             job.state, job.phase = "failed", "done"
-            job.error = f"Network error: {exc}"
+            job.error = f"Network error: {exc}" + self._kept_note(job)
         except Exception as exc:  # noqa: BLE001
             job.state, job.phase = "failed", "done"
-            job.error = f"{type(exc).__name__}: {exc}"
+            job.error = f"{type(exc).__name__}: {exc}" + self._kept_note(job)
         finally:
             job.finished_at = time.time()
 
-    def _stream_extract(self, job: Job, url: str, dest: Path) -> tuple[int, list[dict]]:
+    @staticmethod
+    def _kept_note(job: Job) -> str:
+        return (f" ({job.indexed} granules received before the error were kept "
+                f"and indexed)") if job.indexed else ""
+
+    def _index(self, job: Job, url: str, dest: Path, metas: list[dict],
+               interrupted: bool) -> None:
+        """Index extracted granules and record the dataset."""
+        p = job.params
+        job.phase, job.message = "indexing", "Reading metadata..."
+        for m in metas:
+            m.update(stream=p["stream"], level=p["level"],
+                     year=p["year"], doy=p["doy"], date=p["date"])
+        if metas:
+            job.indexed = store.upsert_granules(metas)
+        elif interrupted:
+            return  # nothing arrived: leave no empty dataset entry behind
+        n_bytes = sum(int(m.get("size_bytes") or 0) for m in metas)
+        # "complete" means the whole day is on disk: we never hit the cap,
+        # never decimated, and were not interrupted.
+        cap = p["max_profiles"]
+        reached_cap = cap is not None and job.extracted >= cap
+        complete = (not reached_cap) and job.skipped == 0 and not interrupted
+        note = f"sampling={p['sampling']}" + ("; interrupted" if interrupted else "")
+        key = store.record_dataset(
+            p["stream"], p["level"], p["product"], p["year"], p["doy"],
+            url, len(metas), n_bytes, complete, p["max_profiles"], note=note)
+        job.result.update(dataset_key=key, granules=len(metas),
+                          bytes=n_bytes, complete=complete,
+                          directory=str(dest))
+
+    def _stream_extract(self, job: Job, url: str, dest: Path,
+                        metas: list[dict]) -> int:
+        """Stream the day's tar, appending each kept granule's metadata to
+        ``metas`` as it is written (so a caller still has the partial list if
+        this raises).  Returns the bytes written to disk."""
         p = job.params
         target = p["max_profiles"]
         sampling = p["sampling"]
@@ -320,7 +355,6 @@ class DownloadManager:
                 return False
             return hour_counts.get(h, 0) >= per_hour
 
-        metas: list[dict] = []
         on_disk = 0
         session = self.archive.session()
 
@@ -393,7 +427,7 @@ class DownloadManager:
                     if target and job.extracted >= target:
                         break  # connection closes on context exit
         job.hours_covered = len(hour_counts) if per_hour else 0
-        return on_disk, metas
+        return on_disk
 
 
 MANAGER: DownloadManager | None = None
