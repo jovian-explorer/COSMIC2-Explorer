@@ -122,3 +122,15 @@ def test_profile_figure_export_uses_every_level(monkeypatch):
     monkeypatch.setattr(plotting, "profile_figure", spy)
     api._build_figure(api.FigureRequest(kind="profiles", field="Ref"), rows)
     assert seen["n"] > 3000          # atmPrf has ~3800 levels; display cap is 900
+
+
+def test_clean_float_arrays_match_elementwise():
+    import math
+    import numpy as np
+    from cosmic2 import api
+    a = np.array([1.5, np.nan, -np.inf, 2.0, np.inf], dtype="f4")
+    assert api._clean(a) == [1.5, None, None, 2.0, None]
+    b = np.array([[1.0, np.nan], [2.0, 3.0]])
+    assert api._clean(b) == [[1.0, None], [2.0, 3.0]]
+    assert api._clean(np.array([1, 2])) == [1, 2]
+    assert all(isinstance(x, float) for x in api._clean(np.arange(3.0)))

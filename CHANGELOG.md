@@ -32,7 +32,7 @@
 
 - New **CPU workers** setting (Settings > Performance) and `--workers N` option for `cosmic2-explorer` and `cosmic2-explorer-server`: composites, profile plots, the diagnostics table, regridded CSV/netCDF exports, importing files and "Rebuild index" read granules on up to N processes when a job has 24 or more granules. 0 = automatic (CPUs - 1), 1 = serial. Results are identical to a serial run. A 400-profile atmPrf composite on 8 CPUs: 21 s serial, 2.6 s with a cold pool, 1.2 s warm.
 - Composites and profile plots of a quantity stored in the file (Temp, Pres, ELEC_dens, ...) no longer compute every derived field for each granule: about 25 % less work per profile.
-- **Draw** on the Profiles tab reads and filters the selected granules on the CPU workers when 24 or more are selected: 200 atmPrf profiles take about 1.2 s instead of 2.1 s (8 CPUs, pool already running).
+- **Draw** on the Profiles tab reads and filters the selected granules on the CPU workers when 24 or more are selected: 200 atmPrf profiles take about 0.8 s instead of 2.1 s (8 CPUs, pool already running; this includes faster conversion of the arrays to JSON, which also speeds up every other response carrying profile data).
 - netCDF-3 granules (all CDAAC products) are read with scipy first: a day-long ivmL2m file loads in about 0.2 s instead of 1.3 s; atmPrf/wetPf2 loads are several times faster.
 - The day manifest lists collections and fetches file sizes concurrently.
 
