@@ -2,7 +2,8 @@
 
 import {api, state, selectedIds, deselectRow, axisTitle, vocabInfo} from './api.js';
 import {$, el, clear, fmt, bytes, dayOf, latlon, toast, withBusy, fillSelect,
-        layoutBase, PLOT_CONFIG, PALETTE, emptyPlot, drawer, cleanPlotlyMath} from './ui.js';
+        layoutBase, PLOT_CONFIG, PALETTE, emptyPlot, drawer, cleanPlotlyMath,
+        renderMath} from './ui.js';
 
 let lastPlot = null;      // the payload behind the current profile plot
 let diagCache = null;     // diagnostics table for the scatter panel

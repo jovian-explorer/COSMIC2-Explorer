@@ -54,3 +54,22 @@ def test_science_default_settings_are_applied_to_controls():
                         ("grid_top_km", "#e-top"), ("grid_step_km", "#e-step")):
         assert f"settings.{key}" in body and target in body, key
     assert "applyScienceDefaults(settings)" in js
+
+
+def test_ui_helpers_used_in_a_module_are_imported_there():
+    """A ui.js helper called without being imported is a ReferenceError at
+    run time (the profile diagnostics panel died on renderMath this way)."""
+    ui = _read(FRONTEND / "js" / "ui.js")
+    exports = re.findall(r"export\s+(?:function|const)\s+(\w+)", ui)
+    errors = []
+    for name in JS_FILES:
+        if name == "ui.js":
+            continue
+        js = _read(FRONTEND / "js" / name)
+        m = re.search(r"import\s*\{([^}]*)\}\s*from\s*'\./ui\.js'", js, re.S)
+        imported = set(re.findall(r"\w+", m.group(1))) if m else set()
+        defined = set(re.findall(r"function\s+(\w+)", js))
+        for sym in exports:
+            if re.search(rf"(?<![\w.]){sym}\(", js) and sym not in imported | defined:
+                errors.append(f"{name}: calls {sym}() without importing it")
+    assert not errors, "\n".join(errors)
