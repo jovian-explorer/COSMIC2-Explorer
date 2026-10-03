@@ -570,6 +570,18 @@ async function exportData() {
     step_km: Number($('#e-step').value) || 0.2,
     basename: $('#e-name').value || 'cosmic2',
   }, selection($('#e-selected-only').checked));
+  if (kind === 'composite') {
+    // The figure reproduces the Compare tab's average as drawn there: its
+    // quantity, height, grid and Kelvin choice (the grid used to fall back to
+    // 0-60 km, which left an ionospheric composite empty).
+    Object.assign(req, {
+      field: $('#c-field').value,
+      vertical: $('#c-vertical').value || 'MSL_alt',
+      top_km: Number($('#c-top').value) || 40,
+      step_km: Number($('#c-step').value) || 0.5,
+      convert_kelvin: $('#c-field').value === 'Temp',
+    });
+  }
   
   // Attach current processing parameters for provenance
   req.outlier_method = $('#p-outlier-method') ? $('#p-outlier-method').value : 'none';

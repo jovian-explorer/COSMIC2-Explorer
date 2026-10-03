@@ -30,6 +30,7 @@
 - netCDF exports use UDUNITS unit strings (`degree_Celsius`, `kg m-3`, `s-2`, ...). `C` is the coulomb to UDUNITS, so tools that decode units read temperature as a charge.
 - The `Software License` line in CSV headers is plain text (name, copyright, URL); it was a Python dictionary dump.
 - Export provenance now states that the Profiles-tab outlier/smoothing/uncertainty settings were not applied to the exported values.
+- The exported "Group averages" figure reproduces the Compare tab's average: its quantity, height, top and step. It used the Export tab's quantity, the Profiles tab's height and a fixed 0-60 km grid, so an ionospheric composite came out empty.
 - Exported figures keep their captions (they were cut off), embed TrueType fonts in PDF/EPS instead of Type 3, follow the Plot Theme setting, draw profiles from every level rather than the 900-point screen subsample, and keep a linear axis when the log switch meets data with no positive values. Concurrent figure exports no longer mix their DPI or styling.
 
 ### Performance

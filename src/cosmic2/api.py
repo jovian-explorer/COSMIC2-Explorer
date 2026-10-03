@@ -719,6 +719,8 @@ class FigureRequest(BaseModel):
     logx: bool = False
     spread: Literal["std", "p10p90"] = "std"
     convert_kelvin: bool = False
+    top_km: float = Field(default=60.0, gt=0)     # composite grid
+    step_km: float = Field(default=0.5, gt=0)
     max_profiles: int = 2000
     outlier_method: str = "none"
     smooth_method: str = "none"
@@ -759,6 +761,7 @@ def _build_figure(req: FigureRequest, rows: list[dict]):
     if req.kind == "composite":
         comp = analysis.composite([(r["path"], r) for r in rows], req.field,
                                   req.vertical, group_by=req.group_by,
+                                  top_km=req.top_km, step_km=req.step_km,
                                   convert_kelvin=req.convert_kelvin).to_json()
         return plotting.composite_figure(comp, spread=req.spread, title=req.title,
                                          caption=req.caption, logx=req.logx)

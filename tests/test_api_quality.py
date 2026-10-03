@@ -134,3 +134,18 @@ def test_clean_float_arrays_match_elementwise():
     assert api._clean(b) == [[1.0, None], [2.0, 3.0]]
     assert api._clean(np.array([1, 2])) == [1, 2]
     assert all(isinstance(x, float) for x in api._clean(np.arange(3.0)))
+
+
+def test_composite_figure_uses_the_requested_grid(monkeypatch):
+    from cosmic2 import api, plotting, readers
+    from cosmic2.config import sampledata_dir
+    seen = {}
+    monkeypatch.setattr(plotting, "composite_figure",
+                        lambda comp, **kw: seen.setdefault("comp", comp))
+    rows = [dict(readers.quick_meta(str(p)), id="x", date="2026-07-19")
+            for p in sampledata_dir().glob("ionPrf_*")]
+    req = api.FigureRequest(kind="composite", field="ELEC_dens", group_by="all",
+                            top_km=600, step_km=10)
+    api._build_figure(req, rows)
+    grid = seen["comp"]["grid"]
+    assert grid[-1] == 600 and grid[1] - grid[0] == 10
