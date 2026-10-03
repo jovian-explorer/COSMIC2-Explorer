@@ -676,7 +676,11 @@ def composite(granule_paths: Sequence[tuple[str, dict]], field: str,
         col = interp_field(src[vertical], v, grid, field, max_gap=2.0)
         if not np.isfinite(col).any():
             continue
-        buckets.setdefault(_group_key(g.meta, group_by), []).append(col)
+        # The granule's own metadata, completed by the index row: "date"
+        # (and the processing stream) exist only in the index, so grouping by
+        # date put every profile under "unknown" before.
+        gmeta = {**meta, **{k: v for k, v in g.meta.items() if v is not None}}
+        buckets.setdefault(_group_key(gmeta, group_by), []).append(col)
         used += 1
 
     groups: dict[str, dict] = {}

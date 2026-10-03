@@ -140,3 +140,11 @@ def test_density_counts_water_vapour():
     np.testing.assert_allclose(rho, expected, rtol=1e-12)
     dry = p / (analysis.R_DRY * tk)
     assert np.nanmax(dry - rho) > 0                     # moist air is lighter
+
+
+def test_composite_grouped_by_date_uses_the_index_date():
+    paths = sorted(sampledata_dir().glob("wetPf2_*"))
+    rows = [(str(p), {"product": "wetPf2", "good": True, "date": "2026-07-19"})
+            for p in paths]
+    comp = analysis.composite(rows, "Temp", group_by="date", min_count=1)
+    assert list(comp.groups) == ["2026-07-19"]
