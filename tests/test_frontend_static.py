@@ -73,3 +73,24 @@ def test_ui_helpers_used_in_a_module_are_imported_there():
             if re.search(rf"(?<![\w.]){sym}\(", js) and sym not in imported | defined:
                 errors.append(f"{name}: calls {sym}() without importing it")
     assert not errors, "\n".join(errors)
+
+
+def test_settings_number_inputs_accept_their_default_values():
+    """The browser will not submit a form whose number input holds a value
+    off its min/step lattice; the Settings form could not be saved at all
+    while the DPI field had min 72, step 10 and default 300."""
+    from decimal import Decimal
+    js = _read(FRONTEND / "js" / "main.js")
+    body = js[js.index("function settingsBody"):]
+    bad = []
+    for m in re.finditer(r"el\('input', \{type: 'number'(.*?)\}\)", body, re.S):
+        attrs = m.group(1)
+        step = re.search(r"step: ([^,}\s]+)", attrs)
+        lo = re.search(r"min: ([\d.]+)", attrs)
+        val = re.search(r"value: [^,}]*?(?:\|\||\?\?)\s*([\d.]+)", attrs)
+        if not (step and lo and val) or step.group(1).strip("'\"") == "any":
+            continue
+        k = (Decimal(val.group(1)) - Decimal(lo.group(1))) / Decimal(step.group(1))
+        if k != k.to_integral_value():
+            bad.append(attrs.strip()[:60])
+    assert not bad, bad

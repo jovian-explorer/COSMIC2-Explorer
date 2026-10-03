@@ -120,6 +120,9 @@ function applyScienceDefaults(settings) {
   if (settings.grid_step_km) set('#e-step', (n) => { n.value = settings.grid_step_km; });
 }
 
+// Every number input in this form must accept its own default: the browser
+// refuses to submit a form when value is not min + k * step, and the old DPI
+// field (min 72, step 10, value 300) silently blocked every Settings save.
 function settingsBody() {
   const container = el('div', {class: 'stack'});
   
@@ -184,7 +187,7 @@ function settingsBody() {
       )
     ),
     el('label', {}, 'Plot DPI (Export) ',
-      el('input', {type: 'number', id: 's-plot-dpi', value: state.meta.settings.plot_dpi || 300, min: 72, max: 1200, step: 10})
+      el('input', {type: 'number', id: 's-plot-dpi', value: state.meta.settings.plot_dpi || 300, min: 50, max: 1200, step: 10})
     ),
     el('hr'),
     el('h3', {}, 'Science Defaults'),
@@ -208,11 +211,11 @@ function settingsBody() {
       ' Require Good QC by default'
     ),
     el('label', {}, 'Export grid top (km) ',
-      el('input', {type: 'number', id: 's-grid-top', min: 1, step: 5,
+      el('input', {type: 'number', id: 's-grid-top', min: 5, step: 5,
                    value: state.meta.settings.grid_top_km || 60})
     ),
     el('label', {}, 'Export grid step (km) ',
-      el('input', {type: 'number', id: 's-grid-step', min: 0.01, step: 0.05,
+      el('input', {type: 'number', id: 's-grid-step', min: 0.01, step: 'any',
                    value: state.meta.settings.grid_step_km || 0.2})
     ),
     el('hr'),
