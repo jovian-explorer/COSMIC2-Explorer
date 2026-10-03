@@ -740,7 +740,9 @@ def composite(granule_paths: Sequence[tuple[str, dict]], field: str,
             warnings.simplefilter("ignore", RuntimeWarning)
             mean = np.nanmean(m, axis=0)
             median = np.nanmedian(m, axis=0)
-            std = np.nanstd(m, axis=0, ddof=1) if m.shape[0] > 1 else np.zeros(grid.size)
+            # Sample std; undefined (NaN) where only one profile reaches a
+            # level, rather than a misleading zero-width spread band.
+            std = np.nanstd(m, axis=0, ddof=1)
             p10 = np.nanpercentile(m, 10, axis=0)
             p90 = np.nanpercentile(m, 90, axis=0)
         thin = count < min_count

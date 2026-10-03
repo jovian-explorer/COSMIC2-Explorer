@@ -171,3 +171,12 @@ def test_granule_variable_list_uses_product_meaning():
     g = readers.load(str(next(sampledata_dir().glob("atmPrf_*"))))
     labels = {v["name"]: v["label"] for v in g.variables()}
     assert labels["Temp"] == "Dry temperature" and labels["Pres"] == "Dry pressure"
+
+
+def test_composite_spread_of_a_single_profile_is_undefined_not_zero():
+    p = next(sampledata_dir().glob("wetPf2_*"))
+    comp = analysis.composite([(str(p), {"product": "wetPf2", "good": True})],
+                              "Temp", min_count=1)
+    g = comp.groups["all"]
+    assert np.isfinite(g["mean"]).any()
+    assert not np.isfinite(g["std"]).any()
