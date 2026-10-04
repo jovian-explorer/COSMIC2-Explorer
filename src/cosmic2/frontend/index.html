@@ -27,6 +27,7 @@
     <button class="tab" role="tab" data-tab="explore">Explore</button>
     <button class="tab" role="tab" data-tab="profile">Profiles</button>
     <button class="tab" role="tab" data-tab="composite">Compare</button>
+    <button class="tab" role="tab" data-tab="stats">Statistics</button>
     <button class="tab" role="tab" data-tab="export">Export</button>
   </nav>
   <div class="topright">
@@ -717,6 +718,44 @@
         <p class="hint" id="scatter-caption"></p>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ==================== STATISTICS ==================== -->
+<section class="panel" id="tab-stats">
+  <div class="explain" data-curious>
+    How many profiles there are, where and when they were taken, how many the
+    archive flagged as bad and how close to the ground they reached. The
+    numbers cover the current Explore search, or only your selection.
+  </div>
+  <div class="card">
+    <div class="card-head">
+      <h2>Sampling and quality</h2>
+      <div class="row tight">
+        <label class="check"><input type="checkbox" id="st-selected-only">
+          Use only my selection</label>
+        <button class="primary" id="btn-stats">Compute</button>
+      </div>
+    </div>
+    <div class="scroll-x">
+      <table class="table" id="st-table">
+        <thead><tr><th>Product</th><th>Profiles</th><th>Flagged bad</th>
+          <th>Bad codes</th><th>Median levels</th><th>Latitudes</th>
+          <th>Median lowest level</th><th>Below 1 km (sea level)</th>
+          <th>Below 1 km (ground)</th></tr></thead>
+        <tbody><tr><td colspan="9" class="hint">Press Compute.</td></tr></tbody>
+      </table>
+    </div>
+    <p class="hint" id="st-caption"></p>
+  </div>
+  <div class="grid-2">
+    <div class="card"><h2>Profiles by latitude</h2><div id="st-lat-plot" class="plot"></div></div>
+    <div class="card"><h2>Profiles by local solar time</h2><div id="st-lt-plot" class="plot"></div></div>
+    <div class="card"><h2>Penetration depth</h2><div id="st-pen-plot" class="plot"></div>
+      <p class="hint">Height of the lowest retrieved level of each good neutral
+        profile (above sea level), with the fraction of profiles reaching below
+        each height.</p></div>
+    <div class="card"><h2>Median lowest level by latitude</h2><div id="st-penlat-plot" class="plot"></div></div>
   </div>
 </section>
 

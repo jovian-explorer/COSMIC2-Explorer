@@ -11,6 +11,10 @@
 - DATA_POLICY.md: no account is needed for CDAAC (it said registration through UCAR credentials); the UCAR data DOI is `10.5065/T353-C093` (it gave a DOI that does not resolve); the streams listed are the ones the app reads; no Parquet files are written. pandas and Requests are added to the third-party licences.
 - The data terms no longer call UCAR CDAAC data "public domain": UCAR publishes no licence text, and asks for a citation of doi:10.5065/T353-C093. The NCEI, TASA, NASA CDDIS and ISRO ISSDC portals are labelled as references the app does not download from.
 
+### New science features
+
+- **Statistics tab: sampling, quality flags and penetration depth.** For the current Explore search (or the selection) it counts profiles by product, latitude and local solar time, lists how many CDAAC flagged as bad and with which `bad` code, and shows the penetration depth of good neutral profiles: the lowest retrieved level as a histogram with the cumulative fraction, its median by latitude, and the fraction reaching below 1 km above sea level and above the ground. The above-ground height uses the terrain height stored in the wetPf2 file retrieved from the same atmPrf. On the 600 atmPrf profiles of 2026-06-20 and 2026-09-30, 84.5 % of the 549 with a matching wetPf2 reach within 1 km of the ground, in line with the more than 80 % reported for COSMIC-2 by Schreiner et al. (2020); the lowest levels agree with CDAAC's `profile_bottom_km` to 0.2 mm. New endpoint `POST /api/stats/sampling`; it reads only the index, so it is instant.
+
 ### Science fixes (results change)
 
 - **Vertical TEC below hmF2** now integrates the whole profile from its lowest level up to the F2 peak. It previously started at 150 km, dropping the E and lower F region (bundled ionPrf sample: 14.3 to 16.4 TECU).

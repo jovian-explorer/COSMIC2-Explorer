@@ -21,8 +21,9 @@ The retrievals themselves (bending angle, refractivity, temperature, humidity, e
 2. **Five COSMIC-2 products**: reads `wetPf2`, `atmPrf`, `ionPrf`, `scnLv2` and `ivmL2m`. Downloads come from UCAR CDAAC; files in the same format from elsewhere (for example NOAA NCEI) can be dropped onto the window to be indexed.
 3. **Diagnostics**: from CDAAC's retrieved (Abel-inverted) profiles the app computes the cold-point tropopause, the WMO lapse-rate tropopause (searched above 500 hPa, and on dry temperature only below 235 K), density ($\rho$, including water vapour where available), scale height ($H$), potential temperature ($\theta$), Brunt-Vaisala frequency ($N_{BV}^2$), F2 and E layer peaks with foF2, vertical TEC, integrated water vapour, ducting layers, boundary-layer height and gravity-wave potential energy ($E_p$, 20-40 km). Where the file carries CDAAC's own value (tropopause, cold point, NmF2, hmF2, TEC, S4) the two are shown side by side.
 4. **Interactive plots**: overlay up to 200 profiles of any quantity on any height axis; optionally filter outliers (sigma, MAD, IQR, percentile) and smooth (moving average, Gaussian, median, Savitzky-Golay) on screen, beside the raw profile; average profiles in groups (latitude band, hemisphere, day/night, date, product, satellite); and scatter any per-profile diagnostic against another.
-5. **Parallel Processing**: Composites, diagnostics tables, regridded exports and indexing run on a user-chosen number of CPU worker processes.
-6. **Exports**: Matplotlib figures (PNG at 300 dpi by default, PDF, SVG, EPS), regridded netCDF-4 with CF-style attributes and UDUNITS units, CSV tables and JSON. Data files carry their provenance (input files, software version, data citation); figure files do not.
+5. **Statistics**: counts by product, latitude and local time, the archive's quality flags, and penetration depth (lowest retrieved level, above sea level and, where the matching wetPf2 gives the terrain height, above the ground) for the current search.
+6. **Parallel Processing**: Composites, diagnostics tables, regridded exports and indexing run on a user-chosen number of CPU worker processes.
+7. **Exports**: Matplotlib figures (PNG at 300 dpi by default, PDF, SVG, EPS), regridded netCDF-4 with CF-style attributes and UDUNITS units, CSV tables and JSON. Data files carry their provenance (input files, software version, data citation); figure files do not.
 
 ---
 
@@ -95,6 +96,7 @@ Work that reads many granules (composites, profile plots, the diagnostics table,
 * Pressure, density, vapour pressure, specific humidity and electron density are interpolated in log space when profiles are put on a common grid.
 * Profile error bars are the running scatter of the values about their running mean (an estimate of level-to-level noise), not a retrieval uncertainty.
 * The integrated water vapour starts at the lowest retrieved level; the height of that level is given alongside the value.
+* Penetration depth is the lowest retrieved level of good atmPrf/wetPf2 profiles. Above the ground it uses the terrain height stored in the wetPf2 retrieved from the same atmPrf; on the 600 atmPrf profiles of 2026-06-20 and 2026-09-30, 84.5 % reach within 1 km of the ground (76.8 % below 1 km above sea level), in line with the more than 80 % reported by Schreiner et al. (2020).
 * Exports contain the archive values and derived fields. The outlier, smoothing and uncertainty settings on the Profiles tab affect the on-screen plot only, and the export provenance says so.
 
 ### Platform notes

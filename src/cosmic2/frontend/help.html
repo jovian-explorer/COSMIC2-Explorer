@@ -60,6 +60,9 @@
   <p>$$\text{VTEC} = 10^{-7} \int_{z_{base}}^{z_{top}} \max(N_e, 0)\,dz \quad [\text{TECU}]$$</p>
   <p>with $N_e$ in el/cm$^3$ and $z$ in km ($1\text{ TECU} = 10^{16}\text{ electrons/m}^2$). Negative densities, an Abel-inversion artefact of the bottomside, count as zero, as in CDAAC's own <code>tec0</code>. Both the column below hmF2 and the whole-profile column are reported.</p>
 
+  <h4>H. Sampling, Quality and Penetration Depth (Statistics tab)</h4>
+  <p>The Statistics tab counts the profiles of the current Explore search (or your selection) by product, latitude and local solar time, including those CDAAC flagged as bad, with their <code>bad</code> codes. The <em>penetration depth</em> is the height of the lowest retrieved level of each good atmPrf or wetPf2 profile above mean sea level. For atmPrf it is also given above the ground, using the terrain height stored in the wetPf2 file retrieved from the same occultation (both products of the day must be on disk). The atmPrf value is checked against CDAAC's own <code>profile_bottom_km</code>.</p>
+
   <h3>4. Profile-Plot Processing (on-screen only)</h3>
   <p>The Profiles tab can filter and smooth what is drawn. These settings change the plot only: exported data are the archive values and derived fields, and the export provenance says so.</p>
   <ol>

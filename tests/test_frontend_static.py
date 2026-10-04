@@ -10,7 +10,7 @@ import re
 from pathlib import Path
 
 FRONTEND = Path(__file__).resolve().parents[1] / "src" / "cosmic2" / "frontend"
-JS_FILES = ["main.js", "tabs_data.js", "tabs_science.js", "ui.js", "api.js"]
+JS_FILES = ["main.js", "tabs_data.js", "tabs_science.js", "tabs_stats.js", "ui.js", "api.js"]
 
 
 def _read(path: Path) -> str:

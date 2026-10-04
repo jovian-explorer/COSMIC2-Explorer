@@ -75,6 +75,7 @@ export const api = {
   plotProfiles:  (req)       => call('/api/plot/profiles', {method: 'POST', body: req}),
   composite:     (req)       => call('/api/composite', {method: 'POST', body: req}),
   diagTable:     (req)       => call('/api/diagnostics/table', {method: 'POST', body: req}),
+  statsSampling: (req)       => call('/api/stats/sampling', {method: 'POST', body: req}),
 
   exportData:    (req)       => call('/api/export/data', {method: 'POST', body: req}),
   exportFigure:  (req)       => call('/api/export/figure', {method: 'POST', body: req}),

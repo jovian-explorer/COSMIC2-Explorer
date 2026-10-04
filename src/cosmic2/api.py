@@ -22,7 +22,8 @@ from pydantic import BaseModel, Field
 
 from contextlib import asynccontextmanager
 
-from . import analysis, exporters, fetch, parallel, plotting, readers, store, vocab
+from . import (analysis, climatology, exporters, fetch, parallel, plotting,
+               readers, store, vocab)
 from .catalog import (COLLECTIONS, PRODUCTS, STREAMS, Archive, date_to_doy,
                       describe_product, doy_to_date)
 from .config import (APP_TITLE, APP_VERSION, CACHE_DIR, EXPORT_DIR, SETTINGS,
@@ -634,6 +635,39 @@ def diagnostics_table(req: DiagnosticsTableRequest) -> dict:
     columns = sorted({k for row in table for k in row})
     return _clean({"rows": table, "columns": columns, "n": len(table),
                    "unreadable": failed})
+
+
+# ---------------------------------------------------------------------------
+# statistics and climatologies
+# ---------------------------------------------------------------------------
+
+class StatsRequest(BaseModel):
+    granule_ids: list[str] | None = None
+    search: SearchRequest | None = None
+    lat_step: float = Field(default=10.0, gt=0, le=90)
+    max_profiles: int = Field(default=200000, ge=1)
+
+
+@app.post("/api/stats/sampling")
+def stats_sampling(req: StatsRequest) -> dict:
+    """Counts, quality flags and penetration depth of a selection.
+
+    Read from the index only (no granule is opened), so it is instant even
+    for a whole downloaded month.
+    """
+    if req.granule_ids:
+        rows = store.get_granules(req.granule_ids)
+    else:
+        payload = (req.search.model_dump() if req.search is not None else {})
+        payload.update(limit=req.max_profiles, offset=0)
+        rows = store.query_granules(**payload)["granules"]
+    if not rows:
+        raise HTTPException(400, "No local profiles match that selection")
+    # Terrain heights come from every wetPf2 on disk, so an atmPrf-only
+    # selection still gets heights above the ground.
+    wet = store.query_granules(products=["wetPf2"], limit=10 ** 7)["granules"]
+    return _clean(climatology.sampling_statistics(
+        rows, lat_step=req.lat_step, terrain=climatology.terrain_by_atmprf(wet)))
 
 
 # ---------------------------------------------------------------------------

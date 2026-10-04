@@ -5,6 +5,7 @@ import {$, $$, el, banner, toast, drawer, renderMath, updatePlotlyFonts} from '.
 import {initGetTab, initExploreTab, refreshLocal, refreshFacets,
         runSearch, loadSamples, updateProfileCounter} from './tabs_data.js';
 import {initProfileTab, initCompositeTab, initExportTab} from './tabs_science.js';
+import {initStatsTab} from './tabs_stats.js';
 
 const FONT_SCALES = [0.85, 0.92, 1.0, 1.10, 1.20, 1.32, 1.45];
 let currentScaleIdx = 2; // Default 1.0 (100%)
@@ -543,6 +544,7 @@ async function boot() {
   initExploreTab();
   initProfileTab();
   initCompositeTab();
+  initStatsTab();
   initExportTab();
   renderMath(document.body);
 
