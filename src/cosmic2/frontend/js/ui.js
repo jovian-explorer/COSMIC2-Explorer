@@ -31,7 +31,10 @@ export function fmt(v, digits = 2) {
   if (v !== 0 && (Math.abs(v) >= 1e5 || Math.abs(v) < 1e-3)) {
     return v.toExponential(2).replace('e+', '\u00d710^').replace('e-', '\u00d710^-');
   }
-  return v.toFixed(digits).replace(/\.?0+$/, '') || '0';
+  // Trim trailing zeros of the decimals only: with digits = 0 the old
+  // pattern also ate the zeros of the integer (fmt(100, 0) gave "1").
+  const s = v.toFixed(digits);
+  return s.includes('.') ? s.replace(/\.?0+$/, '') : s;
 }
 
 export function bytes(n) {

@@ -104,3 +104,23 @@ def test_export_handlers_declare_what_they_use():
         body = src.split(f"async function {fn}()", 1)[1].split("\n}\n", 1)[0]
         if re.search(r"\bkind\s*===", body):
             assert re.search(r"\b(const|let|var)\s+kind\b", body), fn
+
+
+def test_fmt_keeps_integer_zeros():
+    """fmt(100, 0) returned "1": the trailing-zero trim also ate the zeros
+    of an integer.  Runs ui.js under Node when it is installed."""
+    import shutil
+    import subprocess
+    import pytest
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("Node.js not installed")
+    url = (FRONTEND / "js" / "ui.js").resolve().as_uri()
+    code = (f"import {{fmt}} from '{url}';"
+            "console.log([fmt(100, 0), fmt(2.5, 2), fmt(12, 2), fmt(0, 0),"
+            " fmt(1.25, 1), fmt(-40, 0)].join('|'))")
+    out = subprocess.run([node, "--input-type=module", "-e", code],
+                         capture_output=True, text=True, timeout=60)
+    if out.returncode != 0 and "SyntaxError" in out.stderr:
+        pytest.skip("this Node cannot load ES modules from a .js file")
+    assert out.stdout.strip() == "100|2.5|12|0|1.3|-40", out.stderr
