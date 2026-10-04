@@ -42,9 +42,9 @@ DATA_AVAILABILITY_STATEMENT = (
 DATA_LICENSES = {
     "cdaac": {
         "name": "UCAR CDAAC Data Terms of Use",
-        "type": "Open Access / Public Domain",
+        "type": "Open access (no account needed)",
         "url": "https://www.cosmic.ucar.edu/what-we-do/cosmic-2/data",
-        "terms": "Freely available for scientific research, operational weather prediction, and educational use under UCAR open data policy.",
+        "terms": "Downloadable from the CDAAC archive without registration. UCAR asks users to cite the data set as UCAR COSMIC Program (2019), COSMIC-2 Data Products, doi:10.5065/T353-C093.",
     },
     "noaa": {
         "name": "NOAA Open Data Policy",
@@ -77,7 +77,7 @@ DATA_PORTALS = [
         "agency": "NOAA / NESDIS",
         "url": "https://www.ncei.noaa.gov/data/gps-radio-occultation/",
         "portal_url": "https://www.nesdis.noaa.gov/current-satellite-missions/currently-flying/formosat-7-cosmic-2",
-        "description": "Long-term operational archive for FORMOSAT-7 / COSMIC-2 constellation observations.",
+        "description": "NOAA's long-term archive of radio occultation data, including FORMOSAT-7 / COSMIC-2. COSMIC-2 Explorer downloads from CDAAC only, but reads the same netCDF products if you import them.",
         "streams": ["operational", "reanalysis"],
     },
     {
@@ -86,7 +86,7 @@ DATA_PORTALS = [
         "agency": "TASA / NSPO",
         "url": "https://www.tasa.org.tw/en-US/",
         "portal_url": "https://tacc.cwb.gov.tw/",
-        "description": "Co-lead agency operating the FORMOSAT-7 / COSMIC-2 satellite constellation.",
+        "description": "Taiwan's space agency, which operates the FORMOSAT-7 / COSMIC-2 satellites with NOAA. Listed for reference.",
         "streams": ["nrt", "postcal"],
     },
     {
@@ -95,7 +95,7 @@ DATA_PORTALS = [
         "agency": "NASA Earth Science Data and Information System (ESDIS)",
         "url": "https://cddis.nasa.gov/archive/gnss/products/ionex/",
         "portal_url": "https://cddis.nasa.gov/",
-        "description": "Global GNSS tracking and precise orbit determination (POD) data portal.",
+        "description": "Global GNSS tracking, precise orbit and ionosphere (IONEX) products. Listed for reference; COSMIC-2 Explorer does not read these data.",
         "streams": ["pod", "ionex"],
     },
     {
@@ -104,7 +104,7 @@ DATA_PORTALS = [
         "agency": "Indian Space Research Organisation (ISRO)",
         "url": "https://pradan.issdc.gov.in/",
         "portal_url": "https://www.issdc.gov.in/",
-        "description": "Space Physics Laboratory (SPL/VSSC) planetary radio science and exospheric instruments repository.",
+        "description": "ISRO's archive (ISSDC) for data from Indian space-science missions such as Chandrayaan-2 and the Mars Orbiter Mission. Listed for reference; COSMIC-2 Explorer does not read these data.",
         "streams": ["ch2_dfrs", "mom_menca", "chace2"],
     },
 ]

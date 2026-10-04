@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Documentation and references
+
+- **References and DOIs corrected** in the Variables catalogue, the product descriptions and the tutorial. 23 variables cited `10.1029/97RG02808`, which does not exist; others linked to unrelated papers (the ivmL2m ion density to a Mars 2020 overview, electron density to an Arctic Ocean study, S4/sigma-phi to an HF propagation correction). Every DOI the app shows has now been resolved at doi.org and its first author checked (Kursinski et al. 1997 is `10.1029/97JD01569`; COSMIC-2 products cite Schreiner et al. 2020, GRL; the IVM cites Heelis et al. 2017; and so on). Where no DOI exists (WGS-84, US Standard Atmosphere, textbooks without one) the reference text stays and the DOI is left empty. `tests/test_references.py` keeps the list honest and re-resolves it with `COSMIC2_NETWORK_TESTS=1`.
+- Variable descriptions say what the app does: relative humidity is CDAAC's value (it is not computed here with Goff-Gratch); the refractivity gradient is smoothed over 5 levels; scale height uses constant g0; dry temperature equals the real temperature only in dry air, above about 8-10 km in the tropics.
+- The data terms no longer call UCAR CDAAC data "public domain": UCAR publishes no licence text, and asks for a citation of doi:10.5065/T353-C093. The NCEI, TASA, NASA CDDIS and ISRO ISSDC portals are labelled as references the app does not download from.
+
 ### Science fixes (results change)
 
 - **Vertical TEC below hmF2** now integrates the whole profile from its lowest level up to the F2 peak. It previously started at 150 km, dropping the E and lower F region (bundled ionPrf sample: 14.3 to 16.4 TECU).

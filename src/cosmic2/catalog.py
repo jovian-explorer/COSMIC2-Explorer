@@ -86,7 +86,9 @@ class Product:
     doi: str = ""
     archive_url: str = ""
     processing_chain: str = ""
-    license: str = "Public Domain (U.S. Federal Government / CC0-compatible) with UCAR CDAAC attribution"
+    # UCAR publishes no licence text for these data; it asks for a citation.
+    license: str = ("Openly available from UCAR CDAAC without an account; "
+                    "cite UCAR COSMIC Program (2019), doi:10.5065/T353-C093")
 
 
 PRODUCTS: dict[str, Product] = {p.code: p for p in [
@@ -98,8 +100,8 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         "you get from it if you ignore water vapour.",
         "large",
         ("Bend_ang", "Ref", "Temp", "Pres", "MSL_alt", "Impact_height"),
-        reference="Schreiner, W. S., et al. (2020), Atmos. Meas. Tech., 13, 6499-6519",
-        doi="10.5194/amt-13-6499-2020",
+        reference="Schreiner, W. S., et al. (2020), COSMIC-2 radio occultation constellation: first results, Geophys. Res. Lett., 47, e2019GL086841",
+        doi="10.1029/2019GL086841",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/atmPrf/",
         processing_chain="L1b excess phase -> Doppler frequency shift -> geometric optical impact parameter -> dual-frequency ionospheric combination -> Abel integral inversion -> hydrostatic downward integration for dry temperature and pressure."
     ),
@@ -111,7 +113,7 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         "This is the friendliest product to start with.",
         "medium",
         ("Temp", "Pres", "Vp", "sph", "rh", "ref", "gph", "MSL_alt"),
-        reference="Healy, S. B., & Eyre, J. R. (2000), QJRMS, 126, 1661-1680",
+        reference="Healy, S. B., & Eyre, J. R. (2000), Q. J. R. Meteorol. Soc., 126, 1661-1683",
         doi="10.1002/qj.49712656606",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/wetPf2/",
         processing_chain="Level 2 refractivity and dry pressure combined with ECMWF/GFS analysis background via 1D-Var optimal estimation to separate temperature and water vapor profiles on a uniform 100 m vertical grid."
@@ -124,7 +126,7 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         "small",
         ("ELEC_dens", "TEC_cal", "MSL_alt"),
         reference="Syndergaard, S. (2000), Radio Sci., 35(3), 865-883",
-        doi="10.1029/2000RS002319",
+        doi="10.1029/1999RS002199",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/provisional/spaceWeather/level2/ionPrf/",
         processing_chain="Calibrated dual-frequency excess phase L1-L2 -> ionospheric bending angle -> Abel transform inversion under local spherical symmetry assumption to yield electron density profile from 80 to 800 km."
     ),
@@ -136,8 +138,8 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         "patches in the ionosphere.",
         "small",
         ("s4_L1", "sigma_phi_L1", "occheight", "elevation"),
-        reference="Carrano, C. S., et al. (2011), Radio Sci., 46, RS0D07",
-        doi="10.1029/2011RS004707",
+        reference="Carrano, C. S., et al. (2011), Multiple phase screen modeling of ionospheric scintillation along radio occultation raypaths, Radio Sci., 46, RS0D07",
+        doi="10.1029/2010RS004591",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/scnLv2/",
         processing_chain="50 Hz raw SNR and carrier phase detrended over 1-second sliding windows -> calculation of amplitude scintillation index S4 and phase scintillation sigma-phi along ray path."
     ),
@@ -149,8 +151,8 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         "is drifting.",
         "medium",
         ("ion_dens", "ion_temp", "iv_zon", "iv_mer", "alt", "lat", "lon"),
-        reference="Klenzing, J., et al. (2020), Space Sci. Rev., 216, 142",
-        doi="10.1007/s11214-020-00762-y",
+        reference="Heelis, R. A., et al. (2017), Ion velocity measurements for the Ionospheric Connections Explorer, Space Sci. Rev., 212, 615-629 (the COSMIC-2 IVM is the same University of Texas at Dallas design)",
+        doi="10.1007/s11214-017-0383-3",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/ivmL2m/",
         processing_chain="In-situ Ion Velocity Meter (IVM) planar ion trap measurements at ~550 km orbit: retarding potential analysis yields ion density and temperature, drift meter yields 3-component plasma velocity vectors."
     ),
@@ -159,8 +161,8 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         "Retrieved profile co-located with an operational analysis, for comparison.",
         "The same profile, lined up against a weather-model forecast.",
         "medium",
-        reference="Schreiner, W. S., et al. (2020), Atmos. Meas. Tech., 13, 6499-6519",
-        doi="10.5194/amt-13-6499-2020",
+        reference="Schreiner, W. S., et al. (2020), COSMIC-2 radio occultation constellation: first results, Geophys. Res. Lett., 47, e2019GL086841",
+        doi="10.1029/2019GL086841",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/avnPrf/",
         processing_chain="CDAAC retrieval profile matched and interpolated onto operational NCEP GFS model vertical analysis levels."
     ),
@@ -169,8 +171,8 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         "ECMWF analysis interpolated to the occultation location.",
         "What a weather model thought the atmosphere looked like at the same spot.",
         "medium",
-        reference="Healy, S. B., et al. (2005), QJRMS, 131, 1665-1677",
-        doi="10.1256/qj.04.182",
+        reference="CDAAC: ECMWF analysis interpolated to the occultation location",
+        doi="",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/postProc/level2/echPrf/",
         processing_chain="ECMWF high-resolution global reanalysis thermodynamic state interpolated to occultation tangent point coordinates and time."
     ),
@@ -180,7 +182,7 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         "The packed format weather centres feed into their forecast models.",
         "small",
         reference="WMO Manual on Codes (WMO-No. 306), Volume I.2",
-        doi="10.5194/amt-13-6499-2020",
+        doi="",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/bfrPrf/",
         processing_chain="Binary Universal Form for the Representation of meteorological data (BUFR) encoding for operational assimilation into global NWP centers."
     ),
@@ -189,8 +191,8 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         "Level 1b excess phase and amplitude - the input to the retrieval chain.",
         "The most raw measurement: how much the signal was delayed, moment by moment.",
         "large",
-        reference="Schreiner et al. (2020), Atmos. Meas. Tech., 13, 6499-6519",
-        doi="10.5194/amt-13-6499-2020",
+        reference="Schreiner, W. S., et al. (2020), COSMIC-2 radio occultation constellation: first results, Geophys. Res. Lett., 47, e2019GL086841",
+        doi="10.1029/2019GL086841",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level1b/conPhs/",
         processing_chain="High-rate 50 Hz carrier phase observations combined with precise satellite orbit and clock corrections to compute atmospheric excess phase."
     ),
@@ -199,8 +201,8 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         "Absolute TEC along the receiver-to-GNSS link from the POD antenna.",
         "Total electron content measured on the satellite's navigation antenna.",
         "medium",
-        reference="Weiss et al. (2020), Space Sci. Rev., 216, 128",
-        doi="10.1007/s11214-020-00756-w",
+        reference="Weiss, J.-P., et al. (2022), COSMIC-2 mission summary at three years in orbit, Atmosphere, 13, 1409",
+        doi="10.3390/atmos13091409",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/podTc2/",
         processing_chain="Geometry-free linear combination of dual-frequency carrier phases from the upward-looking precise orbit determination (POD) antennas."
     ),
@@ -209,8 +211,8 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         "Spacecraft position and velocity.",
         "Where each satellite was, second by second.",
         "medium",
-        reference="Weiss et al. (2020), Space Sci. Rev., 216, 128",
-        doi="10.1007/s11214-020-00756-w",
+        reference="Weiss, J.-P., et al. (2022), COSMIC-2 mission summary at three years in orbit, Atmosphere, 13, 1409",
+        doi="10.3390/atmos13091409",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level1b/leoOrb/",
         processing_chain="Reduced-dynamic precise orbit determination utilizing Bernese GNSS software to estimate satellite positions and velocities at cm-level accuracy."
     ),
