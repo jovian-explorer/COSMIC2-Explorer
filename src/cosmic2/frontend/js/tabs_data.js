@@ -477,7 +477,13 @@ function drawMap() {
   });
   Plotly.react('map-plot', [trace], layout, PLOT_CONFIG);
   const node = document.getElementById('map-plot');
-  node.removeAllListeners && node.removeAllListeners('plotly_click');
+  // Every redraw re-registers the handlers, so the old ones go first (only
+  // the click handler was removed before: each search or colour change
+  // added another plotly_selected handler, until Plotly warned of a leak).
+  if (node.removeAllListeners) {
+    node.removeAllListeners('plotly_click');
+    node.removeAllListeners('plotly_selected');
+  }
   node.on('plotly_click', (ev) => {
     const id = ev.points[0] && ev.points[0].customdata;
     const row = state.results.find((g) => g.id === id);

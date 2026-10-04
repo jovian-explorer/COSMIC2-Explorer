@@ -135,3 +135,12 @@ def test_no_control_characters_in_frontend_text():
         text = _read(f)
         bad = [hex(ord(c)) for c in text if ord(c) < 32 and c not in "\n\r\t"]
         assert not bad, f"{f.name}: {bad[:5]}"
+
+
+def test_plotly_handlers_are_removed_before_being_added_again():
+    """drawMap ran on every search and colour change and added a new
+    plotly_selected handler each time (Plotly's MaxListeners warning)."""
+    for name in JS_FILES:
+        src = _read(FRONTEND / "js" / name)
+        for ev in set(re.findall(r"\.on\('(plotly_\w+)'", src)):
+            assert f"removeAllListeners('{ev}')" in src, f"{name}: {ev}"

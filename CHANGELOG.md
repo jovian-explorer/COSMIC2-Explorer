@@ -43,6 +43,7 @@
 
 ### Interface
 
+- The Explore map no longer piles up box/lasso-selection handlers: each search or colour change added another one (Plotly warned of a listener leak after ten), so a selection was processed once per earlier redraw.
 - The Compare tab's relationship plot and its exported figure name every diagnostic with its label and unit ("WMO tropopause height [km]", "Gravity-wave potential energy Ep [J/kg]") instead of the raw column name; the exported figure was labelled `tropopause.height_km`. The exported scatter figure now also uses the colour chosen on the Compare tab (it was never sent, so the figure had no colour scale).
 - Numbers shown with no decimals keep their zeros (the formatter turned 100 into "1" when asked for 0 decimal places).
 - The Export tab's **Write file** button works again: it stopped with a script error ("kind is not defined") before any request was sent, so no data file could be written from the interface.
