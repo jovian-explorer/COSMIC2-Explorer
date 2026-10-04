@@ -1,6 +1,8 @@
 # COSMIC-2 Explorer
 
-A production-quality scientific desktop GUI and analysis environment for UCAR/CDAAC COSMIC-2 radio occultation data and comparative planetary atmospheric profiles. Runs entirely offline once data has been downloaded.
+A desktop GUI and analysis environment for the FORMOSAT-7 / COSMIC-2 radio occultation profiles published by UCAR CDAAC: find and download them, plot and compare them, compute diagnostics, and export data and figures. Everything except downloading works offline once the data are on your computer.
+
+The retrievals themselves (bending angle, refractivity, temperature, humidity, electron density) are CDAAC's; the app reads those files and computes its diagnostics from them.
 
 ---
 
@@ -15,12 +17,12 @@ A production-quality scientific desktop GUI and analysis environment for UCAR/CD
 
 ## Key Features
 
-1. **Complete Offline-First Architecture**: 100% offline mathematical typesetting via bundled KaTeX fonts and engine, local TopoJSON map rendering, and bundled Plotly.js plotting.
-2. **Robust Multi-Product Ingestion**: Supports FORMOSAT-7 / COSMIC-2 products (`wetPf2`, `atmPrf`, `ionPrf`, `scnLv2`, `ivmL2m`) from UCAR CDAAC and NOAA NCEI.
-3. **Advanced Scientific Diagnostics**: Starting from CDAAC's retrieved (Abel-inverted) profiles, computes cold point tropopause height/temperature, WMO lapse-rate tropopause (with 500 hPa floor guard), atmospheric density ($\rho$, including water vapour where available), atmospheric scale height ($H$), potential temperature ($\theta$), Brunt-Vaisala frequency ($N_{BV}^2$), F2 and E layer peaks, vertical TEC, integrated water vapour, ducting layers, boundary-layer height and gravity-wave potential energy.
-4. **Interactive Filtering and Visualisation**: Visualise raw versus processed profiles, filter outliers (Sigma, MAD, IQR, Percentile), smooth soundings (Gaussian, Median, Savitzky-Golay), and compute composite latitudinal bands.
+1. **Offline once downloaded**: KaTeX (equations), Plotly.js (plots) and the TopoJSON map outlines are bundled, so nothing but downloading needs a network.
+2. **Five COSMIC-2 products**: reads `wetPf2`, `atmPrf`, `ionPrf`, `scnLv2` and `ivmL2m`. Downloads come from UCAR CDAAC; files in the same format from elsewhere (for example NOAA NCEI) can be dropped onto the window to be indexed.
+3. **Diagnostics**: from CDAAC's retrieved (Abel-inverted) profiles the app computes the cold-point tropopause, the WMO lapse-rate tropopause (searched above 500 hPa, and on dry temperature only below 235 K), density ($\rho$, including water vapour where available), scale height ($H$), potential temperature ($\theta$), Brunt-Vaisala frequency ($N_{BV}^2$), F2 and E layer peaks with foF2, vertical TEC, integrated water vapour, ducting layers, boundary-layer height and gravity-wave potential energy ($E_p$, 20-40 km). Where the file carries CDAAC's own value (tropopause, cold point, NmF2, hmF2, TEC, S4) the two are shown side by side.
+4. **Interactive plots**: overlay up to 200 profiles of any quantity on any height axis; optionally filter outliers (sigma, MAD, IQR, percentile) and smooth (moving average, Gaussian, median, Savitzky-Golay) on screen, beside the raw profile; average profiles in groups (latitude band, hemisphere, day/night, date, product, satellite); and scatter any per-profile diagnostic against another.
 5. **Parallel Processing**: Composites, diagnostics tables, regridded exports and indexing run on a user-chosen number of CPU worker processes.
-6. **Publication-Ready Exports**: Generates 300 dpi publication raster/vector figures (PNG, PDF, SVG, EPS), regridded NetCDF-4 files with CF-1.8 metadata, CSV tables, JSON bundles, and complete provenance tracking.
+6. **Exports**: Matplotlib figures (PNG at 300 dpi by default, PDF, SVG, EPS), regridded netCDF-4 with CF-style attributes and UDUNITS units, CSV tables and JSON. Data files carry their provenance (input files, software version, data citation); figure files do not.
 
 ---
 
@@ -160,21 +162,21 @@ Supported products:
 
 | Product | Description |
 |---|---|
-| `wetPf2` | Neutral atmosphere: temperature, pressure, humidity on 100 m grid to 60 km (1D-Var) |
-| `atmPrf` | Bending angle, refractivity, dry temperature at native resolution |
-| `ionPrf` | Ionospheric electron density profile to ~800 km |
+| `wetPf2` | Neutral atmosphere: temperature, pressure, humidity from CDAAC's 1D-Var retrieval, every 50 m to 20 km and every 100 m above, to 60 km |
+| `atmPrf` | Bending angle, refractivity, dry temperature and pressure at native resolution (~3800 levels, up to 80 km) |
+| `ionPrf` | Ionospheric electron density profile, up to the satellite's orbit (about 550-580 km) |
 | `scnLv2` | Signal scintillation indices (S4, sigma-phi) |
 | `ivmL2m` | In-situ plasma density, temperature and drift at spacecraft altitude |
 
-Streams: `nrt` (near-real-time, within hours), `rapid` (~24 h), `postProc` (final, weeks to months), `provisional`.
+Streams: `nrt` (near-real-time, about 30-120 minutes after observation), `rapid` (reprocessed within days; scnLv2 and ivmL2m), `postProc` (final, weeks to months later), `provisional` (space weather; ionPrf).
 
 ---
 
 ## Data Availability and Licensing
 
 * **License**: MIT License (see [LICENSE](LICENSE))
-* **Data Policy**: See [DATA_POLICY.md](DATA_POLICY.md) for full terms on UCAR CDAAC and NOAA NCEI public domain data access, along with mandatory publication citations.
-* **Third-Party Licenses**: See [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) for KaTeX, Plotly.js, TopoJSON, FastAPI, NumPy, SciPy, Matplotlib, NetCDF4, and PyWebView licenses.
+* **Data Policy**: See [DATA_POLICY.md](DATA_POLICY.md) for UCAR CDAAC and NOAA NCEI data access and the suggested citations.
+* **Third-Party Licenses**: See [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) for KaTeX, Plotly.js, TopoJSON, FastAPI, NumPy, SciPy, pandas, Matplotlib, netCDF4, Requests and pywebview licenses.
 
 ---
 
@@ -198,4 +200,5 @@ The test suite validates:
 * Frontend DOM targets and module exports
 * Strict zero em/en-dash compliance and local asset integrity
 * Windows double-click launch of a built EXE (skipped unless `dist/COSMIC2-Explorer.exe` or `COSMIC2_EXE` exists)
+* Every DOI shown in the app is on a list checked against doi.org (re-resolved with `COSMIC2_NETWORK_TESTS=1`)
 * Live CDAAC download (opt-in: `COSMIC2_NETWORK_TESTS=1`)
