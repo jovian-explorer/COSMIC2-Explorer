@@ -53,7 +53,8 @@
   <h4>F. Gravity-Wave Potential Energy ($E_p$)</h4>
   <p>For each neutral profile, the temperature between 20 and 40 km is put on a 0.2 km grid, a 4th-order polynomial in height is fitted as the background $T_0$, and the residual is the wave perturbation $T' = T - T_0$. Then</p>
   <p>$$E_p = \frac{1}{2}\left(\frac{g_0}{N_{BV}}\right)^2 \left(\frac{T'}{T_0}\right)^2$$</p>
-  <p>is averaged over the layer, with $N_{BV}$ from $T_0$ (Tsuda et al., 2000). The polynomial keeps vertical wavelengths shorter than roughly the 20 km layer depth. atmPrf uses dry temperature, which is the real temperature at these heights.</p>
+  <p>is averaged over the layer, with $N_{BV}$ from $T_0$ (Tsuda et al., 2000). atmPrf uses dry temperature, which is the real temperature at these heights.</p>
+  <p>The polynomial filter (used for the per-profile diagnostic) keeps short waves and weakens long ones: for a test wave it recovers 98 % of the energy at 2 km vertical wavelength, 90 % at 5 km, 75 % at 10 km and 1 % at 20 km. The diagnostic map can instead use a zero-phase Butterworth high-pass with a chosen cut-off (10 km by default, the separation Tsuda et al. used), which keeps 98-99 % at 2-5 km, a quarter at the cut-off and under 1 % at 15 km. With the high-pass over 20-30 km, the 2026 sample's tropical (|lat| &lt; 20&deg;) mean is 6.0 J/kg, within the 6-10 J/kg Tsuda et al. reported for that layer.</p>
 
   <h4>G. Ionospheric Electron Density ($N_e$) and VTEC</h4>
   <p>CDAAC's <code>ionPrf</code> profiles run from the lower ionosphere up to the satellite's own orbit (about 550-580 km). This app integrates the density to vertical TEC:</p>

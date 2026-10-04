@@ -313,37 +313,96 @@ def boundary_layer_height(z_km: np.ndarray, n_units: np.ndarray,
             "sharpness": float(abs(grad[i]) / abs(DUCTING_GRADIENT)), "found": True}
 
 
+GW_METHODS = ("polynomial", "highpass")
+
+
 def gravity_wave_energy(z_km: np.ndarray, temp_k: np.ndarray,
                         z_lo: float = 20.0, z_hi: float = 40.0,
-                        poly_order: int = 4) -> dict:
-    """Gravity-wave potential energy density in the lower stratosphere.
+                        poly_order: int = 4, method: str = "polynomial",
+                        cutoff_km: float = 10.0) -> dict:
+    """Gravity-wave potential energy density in the stratosphere.
 
-    The background is a degree-``poly_order`` polynomial in height fitted over
-    ``[z_lo, z_hi]``; the residual T' is taken as the wave perturbation and
+    The temperature is put on a 0.2 km grid and split into a background
+    T0 and a perturbation T' = T - T0, by one of two filters:
 
-        Ep = 0.5 * (g / N)^2 * (T'/T0)^2     [J/kg]
+    ``polynomial`` (default)
+        a degree-``poly_order`` polynomial in height fitted over
+        ``[z_lo, z_hi]``.  It keeps vertical wavelengths short compared with
+        the layer: for a 2 K sine wave on an isothermal 220 K background over
+        20-40 km it recovers 98 % of the true Ep at 2 km wavelength, 90 % at
+        5 km and 75 % at 10 km (``tests/test_gravity_waves.py``).
+    ``highpass``
+        a 4th-order Butterworth low-pass with cut-off wavelength
+        ``cutoff_km``, run forwards and backwards (zero phase) over the layer
+        plus up to 5 km on each side to keep its edge transients out of the
+        layer; T0 is the low-passed profile.  The same test wave keeps 99 %
+        of its Ep at 2 km wavelength, 98 % at 5 km, a quarter at the cut-off
+        (the filter's half-amplitude point) and under 1 % at 15 km.  Tsuda
+        et al. (2000) separated waves the same way, keeping vertical
+        wavelengths below 10 km in 20-30 km: with ``z_lo=20, z_hi=30,
+        method="highpass"`` the 2026 COSMIC-2 sample gives a tropical
+        (|lat| < 20) mean of 6.0 J/kg, within their 6-10 J/kg.
 
-    is averaged over the layer.  This is the conventional RO gravity-wave
-    diagnostic; the polynomial detrend makes it sensitive to vertical
-    wavelengths shorter than roughly the layer depth.
+    Then
+
+        Ep = 0.5 * (g0 / N)^2 * (T'/T0)^2     [J/kg]
+
+    with N from the background T0, averaged over ``[z_lo, z_hi]``.
     """
-    grid = make_grid(z_hi, 0.2, z_lo)
+    if method not in GW_METHODS:
+        raise ValueError(f"method must be one of {GW_METHODS}")
+    if not (z_hi > z_lo):
+        raise ValueError("z_hi must be above z_lo")
+    step = 0.2
+    pad = 5.0 if method == "highpass" else 0.0
+    grid = make_grid(z_hi + pad, step, max(z_lo - pad, 0.0))
     t = interp_to_grid(z_km, temp_k, grid)
+    layer = (grid >= z_lo - 1e-9) & (grid <= z_hi + 1e-9)
     ok = np.isfinite(t)
-    if ok.sum() < poly_order + 3:
-        return {"ep_J_per_kg": None, "t_prime_rms_K": None, "found": False}
-    coef = np.polyfit(grid[ok], t[ok], poly_order)
-    t0 = np.polyval(coef, grid)
+    empty = {"ep_J_per_kg": None, "t_prime_rms_K": None, "found": False,
+             "layer_km": [z_lo, z_hi], "method": method}
+    if method == "polynomial":
+        sel = ok & layer
+        if sel.sum() < poly_order + 3:
+            return empty
+        t0 = np.polyval(np.polyfit(grid[sel], t[sel], poly_order), grid)
+    else:
+        # The filter needs a gap-free series: the longest finite run, which
+        # must cover the whole layer.
+        from scipy.signal import butter, filtfilt
+        runs = np.flatnonzero(np.diff(np.concatenate(([0], ok.astype(int), [0]))))
+        starts, ends = runs[::2], runs[1::2]
+        if not starts.size:
+            return empty
+        k = int(np.argmax(ends - starts))
+        a, b = starts[k], ends[k]
+        lay = np.flatnonzero(layer)
+        if a > lay[0] or b <= lay[-1] or b - a < 30:
+            return empty
+        bb, aa = butter(4, step / cutoff_km * 2.0)   # cut-off as a fraction of Nyquist
+        t0 = np.full(grid.shape, np.nan)
+        # Filter the departure from a straight line: the stratospheric
+        # temperature trend would otherwise leak into T' through the
+        # filter's end effects (0.04 J/kg on a wave-free linear profile).
+        zz = grid[a:b]
+        trend = np.polyval(np.polyfit(zz, t[a:b], 1), zz)
+        t0[a:b] = trend + filtfilt(bb, aa, t[a:b] - trend,
+                                   padlen=min(3 * max(len(aa), len(bb)), b - a - 1))
     tprime = t - t0
     n2 = brunt_vaisala_squared(grid, t0)
     with np.errstate(invalid="ignore", divide="ignore"):
         ep = 0.5 * (G0 ** 2 / n2) * (tprime / t0) ** 2
-    ep = ep[np.isfinite(ep) & (n2 > 0)]
-    if ep.size == 0:
-        return {"ep_J_per_kg": None, "t_prime_rms_K": None, "found": False}
-    return {"ep_J_per_kg": float(np.mean(ep)),
-            "t_prime_rms_K": float(np.sqrt(np.nanmean(tprime[ok] ** 2))),
-            "layer_km": [z_lo, z_hi], "poly_order": poly_order, "found": True}
+    use = layer & np.isfinite(ep) & (n2 > 0)
+    if not use.any():
+        return empty
+    out = {"ep_J_per_kg": float(np.mean(ep[use])),
+           "t_prime_rms_K": float(np.sqrt(np.mean(tprime[use] ** 2))),
+           "layer_km": [z_lo, z_hi], "method": method, "found": True}
+    if method == "polynomial":
+        out["poly_order"] = poly_order
+    else:
+        out["cutoff_km"] = cutoff_km
+    return out
 
 
 # ---------------------------------------------------------------------------
