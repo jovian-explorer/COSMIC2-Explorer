@@ -389,12 +389,12 @@ def scatter_figure(x: Sequence[float], y: Sequence[float], x_var: str, y_var: st
             sc = ax.scatter(xa, ya, c=np.asarray(color, dtype="float64"),
                             cmap="viridis", s=14, linewidths=0)
             cb = fig.colorbar(sc, ax=ax, pad=0.02, fraction=0.05)
-            cb.set_label(vocab.axis_title(color_var), fontsize=SIZES[1])
+            cb.set_label(vocab.column_title(color_var), fontsize=SIZES[1])
             cb.ax.tick_params(labelsize=SIZES[2])
         else:
             ax.scatter(xa, ya, s=14, color=FOCAL, linewidths=0)
-        ax.set_xlabel(vocab.axis_title(x_var))
-        ax.set_ylabel(vocab.axis_title(y_var))
+        ax.set_xlabel(vocab.column_title(x_var))
+        ax.set_ylabel(vocab.column_title(y_var))
         if logy:
             ax.set_yscale("log")
         if title:

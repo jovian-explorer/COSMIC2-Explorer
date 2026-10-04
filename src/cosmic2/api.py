@@ -148,6 +148,7 @@ def meta() -> dict:
                          "license": p.license}
                      for c, p in PRODUCTS.items()},
         "vocabulary": {k: vocab.info(k) for k in vocab.VAR_INFO},
+        "diag_columns": {c: vocab.column_title(c) for c in vocab.DIAG_COLUMNS},
         "defaults": {"field": vocab.DEFAULT_FIELD, "vertical": vocab.DEFAULT_VERTICAL},
         "lat_bands": [{"min": lo, "max": hi, "name": n}
                       for lo, hi, n in analysis.LAT_BANDS],

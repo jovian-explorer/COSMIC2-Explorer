@@ -553,6 +553,10 @@ async function drawScatter() {
 
 function prettyCol(col) {
   if (!col) return '';
+  // The server's titles for the diagnostics columns (label and unit), shared
+  // with the exported scatter figure.
+  const known = state.meta.diag_columns && state.meta.diag_columns[col];
+  if (known) return known;
   if (!col.includes('.')) return axisTitle(col);
   const [group, leaf] = col.split('.');
   const unit = leaf.match(/_(km|K|C|MHz|mm)$/);
@@ -630,7 +634,10 @@ async function exportFigure() {
     caption: $('#e-caption').value,
     logx: $('#p-logx').checked,
     convert_kelvin: $('#p-kelvin').checked,
-    color_field: kind === 'map' ? 'local_time' : null,
+    // The scatter figure takes the Compare tab's colour choice (it was never
+    // sent, so the exported figure had no colour scale).
+    color_field: kind === 'map' ? 'local_time'
+               : (kind === 'scatter' ? ($('#s-c').value || null) : null),
     panels: kind === 'panels' ? panelsFor() : null,
     x_field: $('#s-x').value || 'lat',
     y_field: $('#s-y').value || 'tropopause.height_km',

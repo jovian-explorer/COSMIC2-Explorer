@@ -79,3 +79,30 @@ def test_figures_use_product_aware_axis_titles():
     fig = plotting.panels_figure([{"x": z, "y": z, "x_var": "Temp", "units": "C",
                                    "y_var": "MSL_alt", "product": "atmPrf"}], dpi=100)
     assert fig.axes[0].get_xlabel().startswith("Dry temperature")
+
+
+def test_scatter_figure_titles_name_the_diagnostics():
+    """Scatter axes and colour bar were labelled with raw column names."""
+    from cosmic2 import vocab
+    fig = plotting.scatter_figure([1, 2, 3], [15, 16, 17], "lat",
+                                  "tropopause.height_km", color=[1, 2, 3],
+                                  color_var="gravity_waves.ep_J_per_kg", dpi=80)
+    ax, cax = fig.axes[0], fig.axes[1]
+    assert ax.get_ylabel() == "WMO tropopause height [km]"
+    assert ax.get_xlabel() == "Latitude [°N]"
+    assert cax.get_ylabel() == "Gravity-wave potential energy Ep [J/kg]"
+    # every numeric column the diagnostics table gives the bundled samples
+    # has a title of its own
+    from cosmic2 import analysis, readers
+    from cosmic2.config import sampledata_dir
+    cols = set()
+    for p in sampledata_dir().iterdir():
+        g = readers.load(str(p))
+        row = analysis.diagnostics_row({
+            "path": str(p), "product": g.product, "id": "x", "file_name": p.name,
+            "time_utc": None, "lat": 0.0, "lon": 0.0, "local_time": 0.0,
+            "sat": "", "good": 1})
+        cols |= {k for k, v in (row or {}).items()
+                 if isinstance(v, (int, float)) and not isinstance(v, bool)}
+    cols -= {"good", "ducting.critical_gradient"}   # a constant, not offered
+    assert cols and cols <= set(vocab.DIAG_COLUMNS), cols - set(vocab.DIAG_COLUMNS)

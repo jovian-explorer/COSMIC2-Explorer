@@ -683,3 +683,57 @@ def axis_title(name: str, units: str | None = None,
     d = info(name, product)
     u = normalise_units(units if units is not None else d["units"])
     return f"{d['label']} [{u}]" if u and u != "-" else d["label"]
+
+
+# Columns of the diagnostics table (one row per profile; see
+# analysis.diagnostics_row): label and units for axis and colour-bar titles.
+# Without this the scatter plot and its exported figure were labelled with
+# the raw column names ("tropopause.height_km").
+DIAG_COLUMNS: dict[str, tuple[str, str]] = {
+    "lat": ("Latitude", "°N"),
+    "lon": ("Longitude", "°E"),
+    "local_time": ("Local solar time", "h"),
+    "tropopause.height_km": ("WMO tropopause height", "km"),
+    "tropopause.temp_K": ("WMO tropopause temperature", "K"),
+    "tropopause.temp_C": ("WMO tropopause temperature", "°C"),
+    "cold_point.height_km": ("Cold-point height", "km"),
+    "cold_point.temp_K": ("Cold-point temperature", "K"),
+    "cold_point.temp_C": ("Cold-point temperature", "°C"),
+    "gravity_waves.ep_J_per_kg": ("Gravity-wave potential energy Ep", "J/kg"),
+    "gravity_waves.t_prime_rms_K": ("Temperature perturbation (rms)", "K"),
+    "gravity_waves.poly_order": ("Ep background polynomial order", ""),
+    "ducting.min_gradient": ("Steepest refractivity gradient", "N/km"),
+    "ducting.min_gradient_height_km": ("Height of steepest refractivity gradient", "km"),
+    "boundary_layer.height_km": ("Boundary-layer height", "km"),
+    "boundary_layer.gradient": ("Refractivity gradient at boundary-layer top", "N/km"),
+    "boundary_layer.sharpness": ("Boundary-layer sharpness (gradient / -157)", ""),
+    "column_water_vapour_mm": ("Integrated water vapour", "mm"),
+    "column_water_vapour_bottom_km": ("Lowest level of the water-vapour column", "km"),
+    "ionosphere.NmF2_el_cm3": ("NmF2", "el/cm3"),
+    "ionosphere.hmF2_km": ("hmF2", "km"),
+    "ionosphere.foF2_MHz": ("foF2", "MHz"),
+    "ionosphere.topside_scale_height_km": ("Topside scale height", "km"),
+    "ionosphere.vtec_below_peak_TECU": ("Vertical TEC below hmF2", "TECU"),
+    "ionosphere.vtec_profile_TECU": ("Vertical TEC of the profile", "TECU"),
+    "scintillation.s4_max": ("Peak S4", ""),
+    "scintillation.s4_max_height_km": ("Tangent height of peak S4", "km"),
+    "scintillation.s4_mean": ("Mean S4", ""),
+    "scintillation.n_samples": ("Scintillation samples", ""),
+    "scintillation.sigma_phi_max_m": ("Peak phase scintillation sigma-phi", "m"),
+    "insitu.ion_dens_median_Ncc": ("Median ion density (in situ)", "N/cc"),
+    "insitu.ion_dens_max_Ncc": ("Maximum ion density (in situ)", "N/cc"),
+    "insitu.ion_temp_median_K": ("Median ion temperature (in situ)", "K"),
+    "insitu.zonal_drift_median_ms": ("Median zonal ion drift (in situ)", "m/s"),
+}
+
+
+def column_title(col: str) -> str:
+    """Axis title for a diagnostics-table column, or a variable name."""
+    if col in DIAG_COLUMNS:
+        label, units = DIAG_COLUMNS[col]
+        u = normalise_units(units)
+        return f"{label} [{u}]" if u else label
+    if "." in col:
+        group, leaf = col.split(".", 1)
+        return f"{group.replace('_', ' ')}: {leaf.replace('_', ' ')}"
+    return axis_title(col)
