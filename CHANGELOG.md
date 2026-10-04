@@ -91,3 +91,4 @@
 - Grid, DPI and settings values are validated (a zero grid step returned a server error, and could be saved as a setting).
 - The coverage summary (the Explore overview and the "Sampling summary" figure) no longer needs SQLite's optional `FLOOR` function, which is absent from SQLite builds without math functions (for example the system SQLite 3.34 of RHEL/Rocky 9).
 - The test suite removes its temporary data folder when it finishes.
+- A browser test (`tests/test_browser.py`, Playwright with Chromium, skipped when not installed) loads the bundled samples and goes through every tab and main action, failing on any script error or error message.

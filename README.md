@@ -204,6 +204,8 @@ The test suite validates:
 * Worker-process results identical to serial runs
 * FastAPI endpoints and export pipelines (against a server on a free port with a throwaway data folder)
 * Frontend DOM targets and module exports
+* Statistics, latitude-height sections and diagnostic maps against hand-computed cases; gravity-wave energy against a wave of known energy; the radiosonde pipeline against a synthetic sonde built from a profile's own fields, and IGRA file parsing on real records
+* Every tab and main action in Chromium with no script errors (skipped unless Playwright and its Chromium are installed)
 * Strict zero em/en-dash compliance and local asset integrity
 * Windows double-click launch of a built EXE (skipped unless `dist/COSMIC2-Explorer.exe` or `COSMIC2_EXE` exists)
 * Every DOI shown in the app is on a list checked against doi.org (re-resolved with `COSMIC2_NETWORK_TESTS=1`)
