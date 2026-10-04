@@ -124,3 +124,14 @@ def test_fmt_keeps_integer_zeros():
     if out.returncode != 0 and "SyntaxError" in out.stderr:
         pytest.skip("this Node cannot load ES modules from a .js file")
     assert out.stdout.strip() == "100|2.5|12|0|1.3|-40", out.stderr
+
+
+def test_no_control_characters_in_frontend_text():
+    """A LaTeX \frac written through an unescaped string became a form feed
+    plus "rac" in the help page; KaTeX then shows an error."""
+    files = [FRONTEND / "index.html", FRONTEND / "help.html",
+             *[FRONTEND / "js" / n for n in JS_FILES]]
+    for f in files:
+        text = _read(f)
+        bad = [hex(ord(c)) for c in text if ord(c) < 32 and c not in "\n\r\t"]
+        assert not bad, f"{f.name}: {bad[:5]}"
