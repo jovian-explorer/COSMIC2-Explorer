@@ -54,7 +54,7 @@
     <div class="guide-hero-content">
       <h2>Welcome to COSMIC-2 Explorer: Step-by-Step Workflow Guide</h2>
       <p class="guide-hero-sub">
-        Learn how to ingest, filter, condition, compare, and export GNSS Radio Occultation (GNSS-RO) soundings from the six-satellite FORMOSAT-7 / COSMIC-2 tropical constellation.
+        Learn how to ingest, filter, condition, compare, and export GNSS Radio Occultation (GNSS-RO) soundings from the six-satellite FORMOSAT-7 / COSMIC-2 constellation, which samples about 45&deg;S to 45&deg;N.
       </p>
       <div class="guide-author-tag">
         Developed by <strong>Keshav Aggarwal</strong>, Research Associate at Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), Indian Space Research Organisation (ISRO), Thiruvananthapuram, Kerala, India (Former PMRF Scholar at DAASE, IIT Indore).
@@ -75,10 +75,11 @@
         COSMIC-2 data is archived by the University Corporation for Atmospheric Research (UCAR) COSMIC Data Analysis and Archive Center (CDAAC). Data is categorized into distinct publication streams:
       </p>
       <ul class="guide-list">
-        <li><strong>Near Real-Time (nrt):</strong> Available within 1-3 hours of acquisition for operational numerical weather prediction (NWP) assimilation.</li>
-        <li><strong>Rapid / Provisional:</strong> Refined orbits and clocks available daily within 24-48 hours.</li>
-        <li><strong>Post-Processed (postProc / postcal):</strong> High-precision science-grade reanalysis products with finalized GPS/GLONASS satellite ephemerides (typically 1-3 months latency).</li>
-        <li><strong>Offline Granule Samples:</strong> Pre-packaged atmospheric (atmPrf, wetPf2) and ionospheric (ionPrf, ivmL2m, scnLv2) soundings ready to use immediately without network access.</li>
+        <li><strong>Near Real-Time (nrt):</strong> produced within about 30-120 minutes of observation, with predicted orbits and clocks; used by weather centres.</li>
+        <li><strong>Rapid:</strong> reprocessed within days with better orbits; the ionosphere and scintillation products (scnLv2, ivmL2m) are here.</li>
+        <li><strong>Provisional (space weather):</strong> provisional space-weather release, including the ionospheric electron-density profiles (ionPrf).</li>
+        <li><strong>Post-Processed (postProc):</strong> final reprocessing with the best orbits and a frozen software version, published weeks to months later; use it for climate work.</li>
+        <li><strong>Bundled examples:</strong> 8 real granules (atmPrf, wetPf2, ionPrf, ivmL2m, scnLv2) ship with the app, so every feature can be tried without a network.</li>
         <li><strong>Drag-and-Drop Ingestion:</strong> Drag any .nc or _nc files from your desktop directly into this window to index them on the fly.</li>
       </ul>
       <div class="step-actions">
@@ -92,14 +93,14 @@
       <div class="step-badge">Step 2</div>
       <h3>Exploring Spatial Soundings</h3>
       <p>
-        Every dot represents a GNSS radio occultation tangent point where GPS/GLONASS/Galileo signals penetrated the tropical atmosphere:
+        Every dot is the location of one occultation, where a GPS or GLONASS signal crossed the atmosphere:
       </p>
       <ul class="guide-list">
         <li><strong>Interactive Map:</strong> Visualize occultation distributions on an offline TopoJSON map. Color points by local solar time, latitude, or vertical sampling levels.</li>
         <li><strong>Spatial Bounding Boxes:</strong> Filter profiles using latitude and longitude limits.</li>
-        <li><strong>Quick Latitude Presets:</strong> Rapidly select All Tropics (30&deg;S - 30&deg;N), Equatorial (10&deg;S - 10&deg;N), Northern Tropics (0&deg; - 30&deg;N), or Southern Tropics (30&deg;S - 0&deg;).</li>
+        <li><strong>Quick Latitude Presets:</strong> All Tropics (30&deg;S - 30&deg;N), Equatorial (10&deg;S - 10&deg;N), Northern Tropics (0&deg; - 30&deg;N), Southern Tropics (30&deg;S - 0&deg;), or Global.</li>
         <li><strong>Local Solar Time (LST):</strong> Constrain soundings to specific diurnal cycles (0 to 24 h) to isolate daytime convection or nocturnal cooling.</li>
-        <li><strong>Quality Control (QC):</strong> Automatically exclude soundings flagged as unphysical by CDAAC quality checks.</li>
+        <li><strong>Quality Control (QC):</strong> "Good quality only" leaves out profiles CDAAC flagged as bad.</li>
       </ul>
       <div class="step-actions">
         <button class="primary" id="guide-btn-goto-explore">Open Explore Map</button>
@@ -111,14 +112,14 @@
       <div class="step-badge">Step 3</div>
       <h3>Vertical Profile Inspection</h3>
       <p>
-        Inspect high-resolution thermodynamic vertical profiles with altitude from near-surface to stratospheric levels (up to 60 km):
+        Draw one or many profiles of any quantity against height: neutral profiles reach 60 km (wetPf2) or 80 km (atmPrf), ionospheric ones the satellite's orbit:
       </p>
       <ul class="guide-list">
-        <li><strong>Thermodynamic Variables:</strong> Temperature (Temp), Dry Temperature (dry_temp), Atmospheric Pressure (Pres), and Refractivity (Ref).</li>
-        <li><strong>Atmospheric Moisture:</strong> Water vapor pressure (Vp) derived from 1D-Var retrievals in wetPf2 products.</li>
-        <li><strong>Ionospheric Soundings:</strong> Electron density (EDENS) profiles extending to ~500 km altitude from ionPrf files.</li>
+        <li><strong>Thermodynamic Variables:</strong> Temperature (wetPf2 Temp, or the dry temperature of atmPrf Temp and wetPf2 temp_dry), pressure (Pres), refractivity (Ref, ref) and bending angle, plus derived fields: potential temperature, lapse rate, N&sup2;, density, scale height and others.</li>
+        <li><strong>Atmospheric Moisture:</strong> Water-vapour pressure (Vp), specific humidity (sph) and relative humidity (rh) from CDAAC's 1D-Var retrieval in wetPf2.</li>
+        <li><strong>Ionospheric Soundings:</strong> Electron density (ELEC_dens) profiles from ionPrf, up to the satellite's orbit (about 550-580 km); S4 scintillation (scnLv2) and in-situ ion density (ivmL2m).</li>
         <li><strong>Multi-Profile Overlay:</strong> Select multiple occultations from the Explore table or lasso-select points on the map to compare soundings on a single vertical axis.</li>
-        <li><strong>Thermodynamic Diagnostics:</strong> View calculated tropopause cold-point altitude, lapse rates, and boundary layer inversions.</li>
+        <li><strong>Diagnostics:</strong> WMO and cold-point tropopause, boundary-layer height, ducting, column water vapour, gravity-wave energy, F2 peak, foF2 and TEC, each cross-checked against CDAAC's own value where the file has one.</li>
       </ul>
       <div class="guide-formula-box" style="margin: 10px 0; padding: 8px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px;">
         <strong>Smith-Weintraub Refractivity Formulation:</strong>
@@ -144,7 +145,7 @@
         <li><strong>Outlier Removal:</strong> Filter noisy spikes using Sigma Clipping (Gaussian assumption), MAD Robust Filtering (Median Absolute Deviation), IQR Filter, or Percentile Truncation.</li>
         <li><strong>Smoothing Algorithms:</strong> Apply Savitzky-Golay polynomial smoothing (preserves peak shapes, tropopause sharp gradients, and structural features), Gaussian kernel filtering, or Rolling Moving Averages.</li>
         <li><strong>Uncertainty Envelopes:</strong> Generate rolling standard deviation or standard error bands along the profile, computed about the running mean so the vertical gradient is not mistaken for noise.</li>
-        <li><strong>Mathematical Provenance:</strong> Every conditioning transformation records its operational parameters to guarantee reproducible science.</li>
+        <li><strong>On screen only:</strong> these settings shape the plot; the caption lists what was applied, and exports keep the unfiltered archive values (their provenance records the settings as not applied).</li>
       </ul>
       <div class="guide-formula-box" style="margin: 10px 0; padding: 8px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px;">
         <strong>Poisson Potential Temperature ($\theta$):</strong>
@@ -152,7 +153,7 @@
       </div>
       <div class="guide-formula-box" style="margin: 10px 0; padding: 8px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px;">
         <strong>Brunt-Vaisala Static Stability ($N_{BV}^2$):</strong>
-        <p style="margin: 4px 0;">$$N_{BV}^2(z) = \frac{g(z)}{T(z)}\left(\frac{dT}{dz} + \Gamma_d\right) = \frac{g(z)}{\theta(z)}\frac{d\theta}{dz}$$</p>
+        <p style="margin: 4px 0;">$$N_{BV}^2(z) = \frac{g_0}{T(z)}\left(\frac{dT}{dz} + \Gamma_d\right) \approx \frac{g_0}{\theta(z)}\frac{d\theta}{dz}$$</p>
       </div>
       <div class="step-actions">
         <button class="primary" id="guide-btn-goto-pipeline">Open Profile Visualizer</button>
@@ -167,10 +168,9 @@
         Transition from individual sounding weather snapshots to climate-scale regional statistics:
       </p>
       <ul class="guide-list">
-        <li><strong>Latitudinal Composites:</strong> Aggregate profiles into 5-degree or 10-degree latitudinal bands across the tropics and subtropics.</li>
-        <li><strong>Diurnal and Local Time Grouping:</strong> Group soundings into hourly local solar time bins to study atmospheric tides and equatorial waves.</li>
+        <li><strong>Grouped averages:</strong> average profiles by latitude band (equatorial 10&deg;S-10&deg;N, subtropics 10-30&deg;, mid-latitudes 30-60&deg;), hemisphere, day or night (06-18 h local solar time), date, product or satellite, on a common height grid.</li>
         <li><strong>Statistical Spread:</strong> Display group mean profiles with standard deviation (&plusmn;1 sigma) envelopes or 10th-90th percentile ranges.</li>
-        <li><strong>Derived Relationship Scatter:</strong> Correlate tropopause cold-point altitude against latitude, surface pressure against local time, or refractivity gradients.</li>
+        <li><strong>Derived Relationship Scatter:</strong> plot any per-profile diagnostic against another (tropopause height against latitude, foF2 against local time, gravity-wave energy against latitude), coloured by a third.</li>
       </ul>
       <div class="step-actions">
         <button class="primary" id="guide-btn-goto-composite">Open Composite Analysis</button>
@@ -185,10 +185,10 @@
         Export your results in standard formats suitable for peer-reviewed journal articles, technical reports, and scientific archives:
       </p>
       <ul class="guide-list">
-        <li><strong>Publication Figures:</strong> Generate high-resolution 300 DPI figures in vector (PDF, SVG) or raster (PNG) formats using Matplotlib's publication style ladder.</li>
-        <li><strong>CF-Compliant NetCDF-4:</strong> Regridded multi-profile 3D arrays with Climate and Forecast (CF) metadata, standard names, units, and coordinate variables.</li>
+        <li><strong>Publication Figures:</strong> Matplotlib figures in PNG (300 dpi by default), PDF, SVG or EPS.</li>
+        <li><strong>NetCDF-4:</strong> profiles regridded to a common height grid (profile &times; height arrays) with CF-style attributes, UDUNITS units and the provenance as global attributes.</li>
         <li><strong>Tabular Data (CSV):</strong> Level-by-level sounding profiles, uniform altitude grid matrices, or metadata catalog tables.</li>
-        <li><strong>Provenance and Citations:</strong> Full JSON provenance trails and BibTeX citation strings for UCAR CDAAC and lead researcher Keshav Aggarwal (SPL/VSSC/ISRO).</li>
+        <li><strong>Provenance and Citations:</strong> data files carry the input file names, software version and the UCAR data citation; BibTeX entries for the data set and this software are given below.</li>
       </ul>
       <div class="step-actions">
         <button class="primary" id="guide-btn-goto-export">Open Export Center</button>
@@ -203,7 +203,7 @@
       <span class="badge-pill">Atmospheric Physics &amp; Retrieval Chain</span>
     </div>
     <p class="hint">
-      Comprehensive mathematical derivations underpinning each transformation in the GNSS Radio Occultation retrieval chain, from phase delay to thermodynamic profiles:
+      The retrieval chain that produces the files, from phase delay to thermodynamic profiles. Steps 1-6 are performed by UCAR CDAAC before the data reach this app; steps 7-8 are computed here from the profiles.
     </p>
 
     <div class="grid-2" style="margin-top: 14px; gap: 14px;">
@@ -271,7 +271,7 @@
       <div class="guide-formula-box" style="padding: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px;">
         <h4 style="margin: 0 0 6px 0; color: var(--accent);">6. 1D-Var Optimal Estimation (Moisture Separation)</h4>
         <p style="font-size: calc(12px * var(--font-scale, 1.0)); margin-bottom: 6px;">
-          In the warm, moist lower troposphere, water vapor and temperature ambiguities are resolved by minimizing the 1D-Var variational cost function \( J(\mathbf{x}) \) with ECMWF/GFS background states:
+          In the warm, moist lower troposphere, CDAAC separates temperature and water vapour (wetPf2) by minimising the 1D-Var cost function \( J(\mathbf{x}) \) with a numerical weather prediction background state:
         </p>
         <p style="text-align: center; margin: 8px 0;">$$J(\mathbf{x}) = \frac{1}{2}(\mathbf{x} - \mathbf{x}_b)^T \mathbf{B}^{-1} (\mathbf{x} - \mathbf{x}_b) + \frac{1}{2}(\mathbf{y} - H(\mathbf{x}))^T \mathbf{R}^{-1} (\mathbf{y} - H(\mathbf{x}))$$</p>
         <p style="font-size: calc(11px * var(--font-scale, 1.0)); color: var(--text-muted); margin: 0;">
@@ -285,7 +285,7 @@
         <p style="font-size: calc(12px * var(--font-scale, 1.0)); margin-bottom: 6px;">
           Atmospheric resistance to vertical displacement is governed by the squared buoyancy frequency \( N_{BV}^2 \). Negative values denote convective instability; strong peaks indicate the tropopause inversion layer (TIL):
         </p>
-        <p style="text-align: center; margin: 8px 0;">$$N_{BV}^2(z) = \frac{g(z)}{T(z)} \left( \frac{dT}{dz} + \frac{g(z)}{c_p} \right) = \frac{g(z)}{\theta(z)} \frac{d\theta}{dz}$$</p>
+        <p style="text-align: center; margin: 8px 0;">$$N_{BV}^2(z) = \frac{g_0}{T(z)} \left( \frac{dT}{dz} + \frac{g_0}{c_p} \right) \approx \frac{g_0}{\theta(z)} \frac{d\theta}{dz}$$</p>
         <p style="font-size: calc(11px * var(--font-scale, 1.0)); color: var(--text-muted); margin: 0;">
           Reference: Vaisala (1925), Soc. Sci. Fenn. Commentat. Phys.-Math., 2(19); Brunt (1927), QJRMS, 53, 30-32.
         </p>
@@ -295,7 +295,7 @@
       <div class="guide-formula-box" style="padding: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px;">
         <h4 style="margin: 0 0 6px 0; color: var(--accent);">8. Lower Stratospheric Gravity Wave Potential Energy (\( E_p \))</h4>
         <p style="font-size: calc(12px * var(--font-scale, 1.0)); margin-bottom: 6px;">
-          Atmospheric gravity wave activity is extracted by detrending vertical temperature profiles using a 4th-order polynomial over 20-40 km altitude to isolate temperature fluctuations \( T' = T - T_0 \):
+          Computed here for every neutral profile: the temperature between 20 and 40 km is detrended with a 4th-order polynomial in height (the background \( T_0 \), which also gives \( N_{BV} \)) to isolate the fluctuations \( T' = T - T_0 \), and \( E_p \) is averaged over the layer:
         </p>
         <p style="text-align: center; margin: 8px 0;">$$E_p = \frac{1}{2} \left(\frac{g}{N_{BV}}\right)^2 \left(\frac{T'}{T_0}\right)^2 \quad [\mathrm{J/kg}]$$</p>
         <p style="font-size: calc(11px * var(--font-scale, 1.0)); color: var(--text-muted); margin: 0;">
@@ -386,13 +386,13 @@
     </div>
 
     <h3>1. Data Availability Statement for Publications</h3>
-    <p>Authors using COSMIC-2 Explorer for academic research or publications are encouraged to include the following Data Availability Statement:</p>
+    <p>Authors using COSMIC-2 Explorer for publications may adapt the following Data Availability Statement:</p>
     <blockquote style="background: var(--bg); border-left: 4px solid var(--accent); margin: 8px 0; padding: 10px 14px; font-size: calc(13px * var(--font-scale, 1.0));">
-      "The COSMIC-2 radio occultation soundings analyzed in this study are publicly available from the University Corporation for Atmospheric Research (UCAR) COSMIC Data Analysis and Archive Center (CDAAC) at https://data.cosmic.ucar.edu/ and the NOAA National Centers for Environmental Information (NCEI) at https://www.ncei.noaa.gov/data/gps-radio-occultation/. The processing, validation, and profile analysis were conducted using COSMIC-2 Explorer (Version 0.0.1), available open-source at https://github.com/jovian-explorer/COSMIC2-Explorer."
+      "The COSMIC-2 radio occultation soundings analyzed in this study are publicly available from the University Corporation for Atmospheric Research (UCAR) COSMIC Data Analysis and Archive Center (CDAAC) at https://data.cosmic.ucar.edu/ and the NOAA National Centers for Environmental Information (NCEI) at https://www.ncei.noaa.gov/data/gps-radio-occultation/. The profile analysis was conducted using COSMIC-2 Explorer (Version <span class="app-version">0.0.1</span>), https://github.com/jovian-explorer/COSMIC2-Explorer."
     </blockquote>
 
-    <h3 style="margin-top: 14px;">2. Mandatory Dual-Attribution Citations</h3>
-    <p>To ensure computational reproducibility and scientific credit, please provide dual citations:</p>
+    <h3 style="margin-top: 14px;">2. Suggested Citations</h3>
+    <p>Please cite the data set as UCAR asks and, if you used this software, COSMIC-2 Explorer:</p>
     <div class="grid-2" style="gap: 12px;">
       <div>
         <strong>UCAR CDAAC Primary Dataset:</strong>
@@ -413,7 +413,7 @@
   author       = {Keshav Aggarwal},
   title        = {{COSMIC-2 Explorer: High-Resolution Radio Occultation Processing, Visualisation, and Atmospheric Profiling System}},
   year         = {2026},
-  version      = {0.0.1},
+  version      = {<span class="app-version">0.0.1</span>},
   institution  = {Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO},
   address      = {Thiruvananthapuram, Kerala, India},
   url          = {https://github.com/jovian-explorer/COSMIC2-Explorer}
@@ -434,7 +434,7 @@
     <strong>What is this?</strong> A GPS satellite's radio signal bends as it grazes
     Earth's atmosphere. Measuring that bend gives a vertical profile of temperature,
     pressure, humidity and electron density - like a weather balloon, but from
-    orbit, about 5,000 times a day. COSMIC-2 is a six-satellite constellation that
+    orbit, several thousand times a day. COSMIC-2 is a six-satellite constellation that
     samples the tropics densely. Pick a date below and fetch some profiles.
   </div>
 

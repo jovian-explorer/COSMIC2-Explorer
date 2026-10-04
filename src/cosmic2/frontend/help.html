@@ -1,12 +1,12 @@
 <div class="prose">
   <h2>COSMIC-2 Scientific Guidebook</h2>
 
-  <p>Welcome to the COSMIC-2 Explorer Guidebook. This platform transforms raw GNSS radio occultation (RO) soundings into scientifically actionable physical datasets, designed for atmospheric research, space weather investigations, and meteorological education.</p>
+  <p>COSMIC-2 Explorer finds, downloads, plots, compares and exports the radio occultation (RO) profiles that UCAR's COSMIC Data Analysis and Archive Center (CDAAC) publishes for FORMOSAT-7 / COSMIC-2. The retrieval itself (bending angle, refractivity, temperature, electron density) is done by CDAAC; this app reads those files and computes diagnostics from them (tropopause, gravity-wave energy, ionospheric peak, TEC, water-vapour column and others).</p>
 
   <h3>1. Mission and Constellation Overview</h3>
-  <p>The <strong>FORMOSAT-7 / COSMIC-2</strong> (Constellation Observing System for Meteorology, Ionosphere, and Climate - 2) mission is a joint program between the Taiwan Space Agency (TASA / NSPO) and the United States (NOAA, USAF). Launched on June 25, 2019, into a 24-degree inclination low Earth orbit (LEO) at ~550 km altitude, the constellation comprises six advanced microsatellites.</p>
-  <p>Each spacecraft carries the state-of-the-art TriG GNSS Radio Occultation System (TGRS) receiver developed by NASA JPL. The TGRS tracks multi-GNSS signals (GPS, GLONASS, and Galileo) with high-gain beam-steering antennas, capturing over 5,000 high-quality soundings per day across tropical and subtropical latitudes (30°S to 30°N).</p>
-  
+  <p>The <strong>FORMOSAT-7 / COSMIC-2</strong> (Constellation Observing System for Meteorology, Ionosphere, and Climate - 2) mission is a joint program between the Taiwan Space Agency (TASA / NSPO) and the United States (NOAA, USAF). The six satellites were launched on 25 June 2019 into low Earth orbits inclined at 24 degrees, at about 550 km altitude.</p>
+  <p>Each spacecraft carries the TriG GNSS Radio Occultation System (TGRS) receiver developed by NASA JPL, which tracks GPS and GLONASS signals through high-gain antennas. The constellation produces several thousand neutral-atmosphere profiles a day between about 45&deg;S and 45&deg;N, densest in the tropics.</p>
+
   <div class="guide-links-bar" style="margin: 10px 0 16px 0; display: flex; gap: 8px; flex-wrap: wrap;">
     <a href="https://www.tasa.org.tw/en-US/mission/formosat-7" target="_blank" rel="noopener" class="link" style="font-size: 12px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 4px;">🌐 TASA FORMOSAT-7 Mission Page ↗</a>
     <a href="https://www.nesdis.noaa.gov/current-satellite-missions/currently-flying/cosmic-2" target="_blank" rel="noopener" class="link" style="font-size: 12px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 4px;">🛰️ NOAA NESDIS COSMIC-2 Overview ↗</a>
@@ -14,69 +14,77 @@
     <a href="https://www.ncei.noaa.gov/products/cosmic-2" target="_blank" rel="noopener" class="link" style="font-size: 12px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 4px;">📊 NOAA NCEI Archive Portal ↗</a>
   </div>
 
-  <h3>2. GNSS Radio Occultation Fundamentals</h3>
-  <p>Radio Occultation is an active limb-sounding technique utilizing the refraction of microwave signals passing through Earth's atmosphere:</p>
+  <h3>2. GNSS Radio Occultation Fundamentals (done by CDAAC)</h3>
+  <p>Radio occultation is a limb-sounding technique that uses the refraction of GNSS signals passing through Earth's atmosphere:</p>
   <ul>
-    <li><strong>Signal Geometry:</strong> As a transmitting GNSS satellite sets or rises across the atmospheric limb relative to a COSMIC-2 receiver, the radio wave traverses refractive gradients.</li>
-    <li><strong>Phase Delay and Bending Angle:</strong> The atmospheric density gradient decelerates and curves the ray path. Precise dual-frequency carrier phase measurements yield the Doppler shift, which is converted to total bending angle $\alpha(a)$ as a function of impact parameter $a$.</li>
-    <li><strong>Abel Inversion:</strong> Under spherical symmetry, the Abel transform inverts the bending angle profile to compute neutral atmospheric refractive index $\mu(r)$:</li>
+    <li><strong>Signal Geometry:</strong> As a GNSS satellite sets or rises behind the atmospheric limb as seen from a COSMIC-2 receiver, its signal crosses ever deeper layers of the atmosphere.</li>
+    <li><strong>Phase Delay and Bending Angle:</strong> Refractivity gradients slow and bend the ray. Dual-frequency carrier-phase measurements give the Doppler shift, which is converted to the bending angle $\alpha(a)$ as a function of impact parameter $a$.</li>
+    <li><strong>Abel Inversion:</strong> Under local spherical symmetry, the Abel transform inverts the bending-angle profile to the refractive index $\mu$ at radius $r$, where $a = \mu(r)\,r$:</li>
   </ul>
-  <p>$$\mu(r) - 1 = \frac{1}{\pi} \int_r^{r_{top}} \frac{\alpha(a)}{\sqrt{a^2 - r^2}}\,da$$</p>
+  <p>$$\ln \mu(r) = \frac{1}{\pi} \int_{a}^{\infty} \frac{\alpha(x)}{\sqrt{x^2 - a^2}}\,dx$$</p>
 
   <h3>3. Physical Quantities and Governing Equations</h3>
-  
+
   <h4>A. Microwave Refractivity ($N$)</h4>
-  <p>In the terrestrial neutral atmosphere and ionosphere, microwave refractivity $N = (\mu - 1) \times 10^6$ is governed by the Smith-Weintraub equation:</p>
+  <p>Refractivity $N = (\mu - 1) \times 10^6$ follows the Smith-Weintraub relation (the ionospheric term is removed by CDAAC's dual-frequency combination before the neutral retrieval):</p>
   <p>$$N = 77.6 \frac{P}{T} + 3.73 \times 10^5 \frac{e}{T^2} - 40.3 \times 10^6 \frac{N_e}{f^2}$$</p>
-  <p>where $P$ is total atmospheric pressure (hPa), $T$ is temperature (K), $e$ is water vapor partial pressure (hPa), $N_e$ is electron density ($\text{m}^{-3}$), and $f$ is operating signal frequency (Hz).</p>
+  <p>where $P$ is total pressure (hPa), $T$ temperature (K), $e$ water-vapour pressure (hPa), $N_e$ electron density ($\text{m}^{-3}$) and $f$ the signal frequency (Hz).</p>
 
   <h4>B. Hydrostatic Integration and Dry Temperature ($T_{dry}$)</h4>
-  <p>Above ~10 km altitude where water vapor $e \approx 0$, refractivity is proportional to density $\rho \approx P / (R_{dry} T)$. Combining refractivity with the hydrostatic equation $\frac{dP}{dz} = -\rho(z) g(z)$ yields the dry temperature profile without external model priors:</p>
+  <p>If water vapour is ignored ($e = 0$), refractivity is proportional to density. Combining it with the hydrostatic equation $dP/dz = -\rho g$ gives the dry temperature (atmPrf <code>Temp</code>), which needs no weather-model background (CDAAC initialises the integral at the top of the profile):</p>
   <p>$$T_{dry}(z) = \frac{\bar{m}}{k_B \cdot N(z)} \int_z^\infty g(z') N(z')\,dz'$$</p>
+  <p>Dry temperature equals the real temperature only where the air is dry: above about 8-10 km in the tropics. Below that, use the 1D-Var moist temperature of wetPf2.</p>
 
   <h4>C. Atmospheric Density ($\rho$) and Scale Height ($H$)</h4>
-  <p>Thermodynamic mass density and local barometric scale height are evaluated through the ideal gas relation:</p>
-  <p>$$\rho(z) = \frac{P(z)}{R_{dry} T(z)}, \quad H(z) = \frac{R_{dry} T(z)}{g(z)}$$</p>
-  <p>where specific gas constant $R_{dry} = 287.058\text{ J}/(\text{kg}\cdot\text{K})$ and local gravity $g(z) = g_0 (R_E / (R_E + z))^2$.</p>
+  <p>Computed by this app at every level, with constant standard gravity $g_0 = 9.80665\ \text{m s}^{-2}$:</p>
+  <p>$$\rho(z) = \frac{P - e}{R_{dry} T} + \frac{e}{R_v T}, \quad H(z) = \frac{R_{dry} T(z)}{g_0}$$</p>
+  <p>with $R_{dry} = 287.058\ \text{J}/(\text{kg K})$ and $R_v = 461.5\ \text{J}/(\text{kg K})$. The vapour term uses wetPf2's <code>Vp</code>; atmPrf has no humidity, so $e = 0$ there.</p>
 
-  <h4>D. Poisson Potential Temperature ($\theta$)</h4>
-  <p>Quantifies the temperature an air parcel would attain if compressed adiabatically to the standard sea-level reference pressure $P_0 = 1013.25\text{ hPa}$:</p>
-  <p>$$\theta(z) = T(z) \left(\frac{P_0}{P(z)}\right)^{\frac{R_{dry}}{C_p}}$$</p>
-  <p>where isobaric specific heat capacity $C_p = 1004.67\text{ J}/(\text{kg}\cdot\text{K})$ and $R_{dry}/C_p \approx 0.2857$.</p>
+  <h4>D. Potential Temperature ($\theta$)</h4>
+  <p>The temperature an air parcel would reach if brought adiabatically to the reference pressure $P_0 = 1000$ hPa:</p>
+  <p>$$\theta(z) = T(z) \left(\frac{P_0}{P(z)}\right)^{\frac{R_{dry}}{c_p}}$$</p>
+  <p>with $c_p = 1004.6\ \text{J}/(\text{kg K})$, so $R_{dry}/c_p \approx 0.2857$.</p>
 
-  <h4>E. Brunt-Vaisala Static Stability Frequency ($N_{BV}^2$)</h4>
-  <p>Measures buoyant oscillatory stability against vertical convective displacement:</p>
-  <p>$$N_{BV}^2(z) = \frac{g(z)}{T(z)}\left(\frac{dT}{dz} + \Gamma_d\right) = \frac{g(z)}{\theta(z)}\frac{d\theta}{dz}$$</p>
-  <p>where dry adiabatic lapse rate $\Gamma_d = g / C_p \approx 9.8\text{ K/km}$. Layers with $N_{BV}^2 > 0$ are stably stratified; layers with $N_{BV}^2 < 0$ indicate convective overturning instability.</p>
+  <h4>E. Brunt-Vaisala Frequency ($N_{BV}^2$)</h4>
+  <p>Static stability against vertical displacement, with constant $g_0$:</p>
+  <p>$$N_{BV}^2(z) = \frac{g_0}{T(z)}\left(\frac{dT}{dz} + \Gamma_d\right) \approx \frac{g_0}{\theta(z)}\frac{d\theta}{dz}$$</p>
+  <p>where $\Gamma_d = g_0 / c_p \approx 9.8$ K/km. $N_{BV}^2 > 0$ is stably stratified; $N_{BV}^2 < 0$ is statically unstable.</p>
 
-  <h4>F. Ionospheric Electron Density ($N_e$) and VTEC</h4>
-  <p>From dual-frequency dispersive phase soundings (e.g. <code>ionPrf</code> products), vertical electron density $N_e(z)$ is extracted from ~80 km to 800 km altitude. Vertical Total Electron Content (VTEC) is derived by integrating plasma density:</p>
-  <p>$$\text{VTEC} = 10^{-7} \int_{z_{base}}^{z_{top}} N_e(z)\,dz \quad [\text{TECU}]$$</p>
-  <p>where $1\text{ TECU} = 10^{16}\text{ electrons/m}^2$.</p>
+  <h4>F. Gravity-Wave Potential Energy ($E_p$)</h4>
+  <p>For each neutral profile, the temperature between 20 and 40 km is put on a 0.2 km grid, a 4th-order polynomial in height is fitted as the background $T_0$, and the residual is the wave perturbation $T' = T - T_0$. Then</p>
+  <p>$$E_p = \frac{1}{2}\left(\frac{g_0}{N_{BV}}\right)^2 \left(\frac{T'}{T_0}\right)^2$$</p>
+  <p>is averaged over the layer, with $N_{BV}$ from $T_0$ (Tsuda et al., 2000). The polynomial keeps vertical wavelengths shorter than roughly the 20 km layer depth. atmPrf uses dry temperature, which is the real temperature at these heights.</p>
 
-  <h3>4. Scientific Processing Pipeline</h3>
-  <p>COSMIC-2 Explorer features an analytical pipeline enabling reproducible data conditioning:</p>
+  <h4>G. Ionospheric Electron Density ($N_e$) and VTEC</h4>
+  <p>CDAAC's <code>ionPrf</code> profiles run from the lower ionosphere up to the satellite's own orbit (about 550-580 km). This app integrates the density to vertical TEC:</p>
+  <p>$$\text{VTEC} = 10^{-7} \int_{z_{base}}^{z_{top}} \max(N_e, 0)\,dz \quad [\text{TECU}]$$</p>
+  <p>with $N_e$ in el/cm$^3$ and $z$ in km ($1\text{ TECU} = 10^{16}\text{ electrons/m}^2$). Negative densities, an Abel-inversion artefact of the bottomside, count as zero, as in CDAAC's own <code>tec0</code>. Both the column below hmF2 and the whole-profile column are reported.</p>
+
+  <h3>4. Profile-Plot Processing (on-screen only)</h3>
+  <p>The Profiles tab can filter and smooth what is drawn. These settings change the plot only: exported data are the archive values and derived fields, and the export provenance says so.</p>
   <ol>
-    <li><strong>Quality Control Filtering:</strong> Restricts soundings to high-confidence retrievals passing CDAAC quality flags (<code>bad == 0</code>).</li>
-    <li><strong>Statistical Outlier Filtering:</strong>
+    <li><strong>Quality Control:</strong> the "Good quality only" filter keeps profiles whose CDAAC <code>bad</code> flag is 0.</li>
+    <li><strong>Outlier removal</strong> (applied once to the whole profile, so it removes values far from the profile's overall distribution, not local spikes on a steep profile):
       <ul>
-        <li><em>Sigma Clipping:</em> Iterative rejection beyond $N\sigma$ from local mean.</li>
-        <li><em>Median Absolute Deviation (MAD):</em> Robust non-parametric rejection for non-Gaussian outliers.</li>
-        <li><em>Interquartile Range (IQR):</em> Rejection of data falling outside $[Q_1 - 1.5\cdot\text{IQR}, Q_3 + 1.5\cdot\text{IQR}]$.</li>
+        <li><em>Sigma Clipping:</em> values more than 3 standard deviations from the profile mean.</li>
+        <li><em>MAD:</em> values more than 3 &times; 1.4826 median absolute deviations from the median.</li>
+        <li><em>IQR:</em> values outside $[Q_1 - 3\cdot\text{IQR}, Q_3 + 3\cdot\text{IQR}]$.</li>
+        <li><em>Percentile:</em> values below the 5th or above the 95th percentile.</li>
       </ul>
     </li>
-    <li><strong>Vertical Smoothing Filters:</strong>
+    <li><strong>Smoothing</strong> over a window of 5 levels:
       <ul>
-        <li><em>Moving Average:</em> Uniform boxcar window filter.</li>
-        <li><em>Gaussian Filter:</em> Distance-weighted kernel preserving natural inflection points.</li>
-        <li><em>Savitzky-Golay Filter:</em> Local polynomial regression preserving sharp tropopause gradients.</li>
+        <li><em>Moving Average:</em> uniform running mean.</li>
+        <li><em>Gaussian:</em> Gaussian kernel with a standard deviation of 5/3 levels.</li>
+        <li><em>Median:</em> running median, robust to single spikes.</li>
+        <li><em>Savitzky-Golay:</em> local quadratic fit.</li>
       </ul>
     </li>
-    <li><strong>Uncertainty Quantification:</strong> Error bars along each profile from the running scatter of the values about their running mean (so a smooth vertical gradient does not count as uncertainty), as a standard deviation or as the standard error of the running mean.</li>
+    <li><strong>Error bars:</strong> the running scatter of the values about their 5-level running mean (so a smooth vertical gradient does not count as uncertainty), as a standard deviation or as the standard error of the running mean. This estimates level-to-level noise, not the retrieval uncertainty.</li>
   </ol>
 
-  <h3>5. Data Provenance and Academic Attribution</h3>
-  <p>Every exported CSV, JSON, NetCDF file, or figure embeds exact processing history: input granule filenames, filter methods, smoothing parameters, and software version.</p>
-  <p><strong>Mandatory Citation:</strong> Research utilizing data or figures generated with this platform should cite both the primary UCAR CDAAC data archive and the software platform:</p>
+  <h3>5. Data Provenance and Attribution</h3>
+  <p>Exported CSV files start with a commented header (software version, products and processing streams, number of granules and time range, data citation). netCDF global attributes and JSON exports carry the full provenance block, which adds every input granule file name and the interactive plot settings at export time (marked as not applied). Figure files carry no metadata.</p>
+  <p><strong>Suggested citation:</strong> publications using these data should cite the UCAR CDAAC data set (doi:10.5065/T353-C093) and, if this software was used, COSMIC-2 Explorer:</p>
   <p><em>Keshav Aggarwal, Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO, Thiruvananthapuram, Kerala, India (2026).</em></p>
 </div>

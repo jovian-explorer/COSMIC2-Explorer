@@ -95,7 +95,8 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
     Product(
         "atmPrf", "Atmospheric profile (dry)", "neutral", "atmPrf",
         "Bending angle, refractivity and the dry-air temperature/pressure retrieval "
-        "on the native high-resolution vertical grid (~3800 levels, 0-130 km).",
+        "on the native high-resolution vertical grid (~3800 levels, from the lowest "
+        "level reached up to 80 km).",
         "The raw bend of the GPS radio signal through the air, plus the temperature "
         "you get from it if you ignore water vapour.",
         "large",
@@ -108,7 +109,8 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
     Product(
         "wetPf2", "Moist-air profile (1D-Var)", "neutral", "wetPf2",
         "Temperature, pressure, water-vapour pressure, specific humidity and relative "
-        "humidity from the 1D-Var retrieval, on a uniform 100 m grid to ~60 km.",
+        "humidity from the 1D-Var retrieval, every 50 m up to 20 km and every 100 m "
+        "above, to 60 km.",
         "Temperature and humidity through the atmosphere, on neat even height steps. "
         "This is the friendliest product to start with.",
         "medium",
@@ -116,11 +118,12 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         reference="Healy, S. B., & Eyre, J. R. (2000), Q. J. R. Meteorol. Soc., 126, 1661-1683",
         doi="10.1002/qj.49712656606",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/wetPf2/",
-        processing_chain="Level 2 refractivity and dry pressure combined with ECMWF/GFS analysis background via 1D-Var optimal estimation to separate temperature and water vapor profiles on a uniform 100 m vertical grid."
+        processing_chain="Level 2 refractivity combined with a numerical weather prediction background via 1D-Var optimal estimation to separate temperature and water vapour (50 m levels to 20 km, 100 m above)."
     ),
     Product(
         "ionPrf", "Ionospheric electron density", "ionosphere", "ionPrf",
-        "Abel-inverted electron-density profile and calibrated TEC, 0-800 km.",
+        "Abel-inverted electron-density profile and calibrated TEC, up to the "
+        "satellite's orbit (about 550-580 km).",
         "How many free electrons sit at each altitude high above the ground - the "
         "layer that bends radio signals and disrupts GPS.",
         "small",
@@ -128,7 +131,7 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         reference="Syndergaard, S. (2000), Radio Sci., 35(3), 865-883",
         doi="10.1029/1999RS002199",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/provisional/spaceWeather/level2/ionPrf/",
-        processing_chain="Calibrated dual-frequency excess phase L1-L2 -> ionospheric bending angle -> Abel transform inversion under local spherical symmetry assumption to yield electron density profile from 80 to 800 km."
+        processing_chain="Calibrated dual-frequency excess phase L1-L2 -> ionospheric bending angle -> Abel transform inversion under local spherical symmetry assumption to yield the electron density profile up to the satellite's orbit."
     ),
     Product(
         "scnLv2", "Scintillation (S4)", "scintillation", "scnLv2",
@@ -174,7 +177,7 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         reference="CDAAC: ECMWF analysis interpolated to the occultation location",
         doi="",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/postProc/level2/echPrf/",
-        processing_chain="ECMWF high-resolution global reanalysis thermodynamic state interpolated to occultation tangent point coordinates and time."
+        processing_chain="ECMWF analysis interpolated to the occultation location and time."
     ),
     Product(
         "bfrPrf", "BUFR bulletin", "neutral", "",
@@ -214,7 +217,7 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         reference="Weiss, J.-P., et al. (2022), COSMIC-2 mission summary at three years in orbit, Atmosphere, 13, 1409",
         doi="10.3390/atmos13091409",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level1b/leoOrb/",
-        processing_chain="Reduced-dynamic precise orbit determination utilizing Bernese GNSS software to estimate satellite positions and velocities at cm-level accuracy."
+        processing_chain="CDAAC precise orbit determination of the COSMIC-2 spacecraft from its GNSS navigation antennas."
     ),
 ]}
 

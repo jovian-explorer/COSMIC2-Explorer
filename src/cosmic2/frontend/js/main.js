@@ -259,8 +259,8 @@ function aboutBody() {
     <p>COSMIC-2 Explorer is an open-source, interactive desktop scientific analysis and visualization platform dedicated to processing, exploring, and analyzing Global Navigation Satellite System (GNSS) Radio Occultation (RO) soundings from the FORMOSAT-7 / COSMIC-2 constellation.</p>
 
     <h3>1. Mission Overview</h3>
-    <p><strong>FORMOSAT-7 / COSMIC-2</strong> is a joint collaborative satellite program between Taiwan Space Agency (TASA / NSPO) and the United States (NOAA, USAF). The six-satellite constellation operates in a 24-degree inclination low Earth orbit (~550 km altitude) to continuously monitor the tropical and subtropical atmosphere and ionosphere (30°S to 30°N).</p>
-    <p>Using the TriG GNSS Radio Occultation System (TGRS), the constellation retrieves more than 5,000 vertical atmospheric soundings daily from GPS, GLONASS, and Galileo signals.</p>
+    <p><strong>FORMOSAT-7 / COSMIC-2</strong> is a joint collaborative satellite program between Taiwan Space Agency (TASA / NSPO) and the United States (NOAA, USAF). The six satellites fly in low Earth orbits inclined at 24 degrees (~550 km altitude) and sample the atmosphere and ionosphere between about 45°S and 45°N, most densely in the tropics.</p>
+    <p>Using the TriG GNSS Radio Occultation System (TGRS), which tracks GPS and GLONASS signals, the constellation yields several thousand neutral-atmosphere profiles a day. UCAR CDAAC turns the measurements into the profiles this app reads; COSMIC-2 Explorer computes its diagnostics from those profiles.</p>
 
     <div style="margin: 8px 0; display: flex; gap: 8px; flex-wrap: wrap;">
       <a href="https://www.tasa.org.tw/en-US/mission/formosat-7" target="_blank" rel="noopener" class="link">🌐 TASA FORMOSAT-7 Mission Page ↗</a>
@@ -274,10 +274,10 @@ function aboutBody() {
     <h3>2. Third-Party Data Policy and Archives</h3>
     <p>COSMIC-2 Explorer accesses open scientific data provided by the University Corporation for Atmospheric Research (UCAR) COSMIC Data Analysis and Archive Center (CDAAC) and NOAA National Centers for Environmental Information (NCEI). The software does not claim ownership of underlying satellite telemetry.</p>
     
-    <h4>Mandatory Dual-Attribution for Academic Publications</h4>
-    <p>Researchers publishing scientific investigations that utilize data, figures, or products generated with COSMIC-2 Explorer are required to cite both:</p>
+    <h4>Suggested Citations for Publications</h4>
+    <p>Researchers publishing work that uses data, figures, or products generated with COSMIC-2 Explorer are asked to cite both:</p>
     <ol>
-      <li>The primary space agency dataset, UCAR CDAAC archive DOI, and mission instruments.</li>
+      <li>The UCAR CDAAC data set, as UCAR asks (doi:10.5065/T353-C093).</li>
       <li>The COSMIC-2 Explorer software platform.</li>
     </ol>
 
@@ -288,7 +288,7 @@ function aboutBody() {
   title     = {{COSMIC-2 Explorer: Atmospheric and Ionospheric GNSS Radio Occultation Scientific Analysis and Visualization Platform}},
   year      = {2026},
   publisher = {Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO},
-  version   = {0.0.1},
+  version   = {${state.meta.app.version}},
   url       = {https://jovian-explorer.github.io/},
   address   = {Thiruvananthapuram, Kerala, India}
 }</pre>
@@ -297,7 +297,7 @@ function aboutBody() {
 
     <h3>3. Software License and Open-Source Attributions</h3>
     <p><strong>License:</strong> COSMIC-2 Explorer is open-source software distributed under the <strong>MIT License</strong>. Copyright (c) 2026 Keshav Aggarwal, Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO.</p>
-    <p><strong>Third-Party Components:</strong> This application bundles permissive open-source libraries: KaTeX (MIT), Plotly.js (MIT), TopoJSON (BSD-3-Clause), FastAPI (MIT), Starlette (BSD-3-Clause), Pydantic (MIT), Uvicorn (BSD-3-Clause), NumPy (BSD-3-Clause), SciPy (BSD-3-Clause), NetCDF4 (MIT/BSD), Matplotlib (PSF), and PyWebView (BSD-3-Clause). Full license notices are available in the repository documentation.</p>
+    <p><strong>Third-Party Components:</strong> This application bundles permissive open-source libraries: KaTeX (MIT), Plotly.js (MIT), TopoJSON (BSD-3-Clause), FastAPI (MIT), Starlette (BSD-3-Clause), Pydantic (MIT), Uvicorn (BSD-3-Clause), NumPy (BSD-3-Clause), SciPy (BSD-3-Clause), pandas (BSD-3-Clause), NetCDF4 (MIT), Matplotlib (PSF-based Matplotlib License), Requests (Apache-2.0), and PyWebView (BSD-3-Clause). Full license notices are available in the repository documentation.</p>
 
     <hr/>
 
@@ -383,9 +383,9 @@ function dataPolicyBody() {
     <h2>Authoritative Data Portals, Availability & Licenses</h2>
 
     <h3>1. Data Availability Statement</h3>
-    <p style="font-size: calc(12px * var(--font-scale, 1.0));">Authors using COSMIC-2 Explorer for academic research or publications are requested to include the following Data Availability Statement:</p>
+    <p style="font-size: calc(12px * var(--font-scale, 1.0));">Authors using COSMIC-2 Explorer for academic research or publications may adapt the following Data Availability Statement:</p>
     <blockquote style="background: var(--bg); border-left: 4px solid var(--accent); margin: 6px 0; padding: 8px 12px; font-size: calc(12px * var(--font-scale, 1.0));">
-      "The COSMIC-2 radio occultation soundings analyzed in this study are publicly available from the University Corporation for Atmospheric Research (UCAR) COSMIC Data Analysis and Archive Center (CDAAC) at https://data.cosmic.ucar.edu/ and the NOAA National Centers for Environmental Information (NCEI) at https://www.ncei.noaa.gov/data/gps-radio-occultation/. The processing, validation, and profile analysis were conducted using COSMIC-2 Explorer (Version 0.0.1), available open-source at https://github.com/jovian-explorer/COSMIC2-Explorer."
+      "The COSMIC-2 radio occultation soundings analyzed in this study are publicly available from the University Corporation for Atmospheric Research (UCAR) COSMIC Data Analysis and Archive Center (CDAAC) at https://data.cosmic.ucar.edu/ and the NOAA National Centers for Environmental Information (NCEI) at https://www.ncei.noaa.gov/data/gps-radio-occultation/. The profile analysis was conducted using COSMIC-2 Explorer (Version ${state.meta.app.version}), https://github.com/jovian-explorer/COSMIC2-Explorer."
     </blockquote>
 
     <hr/>
@@ -395,7 +395,7 @@ function dataPolicyBody() {
 
     <hr/>
 
-    <h3>3. Mandatory Dual-Attribution Policy</h3>
+    <h3>3. Suggested Citations</h3>
     <p style="font-size: calc(12px * var(--font-scale, 1.0));">Please cite both the primary UCAR CDAAC dataset and the COSMIC-2 Explorer software environment in publications:</p>
     
     <div style="margin-bottom: 8px;">
@@ -418,7 +418,7 @@ function dataPolicyBody() {
   author       = {Keshav Aggarwal},
   title        = {{COSMIC-2 Explorer: High-Resolution Radio Occultation Processing, Visualisation, and Atmospheric Profiling System}},
   year         = {2026},
-  version      = {0.0.1},
+  version      = {${state.meta.app.version}},
   institution  = {Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO},
   address      = {Thiruvananthapuram, Kerala, India},
   url          = {https://github.com/jovian-explorer/COSMIC2-Explorer}
@@ -534,6 +534,8 @@ async function boot() {
     return;
   }
   $('#version-tag').textContent = `v${state.meta.app.version}`;
+  // Citations in the tutorial quote the running version, not a hard-coded one.
+  $$('.app-version').forEach((n) => { n.textContent = state.meta.app.version; });
   document.title = `${state.meta.app.title} ${state.meta.app.version}`;
 
   wireChrome();

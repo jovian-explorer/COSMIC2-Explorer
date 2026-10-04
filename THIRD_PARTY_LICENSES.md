@@ -144,3 +144,13 @@ INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 * **Author**: Samuel Colvin and contributors
 * **License**: MIT License
 * **Repository**: https://github.com/pydantic/pydantic
+
+### 13. pandas
+* **Author**: The pandas development team
+* **License**: BSD 3-Clause License
+* **Repository**: https://github.com/pandas-dev/pandas
+
+### 14. Requests
+* **Author**: Kenneth Reitz and contributors
+* **License**: Apache License 2.0
+* **Repository**: https://github.com/psf/requests
