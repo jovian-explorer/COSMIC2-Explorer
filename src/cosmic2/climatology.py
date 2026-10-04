@@ -275,3 +275,96 @@ class warnings_off:
 
     def __exit__(self, *exc):
         return self._cm.__exit__(*exc)
+
+
+# ---------------------------------------------------------------------------
+# gridded maps of per-profile diagnostics (gravity-wave energy and others)
+# ---------------------------------------------------------------------------
+
+EP_COLUMN = "gravity_waves.ep_J_per_kg"
+
+
+def _map_value(task: tuple):
+    """``(lat, lon, value)`` of one profile, or ``None``.  Module-level so
+    it runs on the worker processes.
+
+    The gravity-wave energy is recomputed with the requested layer and
+    filter (``gw``); any other column comes from the standard diagnostics.
+    """
+    from . import analysis, readers
+    row, column, gw = task
+    if row.get("lat") is None or row.get("lon") is None:
+        return None
+    if column == EP_COLUMN and gw:
+        try:
+            g = readers.load(row["path"], row["product"])
+        except Exception:  # noqa: BLE001
+            return None
+        d = g.data
+        tname = "Temp" if "Temp" in d else "temp_dry"
+        if "MSL_alt" not in d or tname not in d:
+            return None
+        tk = analysis.to_kelvin(d[tname], g.units.get(tname, "C"))
+        v = analysis.gravity_wave_energy(d["MSL_alt"], tk, **gw)["ep_J_per_kg"]
+    else:
+        flat = analysis.diagnostics_row(row)
+        v = None if flat is None else flat.get(column)
+    if not isinstance(v, (int, float)) or isinstance(v, bool) or not np.isfinite(v):
+        return None
+    return float(row["lat"]), float(row["lon"]), float(v)
+
+
+def diagnostic_map(rows: Sequence[dict], column: str = EP_COLUMN,
+                   lat_step: float = 10.0, lon_step: float = 20.0,
+                   min_count: int = 1, gw: dict | None = None,
+                   workers: int | None = None) -> dict:
+    """Mean of a per-profile diagnostic in latitude-longitude cells, and its
+    zonal mean (mean, median, standard deviation, count per latitude band).
+
+    ``gw`` (keywords of :func:`analysis.gravity_wave_energy`: ``z_lo``,
+    ``z_hi``, ``method``, ``poly_order``, ``cutoff_km``) recomputes the
+    gravity-wave energy with that layer and background filter; without it
+    the per-profile diagnostic (polynomial, 20-40 km) is used.  Cells with
+    fewer than ``min_count`` profiles are blank.  With a day or two of data
+    the cells are sparse: the zonal mean is the steadier number.
+    """
+    from .parallel import pmap
+    if not (lat_step > 0 and lon_step > 0):
+        raise ValueError("lat_step and lon_step must be > 0")
+    if gw and gw.get("method", "polynomial") not in ("polynomial", "highpass"):
+        raise ValueError("method must be polynomial or highpass")
+    tasks = [(r, column, gw or None) for r in rows]
+    vals = np.array([v for v in pmap(_map_value, tasks, workers=workers) if v is not None],
+                    float).reshape(-1, 3)
+    lat_edges = np.arange(-90.0, 90.0 + lat_step / 2, lat_step)
+    lon_edges = np.arange(-180.0, 180.0 + lon_step / 2, lon_step)
+    nlat, nlon = lat_edges.size - 1, lon_edges.size - 1
+    out = {"column": column, "n": int(vals.shape[0]), "min_count": min_count,
+           "gw": gw or None,
+           "lat_edges": lat_edges.tolist(), "lon_edges": lon_edges.tolist(),
+           "lat_centres": (0.5 * (lat_edges[:-1] + lat_edges[1:])).tolist(),
+           "lon_centres": (0.5 * (lon_edges[:-1] + lon_edges[1:])).tolist()}
+    mean = np.full((nlat, nlon), np.nan)
+    count = np.zeros((nlat, nlon), dtype=int)
+    zonal = {k: [None] * nlat for k in ("mean", "median", "std")}
+    zonal["n"] = [0] * nlat
+    if vals.size:
+        li = np.clip(np.digitize(vals[:, 0], lat_edges) - 1, 0, nlat - 1)
+        lj = np.clip(np.digitize(vals[:, 1], lon_edges) - 1, 0, nlon - 1)
+        np.add.at(count, (li, lj), 1)
+        sums = np.zeros((nlat, nlon))
+        np.add.at(sums, (li, lj), vals[:, 2])
+        with np.errstate(invalid="ignore", divide="ignore"):
+            mean = sums / count
+        mean[count < max(min_count, 1)] = np.nan
+        for i in range(nlat):
+            v = vals[li == i, 2]
+            zonal["n"][i] = int(v.size)
+            if v.size:
+                zonal["mean"][i] = float(v.mean())
+                zonal["median"][i] = float(np.median(v))
+                zonal["std"][i] = float(v.std(ddof=1)) if v.size > 1 else None
+        out["overall"] = {"mean": float(vals[:, 2].mean()),
+                          "median": float(np.median(vals[:, 2]))}
+    out.update(mean=mean, count=count, zonal=zonal)
+    return out

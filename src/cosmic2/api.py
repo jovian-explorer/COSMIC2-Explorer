@@ -706,6 +706,57 @@ def climatology_section(req: SectionRequest) -> dict:
     return _clean(sec)
 
 
+class MapRequest(BaseModel):
+    granule_ids: list[str] | None = None
+    search: SearchRequest | None = None
+    column: str = climatology.EP_COLUMN
+    lat_step: float = Field(default=10.0, gt=0, le=90)
+    lon_step: float = Field(default=20.0, gt=0, le=180)
+    min_count: int = Field(default=1, ge=1)
+    # Gravity-wave energy only: layer and background filter.
+    gw_z_lo: float = Field(default=20.0, ge=0)
+    gw_z_hi: float = Field(default=40.0, gt=0)
+    gw_method: Literal["polynomial", "highpass"] = "polynomial"
+    gw_poly_order: int = Field(default=4, ge=1, le=8)
+    gw_cutoff_km: float = Field(default=10.0, gt=0.5)
+    max_profiles: int = Field(default=5000, ge=1)
+
+
+@app.post("/api/climatology/map")
+def climatology_map(req: MapRequest) -> dict:
+    """Latitude-longitude map and zonal mean of a per-profile diagnostic."""
+    rows = _resolve_selection(req.granule_ids, req.search, req.max_profiles)
+    if not rows:
+        raise HTTPException(400, "No local profiles match that selection")
+    gw = None
+    if req.column == climatology.EP_COLUMN:
+        if req.gw_z_hi <= req.gw_z_lo:
+            raise HTTPException(422, "gw_z_hi must be above gw_z_lo")
+        gw = {"z_lo": req.gw_z_lo, "z_hi": req.gw_z_hi, "method": req.gw_method}
+        gw.update({"poly_order": req.gw_poly_order} if req.gw_method == "polynomial"
+                  else {"cutoff_km": req.gw_cutoff_km})
+    try:
+        res = climatology.diagnostic_map(rows, req.column, req.lat_step, req.lon_step,
+                                         req.min_count, gw=gw)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    res["selected"] = len(rows)
+    res["title"] = vocab.column_title(req.column)
+    return _clean(res)
+
+
+@app.get("/api/coastlines")
+def coastlines_endpoint(resolution: Literal["110m", "50m"] = "110m") -> dict:
+    """Bundled coastlines as one polyline (null between segments), for maps
+    drawn as plain x-y plots."""
+    lon: list = []
+    lat: list = []
+    for line in plotting.coastlines(resolution):
+        lon += line[:, 0].round(3).tolist() + [None]
+        lat += line[:, 1].round(3).tolist() + [None]
+    return {"lon": lon, "lat": lat}
+
+
 # ---------------------------------------------------------------------------
 # exports
 # ---------------------------------------------------------------------------

@@ -20,6 +20,7 @@ export function initStatsTab() {
   });
   $('#btn-section').addEventListener('click', (e) =>
       withBusy(e.target, 'Averaging...', drawSection));
+  initMapCard();
 }
 
 /** The selection when asked for, otherwise the Explore tab's search. */
@@ -201,4 +202,87 @@ async function drawSection() {
     `${req.step_km} km grid; cells with fewer than ${res.min_count} profiles are blank.` +
     (diverging ? ' Departure = 100 (band mean - mean of all profiles) / mean of all ' +
                  'profiles, at each height.' : '');
+}
+
+// ------------------------------------------------------------ diagnostic map
+
+const EP = 'gravity_waves.ep_J_per_kg';
+let coast = null;   // bundled coastlines, fetched once
+
+function initMapCard() {
+  const cols = Object.keys(state.meta.diag_columns || {})
+      .filter((c) => c.includes('.') || c.startsWith('column_'));
+  fillSelect($('#m-col'), cols.map((c) => ({value: c, label: state.meta.diag_columns[c]})),
+             cols.includes(EP) ? EP : cols[0]);
+  const sync = () => { $('#m-gw').disabled = $('#m-col').value !== EP; };
+  $('#m-col').addEventListener('change', sync);
+  sync();
+  $('#btn-map').addEventListener('click', (e) =>
+      withBusy(e.target, 'Computing...', drawMap));
+}
+
+async function drawMap() {
+  const column = $('#m-col').value;
+  const req = Object.assign({
+    column,
+    lat_step: Number($('#m-lat').value) || 10,
+    lon_step: Number($('#m-lon').value) || 20,
+    min_count: Number($('#m-min').value) || 1,
+    gw_z_lo: Number($('#m-zlo').value) || 20,
+    gw_z_hi: Number($('#m-zhi').value) || 40,
+    gw_method: $('#m-method').value,
+    gw_cutoff_km: Number($('#m-cut').value) || 10,
+  }, statsSelection($('#m-selected-only').checked));
+  if (req.search) {
+    req.search.good_only = true;
+    req.search.limit = req.max_profiles = 5000;
+    // Each diagnostic belongs to one family of products.
+    const family = column.startsWith('ionosphere.') ? ['ionPrf']
+                 : column.startsWith('scintillation.') ? ['scnLv2']
+                 : column.startsWith('insitu.') ? ['ivmL2m'] : ['atmPrf', 'wetPf2'];
+    const wanted = (req.search.products || []).filter((p) => family.includes(p));
+    req.search.products = wanted.length ? wanted : [family[0]];
+  }
+  const [res, cl] = await Promise.all([api.diagMap(req), coast || api.coastlines()]);
+  coast = cl;
+  if (!res.n) {
+    emptyPlot('mapgrid-plot', `No selected profile has ${res.title}.`);
+    emptyPlot('zonal-plot', 'Nothing to average.');
+    $('#mapgrid-caption').textContent = '';
+    return;
+  }
+  const base = layoutBase();
+  Plotly.react('mapgrid-plot', [
+    {type: 'heatmap', x: res.lon_centres, y: res.lat_centres, z: res.mean,
+     colorscale: 'Viridis', hoverongaps: false, customdata: res.count,
+     hovertemplate: '%{y}°N %{x}°E: %{z:.3g} (n=%{customdata})<extra></extra>',
+     colorbar: {title: {text: cleanPlotlyMath(res.title), side: 'right'}, thickness: 12}},
+    {type: 'scatter', mode: 'lines', x: coast.lon, y: coast.lat, hoverinfo: 'skip',
+     line: {color: 'rgba(100,116,139,0.9)', width: 0.8}, showlegend: false},
+  ], axesLayout('Longitude [°E]', 'Latitude [°N]', {
+    xaxis: Object.assign(base.xaxis, {title: {text: 'Longitude [°E]'},
+                                      range: [-180, 180], dtick: 60}),
+    yaxis: Object.assign(base.yaxis, {title: {text: 'Latitude [°N]'},
+                                      range: [-60, 60], dtick: 15}),
+  }), PLOT_CONFIG);
+  const z = res.zonal;
+  Plotly.react('zonal-plot', [
+    {type: 'scatter', mode: 'lines+markers', name: 'mean ± 1 std', x: res.lat_centres,
+     y: z.mean, error_y: {type: 'data', array: z.std.map((v) => (v === null ? 0 : v)),
+                          visible: true},
+     text: z.n.map((n) => `n=${n}`), marker: {color: PALETTE[0]},
+     hovertemplate: '%{x}°: %{y:.3g} (%{text})<extra></extra>'},
+    {type: 'scatter', mode: 'lines+markers', name: 'median', x: res.lat_centres,
+     y: z.median, marker: {color: PALETTE[1]}, line: {dash: 'dot'}},
+  ], axesLayout('Latitude [°N] (band centre)', cleanPlotlyMath(res.title)), PLOT_CONFIG);
+  const gw = res.gw;
+  $('#mapgrid-title').textContent = `${res.title}: mean in each cell`;
+  $('#mapgrid-caption').textContent =
+    `${res.n} of ${res.selected} profiles have a value; overall mean ` +
+    `${fmt(res.overall.mean, 3)}, median ${fmt(res.overall.median, 3)}. ` +
+    `Cells of ${req.lat_step}° × ${req.lon_step}° with fewer than ` +
+    `${res.min_count} profiles are blank.` +
+    (gw ? ` Gravity-wave energy over ${gw.z_lo}-${gw.z_hi} km, background: ` +
+          (gw.method === 'highpass' ? `high-pass, ${gw.cutoff_km} km cut-off.`
+                                    : `degree-${gw.poly_order} polynomial.`) : '');
 }

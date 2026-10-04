@@ -91,6 +91,7 @@ def _warm(_: int) -> int:
     worker's start: numpy, scipy, netCDF4)."""
     import time
     from . import analysis, pipeline, readers  # noqa: F401
+    import scipy.signal  # noqa: F401  (gravity-wave high-pass; ~2 s to import)
     time.sleep(0.05)   # hold the worker so the next task starts another
     return os.getpid()
 

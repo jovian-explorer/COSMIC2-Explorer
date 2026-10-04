@@ -117,3 +117,39 @@ def test_section_endpoint_on_bundled_samples():
     assert res["n_profiles"] >= 1 and res["units"] == "K"
     m = np.array([[np.nan if v is None else v for v in row] for row in res["mean"]])
     assert np.nanmin(m) > 150 and np.nanmax(m) < 320
+
+
+def test_diagnostic_map_cells_and_zonal_mean_by_hand(monkeypatch):
+    pts = [(5, 10, 2.0), (6, 12, 4.0), (5, 100, 9.0), (-25, -170, 1.0), (None, 0, 5.0)]
+    monkeypatch.setattr(climatology, "_map_value",
+                        lambda t: None if t[0]["lat"] is None else
+                        (t[0]["lat"], t[0]["lon"], t[0]["v"]))
+    rows = [{"lat": a, "lon": b, "v": v} for a, b, v in pts]
+    m = climatology.diagnostic_map(rows, "x", lat_step=10, lon_step=20, workers=1)
+    assert m["n"] == 4
+    i0 = m["lat_centres"].index(5.0)
+    j10 = m["lon_centres"].index(10.0)
+    j100 = m["lon_centres"].index(110.0)
+    assert m["mean"][i0][j10] == pytest.approx(3.0) and m["count"][i0][j10] == 2
+    assert m["mean"][i0][j100] == pytest.approx(9.0)
+    assert m["zonal"]["mean"][i0] == pytest.approx(5.0)
+    assert m["zonal"]["median"][i0] == pytest.approx(4.0)
+    assert m["zonal"]["n"][i0] == 3
+    assert m["zonal"]["std"][i0] == pytest.approx(np.std([2, 4, 9], ddof=1))
+    # min_count blanks thin cells but not the zonal mean
+    m2 = climatology.diagnostic_map(rows, "x", lat_step=10, lon_step=20,
+                                    min_count=2, workers=1)
+    assert np.isnan(m2["mean"][i0][j100]) and m2["zonal"]["n"][i0] == 3
+
+
+def test_map_and_coastline_endpoints_on_bundled_samples():
+    post("/api/local/load-samples", {})
+    res = post("/api/climatology/map", {
+        "search": {"products": ["atmPrf", "wetPf2"]},
+        "gw_method": "highpass", "gw_z_lo": 20, "gw_z_hi": 30})
+    assert res["n"] >= 1 and res["gw"]["method"] == "highpass"
+    assert res["title"].startswith("Gravity-wave potential energy")
+    tp = post("/api/climatology/map", {"search": {}, "column": "tropopause.height_km"})
+    assert tp["gw"] is None and 5 < tp["overall"]["mean"] < 20
+    coast = json.loads(urllib.request.urlopen(BASE + "/api/coastlines", timeout=60).read())
+    assert len(coast["lon"]) == len(coast["lat"]) > 1000 and None in coast["lon"]

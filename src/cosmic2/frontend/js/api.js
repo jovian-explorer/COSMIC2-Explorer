@@ -77,6 +77,8 @@ export const api = {
   diagTable:     (req)       => call('/api/diagnostics/table', {method: 'POST', body: req}),
   statsSampling: (req)       => call('/api/stats/sampling', {method: 'POST', body: req}),
   section:       (req)       => call('/api/climatology/section', {method: 'POST', body: req}),
+  diagMap:       (req)       => call('/api/climatology/map', {method: 'POST', body: req}),
+  coastlines:    ()          => call('/api/coastlines'),
 
   exportData:    (req)       => call('/api/export/data', {method: 'POST', body: req}),
   exportFigure:  (req)       => call('/api/export/figure', {method: 'POST', body: req}),

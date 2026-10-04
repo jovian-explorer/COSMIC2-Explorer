@@ -792,6 +792,46 @@
       <p class="hint" id="section-caption"></p>
     </div>
   </div>
+  <div class="grid-side">
+    <aside class="card filters">
+      <h2>Map of a diagnostic</h2>
+      <label>Quantity <select id="m-col"></select></label>
+      <div class="row tight">
+        <label>Lat. step (&deg;)<input type="number" id="m-lat" value="10" min="1" step="1"></label>
+        <label>Lon. step (&deg;)<input type="number" id="m-lon" value="20" min="1" step="1"></label>
+        <label>Min. profiles<input type="number" id="m-min" value="1" min="1" step="1"></label>
+      </div>
+      <fieldset id="m-gw">
+        <legend>Gravity-wave energy</legend>
+        <div class="row tight">
+          <label>Bottom (km)<input type="number" id="m-zlo" value="20" min="0" step="any"></label>
+          <label>Top (km)<input type="number" id="m-zhi" value="40" min="1" step="any"></label>
+        </div>
+        <label>Background
+          <select id="m-method">
+            <option value="polynomial">4th-order polynomial over the layer</option>
+            <option value="highpass">high-pass (Butterworth), cut-off below</option>
+          </select>
+        </label>
+        <label>Cut-off wavelength (km)<input type="number" id="m-cut" value="10" min="1" step="any"></label>
+      </fieldset>
+      <label class="check"><input type="checkbox" id="m-selected-only">
+        Use only my selection</label>
+      <button class="primary" id="btn-map">Compute</button>
+      <p class="hint">To compare with Tsuda et al. (2000): 20-30 km, high-pass, 10 km cut-off.</p>
+    </aside>
+    <div class="stack">
+      <div class="card">
+        <h2 id="mapgrid-title">Mean in each cell</h2>
+        <div id="mapgrid-plot" class="plot tall"></div>
+        <p class="hint" id="mapgrid-caption"></p>
+      </div>
+      <div class="card">
+        <h2>Zonal mean</h2>
+        <div id="zonal-plot" class="plot"></div>
+      </div>
+    </div>
+  </div>
 </section>
 
 <!-- ==================== EXPORT ==================== -->
