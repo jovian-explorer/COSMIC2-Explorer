@@ -454,6 +454,7 @@ function wireGuideTab() {
   $('#guide-btn-goto-profile')?.addEventListener('click', () => showTab('profile'));
   $('#guide-btn-goto-pipeline')?.addEventListener('click', () => showTab('profile'));
   $('#guide-btn-goto-composite')?.addEventListener('click', () => showTab('composite'));
+  $('#guide-btn-goto-stats')?.addEventListener('click', () => showTab('stats'));
   $('#guide-btn-goto-export')?.addEventListener('click', () => showTab('export'));
 }
 
