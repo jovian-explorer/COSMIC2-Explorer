@@ -357,6 +357,7 @@ export async function runSearch(offset = 0) {
     `${res.total} profiles match. Showing ${res.granules.length}.`;
   renderResults();
   drawMap();
+  document.dispatchEvent(new CustomEvent('search-changed'));
   return res;
 }
 

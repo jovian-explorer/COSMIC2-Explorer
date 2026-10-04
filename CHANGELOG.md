@@ -43,6 +43,7 @@
 
 ### Interface
 
+- The Compare and Export tabs follow the product of the Explore search, as the Profiles tab follows a selection: after searching ionPrf, scnLv2 or ivmL2m they no longer stay on Temp (every average and overlay figure came back empty), the Compare grid switches to 0-600 km in 5 km steps for ionospheric products, and regridded CSV/netCDF exports use a height the product has (they failed with "No readable granules with the requested vertical coordinate" for scnLv2 and ivmL2m). The relationship plot picks each product's headline diagnostic for y (hmF2, peak S4, ion density) when the tropopause is not available, and its caption no longer describes the previous plot when nothing can be drawn.
 - The Explore map no longer piles up box/lasso-selection handlers: each search or colour change added another one (Plotly warned of a listener leak after ten), so a selection was processed once per earlier redraw.
 - The Compare tab's relationship plot and its exported figure name every diagnostic with its label and unit ("WMO tropopause height [km]", "Gravity-wave potential energy Ep [J/kg]") instead of the raw column name; the exported figure was labelled `tropopause.height_km`. The exported scatter figure now also uses the colour chosen on the Compare tab (it was never sent, so the figure had no colour scale).
 - Numbers shown with no decimals keep their zeros (the formatter turned 100 into "1" when asked for 0 decimal places).

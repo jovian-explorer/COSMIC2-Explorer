@@ -40,14 +40,50 @@ export const PRODUCT_AXES = {
 function fitAxesToSelection() {
   const products = new Set(selectedIds().map((id) => state.selected.get(id).product));
   if (products.size !== 1) return;
-  const axes = PRODUCT_AXES[[...products][0]];
+  fitPair([...products][0], '#p-field', '#p-vertical');
+}
+
+/** Switch a quantity/height pair of controls to what ``product`` can show,
+ *  leaving a choice it can show alone. */
+function fitPair(product, fieldSel, verticalSel) {
+  const axes = PRODUCT_AXES[product];
   if (!axes) return;
   const [fields, verticals] = axes;
-  if (!fields.includes($('#p-field').value)) {
-    $('#p-field').value = fields[0];
-    $('#p-logx').checked = false;
+  if (!fields.includes($(fieldSel).value)) {
+    $(fieldSel).value = fields[0];
+    if (fieldSel === '#p-field') $('#p-logx').checked = false;
   }
-  if (!verticals.includes($('#p-vertical').value)) $('#p-vertical').value = verticals[0];
+  if (verticalSel && !verticals.includes($(verticalSel).value)) {
+    $(verticalSel).value = verticals[0];
+  }
+}
+
+/** The Explore search changed: the Compare and Export tabs (which work on
+ *  the search) follow its product, as the Profiles tab follows a selection.
+ *  An ionPrf search left them on Temp, so every average and overlay figure
+ *  came back empty and the regridded exports failed. */
+function fitAxesToSearch() {
+  const products = (state.lastSearch && state.lastSearch.products) || [];
+  if (products.length !== 1) return;
+  fitPair(products[0], '#c-field', '#c-vertical');
+  // Ionospheric heights need a taller, coarser grid than the 0-40 km default.
+  const iono = ['ionPrf', 'scnLv2'].includes(products[0]);
+  if (iono && Number($('#c-top').value) <= 60) {
+    $('#c-top').value = 600;
+    $('#c-step').value = 5;
+  } else if (!iono && Number($('#c-top').value) > 100) {
+    $('#c-top').value = 40;
+    $('#c-step').value = 0.5;
+  }
+  fitPair(products[0], '#e-field', null);
+  if (!selectedIds().length) fitPair(products[0], '#p-field', '#p-vertical');
+}
+
+/** Height for the regridded exports: one the searched product has. */
+function exportVertical() {
+  const products = (state.lastSearch && state.lastSearch.products) || [];
+  const axes = products.length === 1 && PRODUCT_AXES[products[0]];
+  return axes ? axes[1][0] : 'MSL_alt';
 }
 
 export function labelled(names) {
@@ -64,6 +100,7 @@ export function initProfileTab() {
   $('#btn-view-bending').addEventListener('click', () => quickView('bending'));
   $('#btn-view-iono').addEventListener('click', () => quickView('iono'));
   document.addEventListener('selection-changed', () => { renderChips(); fitAxesToSelection(); });
+  document.addEventListener('search-changed', fitAxesToSearch);
   renderChips();
 }
 
@@ -512,7 +549,9 @@ async function drawScatter() {
   const rows = diagCache.rows.filter((r) => r[xf] !== null && r[yf] !== null &&
                                             r[xf] !== undefined && r[yf] !== undefined);
   if (!rows.length) {
-    emptyPlot('scatter-plot', `No profile has both ${xf} and ${yf}.`);
+    emptyPlot('scatter-plot', `No profile has both ${prettyCol(xf)} and ${prettyCol(yf)}.`);
+    // (the caption used to keep describing the previous plot)
+    $('#scatter-caption').textContent = `0 of ${diagCache.n} profiles have both quantities.`;
     return;
   }
   const trace = {
@@ -571,15 +610,18 @@ function populateScatterAxes(columns) {
       !c.endsWith('.found') && !c.endsWith('.method') && !c.endsWith('.ducting') &&
       !c.endsWith('.critical_gradient'));
   const opts = numeric.map((c) => ({value: c, label: prettyCol(c)}));
-  for (const [sel, preferred] of [['#s-x', 'lat'],
-                                  ['#s-y', 'tropopause.height_km'],
-                                  ['#s-c', 'local_time']]) {
+  // The first preference the table has: each product's headline number
+  // (an ionPrf table has no tropopause, so y used to fall on the first column).
+  for (const [sel, preferred] of [
+      ['#s-x', ['lat']],
+      ['#s-y', ['tropopause.height_km', 'ionosphere.hmF2_km', 'scintillation.s4_max',
+                'insitu.ion_dens_median_Ncc']],
+      ['#s-c', ['local_time']]]) {
     const node = $(sel);
     const keep = node.value;
     const list = sel === '#s-c' ? [{value: '', label: 'none'}, ...opts] : opts;
-    fillSelect(node, list,
-               numeric.includes(keep) ? keep
-               : (numeric.includes(preferred) ? preferred : list[0].value));
+    const pref = preferred.find((c) => numeric.includes(c));
+    fillSelect(node, list, numeric.includes(keep) ? keep : (pref || list[0].value));
   }
 }
 
@@ -605,7 +647,7 @@ async function exportData() {
   const req = Object.assign({
     kind: $('#e-kind').value,
     field: $('#e-field').value,
-    vertical: 'MSL_alt',
+    vertical: exportVertical(),
     top_km: Number($('#e-top').value) || 60,
     step_km: Number($('#e-step').value) || 0.2,
     basename: $('#e-name').value || 'cosmic2',
