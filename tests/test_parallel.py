@@ -106,3 +106,20 @@ def test_profile_series_parallel_matches_serial(force_parallel):
         assert s["units"] == p["units"] == "K"
         np.testing.assert_array_equal(s["series"]["x"], p["series"]["x"])
         np.testing.assert_array_equal(s["series"]["uncertainty"], p["series"]["uncertainty"])
+
+
+def test_warm_up_starts_the_pool_before_the_first_job():
+    """The first big job after launch waited 1-4 s for spawned workers to
+    import numpy/scipy/netCDF4; warm_up pays that in the background."""
+    from cosmic2 import parallel
+    assert parallel.warm_up(workers=1) == 0          # serial: nothing to start
+    if parallel.cpu_count() < 2:
+        return
+    try:
+        assert parallel.warm_up(workers=2, wait=True) == 2
+        pool = parallel._pool
+        assert pool is not None and len(pool._processes) == 2
+        # the warm pool is the one a later job of the same size uses
+        assert parallel._get_pool(2) is pool
+    finally:
+        parallel.shutdown()

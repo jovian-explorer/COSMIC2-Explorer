@@ -36,6 +36,10 @@ async def lifespan(app: FastAPI):
     ensure_dirs()
     store.init_db()
     store.prune_missing()
+    # Spawn the analysis workers now, in the background, so the first large
+    # composite or plot does not wait for them (see parallel.warm_up).
+    if os.environ.get("COSMIC2_NO_WARM_UP") != "1":
+        parallel.warm_up()
     yield
 
 
@@ -219,7 +223,10 @@ def update_settings(patch: SettingsPatch) -> dict:
         raise HTTPException(422, f"default_stream must be one of {sorted(STREAMS)}")
     if patch.default_product is not None and patch.default_product not in PRODUCTS:
         raise HTTPException(422, f"default_product must be one of {sorted(PRODUCTS)}")
+    before = parallel.resolve_workers()
     SETTINGS.update(**{k: v for k, v in patch.model_dump().items() if v is not None})
+    if parallel.resolve_workers() != before:
+        parallel.warm_up()   # a new pool size starts a new pool
     return _clean(vars(SETTINGS))
 
 

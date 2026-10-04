@@ -86,6 +86,45 @@ def shutdown() -> None:
 atexit.register(shutdown)
 
 
+def _warm(_: int) -> int:
+    """Import the per-granule modules in a worker (the slow part of a
+    worker's start: numpy, scipy, netCDF4)."""
+    import time
+    from . import analysis, pipeline, readers  # noqa: F401
+    time.sleep(0.05)   # hold the worker so the next task starts another
+    return os.getpid()
+
+
+def warm_up(workers: int | None = None, wait: bool = False) -> int:
+    """Start the worker pool ahead of the first job.
+
+    On Windows (and macOS) workers are spawned, not forked, so each one
+    imports numpy, scipy and netCDF4 from scratch: the first large composite
+    or plot after launch used to pay 1-4 s for that.  The server calls this
+    in a background thread at start-up and after the worker setting
+    changes, so the cost is paid while the user is still looking at the
+    first screen.  Returns the number of workers asked to start (0 when the
+    setting is serial).
+    """
+    n = resolve_workers(workers)
+    if n <= 1:
+        return 0
+
+    def _go() -> None:
+        try:
+            pool = _get_pool(n)
+            for f in [pool.submit(_warm, i) for i in range(n)]:
+                f.result(timeout=120)
+        except Exception as exc:  # noqa: BLE001 - pmap falls back anyway
+            log.warning("worker pool warm-up failed: %s", exc)
+
+    if wait:
+        _go()
+    else:
+        threading.Thread(target=_go, name="pool-warm-up", daemon=True).start()
+    return n
+
+
 def pmap(func: Callable[[T], R], items: Iterable[T], workers: int | None = None,
          min_items: int | None = None) -> list[R]:
     """``list(map(func, items))``, on worker processes when worthwhile.
