@@ -94,3 +94,13 @@ def test_settings_number_inputs_accept_their_default_values():
         if k != k.to_integral_value():
             bad.append(attrs.strip()[:60])
     assert not bad, bad
+
+
+def test_export_handlers_declare_what_they_use():
+    """exportData once tested an undeclared ``kind`` (copied from
+    exportFigure), so every "Write file" press threw a ReferenceError."""
+    src = _read(FRONTEND / "js" / "tabs_science.js")
+    for fn in ("exportData", "exportFigure"):
+        body = src.split(f"async function {fn}()", 1)[1].split("\n}\n", 1)[0]
+        if re.search(r"\bkind\s*===", body):
+            assert re.search(r"\b(const|let|var)\s+kind\b", body), fn

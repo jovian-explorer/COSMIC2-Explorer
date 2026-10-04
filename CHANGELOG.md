@@ -22,6 +22,7 @@
 
 ### Interface
 
+- The Export tab's **Write file** button works again: it stopped with a script error ("kind is not defined") before any request was sent, so no data file could be written from the interface.
 - Profile and composite plot titles use the product-aware name (an atmPrf `Temp` plot is titled "Dry temperature", as its axis already was).
 - On the Profiles tab, selecting profiles of one product that cannot show the chosen quantity or height (Temp for ionPrf, MSL_alt for scnLv2) switches to that product's natural pair (ELEC_dens on MSL_alt, S4 on tangent height, ion density on altitude) instead of drawing an empty plot.
 - The Compare tab has a **Height** choice. Scintillation (scnLv2 S4, sigma-phi) can now be averaged against tangent-point height (`occheight`), for example S4 by day and night; choosing an S4 quantity switches the height to `occheight` automatically. When no selected profile carries the quantity on that height, the plot says so instead of "No group had enough profiles".
