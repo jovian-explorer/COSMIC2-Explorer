@@ -3,11 +3,23 @@
 
 import {api, state, selectedIds} from './api.js';
 import {$, el, clear, fmt, withBusy, layoutBase, PLOT_CONFIG, PALETTE,
-        emptyPlot} from './ui.js';
+        emptyPlot, fillSelect, cleanPlotlyMath} from './ui.js';
+import {FIELD_CHOICES, VERTICAL_CHOICES, PRODUCT_AXES, labelled} from './tabs_science.js';
 
 export function initStatsTab() {
   $('#btn-stats').addEventListener('click', (e) =>
       withBusy(e.target, 'Counting...', drawStats));
+  fillSelect($('#x-field'), labelled(FIELD_CHOICES), 'Temp');
+  fillSelect($('#x-vertical'), labelled(VERTICAL_CHOICES), 'MSL_alt');
+  // Electron density lives hundreds of km up: move the grid with it.
+  $('#x-field').addEventListener('change', () => {
+    const iono = ['ELEC_dens'].includes($('#x-field').value);
+    $('#x-bottom').value = iono ? 100 : 0;
+    $('#x-top').value = iono ? 550 : 40;
+    $('#x-step').value = iono ? 5 : 0.5;
+  });
+  $('#btn-section').addEventListener('click', (e) =>
+      withBusy(e.target, 'Averaging...', drawSection));
 }
 
 /** The selection when asked for, otherwise the Explore tab's search. */
@@ -121,4 +133,72 @@ async function drawStats() {
             hovertemplate: '%{x}°: %{y:.2f} km (%{text})<extra></extra>',
             marker: {color: PALETTE[products.indexOf(name) % PALETTE.length]}};
   }), axesLayout('Latitude [°N]', 'Median lowest level [km]'), PLOT_CONFIG);
+}
+
+// ------------------------------------------------------------ cross section
+
+async function drawSection() {
+  const field = $('#x-field').value;
+  const req = Object.assign({
+    field,
+    vertical: $('#x-vertical').value,
+    lat_step: Number($('#x-lat').value) || 5,
+    min_count: Number($('#x-min').value) || 3,
+    bottom_km: Number($('#x-bottom').value) || 0,
+    top_km: Number($('#x-top').value) || 40,
+    step_km: Number($('#x-step').value) || 0.5,
+    convert_kelvin: field === 'Temp' || field === 'temp_dry',
+    good_only: true,
+  }, statsSelection($('#x-selected-only').checked));
+  let product = null;
+  if (req.search) {
+    req.search.good_only = true;
+    req.search.limit = req.max_profiles = 5000;
+    // The quantity decides the product: one that carries it, preferring the
+    // Explore tab's product, and wetPf2 (real temperature) over atmPrf (dry
+    // temperature) otherwise. Two products holding Temp as different
+    // quantities are never averaged together.
+    const carriers = ['wetPf2', 'atmPrf', 'ionPrf', 'scnLv2', 'ivmL2m']
+        .filter((p) => PRODUCT_AXES[p][0].includes(field));
+    const wanted = (req.search.products || []).filter((p) => carriers.includes(p));
+    product = wanted[0] || carriers[0] || null;
+    if (product) req.search.products = [product];
+  }
+  const res = await api.section(req);
+  if (!res.n_profiles) {
+    emptyPlot('section-plot', `None of the ${res.selected} selected profiles carry ` +
+              `${field} on ${req.vertical} in ${req.bottom_km}-${req.top_km} km.`);
+    $('#section-caption').textContent = '';
+    return;
+  }
+  const show = $('#x-show').value;
+  const z = res[show];
+  // Plotly heatmaps take z[y][x]: heights down the rows, latitude across.
+  const zT = res.grid.map((_, j) => res.lat_centres.map((__, i) => z[i][j]));
+  const diverging = show === 'departure_pct';
+  let lim = 0;
+  if (diverging) {
+    for (const row of zT) for (const v of row) if (v !== null) lim = Math.max(lim, Math.abs(v));
+  }
+  const zTitle = show === 'mean' ? res.field_label
+               : show === 'std' ? `Std. dev. of ${res.field_label}`
+               : show === 'count' ? 'Profiles' : 'Departure [%]';
+  Plotly.react('section-plot', [{
+    type: 'heatmap', x: res.lat_centres, y: res.grid, z: zT,
+    colorscale: diverging ? 'RdBu' : 'Viridis', reversescale: false,  // RdBu: positive red
+    zmid: diverging ? 0 : undefined,
+    zmin: diverging ? -lim : undefined, zmax: diverging ? lim : undefined,
+    colorbar: {title: {text: cleanPlotlyMath(zTitle), side: 'right'}, thickness: 12},
+    hovertemplate: '%{x}°, %{y} km: %{z:.4g}<extra></extra>',
+  }], axesLayout('Latitude [°N] (band centre)', cleanPlotlyMath(res.vertical_label)),
+  PLOT_CONFIG);
+  const kind = {mean: 'Mean', departure_pct: 'Departure from the all-profile mean of',
+                std: 'Spread of', count: 'Profiles behind'}[show];
+  $('#section-title').textContent = `${kind} ${res.field_label.replace(/\s*\[[^\]]*\]$/, '')}`;
+  $('#section-caption').textContent =
+    `${res.n_profiles} ${product ? product + ' ' : ''}profiles in ${res.lat_centres.length} bands of ${req.lat_step}° ` +
+    `(${res.profiles_per_band.join(', ')} profiles from south to north), on a ` +
+    `${req.step_km} km grid; cells with fewer than ${res.min_count} profiles are blank.` +
+    (diverging ? ' Departure = 100 (band mean - mean of all profiles) / mean of all ' +
+                 'profiles, at each height.' : '');
 }

@@ -67,3 +67,53 @@ def test_stats_endpoint_on_bundled_samples():
     if atm["penetration"]["archive_check"]["n"]:
         # the index's lowest level is CDAAC's profile_bottom_km
         assert atm["penetration"]["archive_check"]["max_abs_diff_km"] < 1e-3
+
+
+def test_cross_section_band_means_and_departure_by_hand(monkeypatch):
+    """Columns are binned by latitude and averaged; the departure is from
+    the mean of all profiles at each height."""
+    from cosmic2 import analysis
+    grid = analysis.make_grid(2.0, 1.0)          # 0, 1, 2 km
+    cols = {"a": [10, 20, 30], "b": [12, 22, 32],   # lat 2, 4   -> band 0-5
+            "c": [20, 40, np.nan], "d": [22, 44, np.nan]}  # lat 12, 14 -> band 10-15
+    lats = {"a": 2.0, "b": 4.0, "c": 12.0, "d": 14.0}
+
+    def fake(task):
+        path = task[0]
+        return "all", np.array(cols[path], float), "N", "Ref"
+    monkeypatch.setattr(analysis, "_composite_column", fake)
+    rows = [(p, {"lat": lats[p], "good": True}) for p in cols]
+    s = climatology.cross_section(rows, "Ref", lat_step=5, top_km=2, step_km=1,
+                                  min_count=2, workers=1)
+    assert s["lat_centres"] == [2.5, 7.5, 12.5]
+    assert s["profiles_per_band"] == [2, 0, 2]
+    mean = np.asarray(s["mean"], float)
+    assert np.allclose(mean[0], [11, 21, 31])
+    assert np.isnan(mean[1]).all()
+    assert np.allclose(mean[2][:2], [21, 42]) and np.isnan(mean[2][2])
+    overall = np.asarray(s["overall_mean"], float)
+    assert np.allclose(overall, [16, 31.5, 31])
+    dep = np.asarray(s["departure_pct"], float)
+    assert np.allclose(dep[0], 100 * (np.array([11, 21, 31]) - overall) / overall)
+    assert np.asarray(s["count"])[2].tolist() == [2, 2, 0]
+    assert np.allclose(np.asarray(s["std"], float)[0], [np.sqrt(2)] * 3)
+
+
+def test_cross_section_refuses_dry_and_moist_temperature(monkeypatch):
+    from cosmic2 import analysis
+    qty = {"a": "temp_dry", "b": "Temp"}
+    monkeypatch.setattr(analysis, "_composite_column",
+                        lambda t: ("all", np.ones(3), "K", qty[t[0]]))
+    with pytest.raises(ValueError, match="different quantities"):
+        climatology.cross_section([("a", {"lat": 0.0}), ("b", {"lat": 1.0})],
+                                  "Temp", top_km=2, step_km=1, workers=1)
+
+
+def test_section_endpoint_on_bundled_samples():
+    post("/api/local/load-samples", {})
+    res = post("/api/climatology/section", {
+        "search": {"products": ["wetPf2"]}, "field": "Temp", "min_count": 1,
+        "top_km": 30, "step_km": 1})
+    assert res["n_profiles"] >= 1 and res["units"] == "K"
+    m = np.array([[np.nan if v is None else v for v in row] for row in res["mean"]])
+    assert np.nanmin(m) > 150 and np.nanmax(m) < 320

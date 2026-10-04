@@ -670,6 +670,42 @@ def stats_sampling(req: StatsRequest) -> dict:
         rows, lat_step=req.lat_step, terrain=climatology.terrain_by_atmprf(wet)))
 
 
+class SectionRequest(BaseModel):
+    granule_ids: list[str] | None = None
+    search: SearchRequest | None = None
+    field: str = "Temp"
+    vertical: str = "MSL_alt"
+    lat_step: float = Field(default=5.0, gt=0, le=90)
+    bottom_km: float = Field(default=0.0, ge=0)
+    top_km: float = Field(default=40.0, gt=0)
+    step_km: float = Field(default=0.5, gt=0)
+    good_only: bool = True
+    min_count: int = Field(default=3, ge=1)
+    convert_kelvin: bool = True
+    max_profiles: int = Field(default=5000, ge=1)
+
+
+@app.post("/api/climatology/section")
+def climatology_section(req: SectionRequest) -> dict:
+    """Zonal-mean latitude-height section (mean, spread, count, and the
+    departure of each latitude band from the selection's mean)."""
+    rows = _resolve_selection(req.granule_ids, req.search, req.max_profiles)
+    if not rows:
+        raise HTTPException(400, "No local profiles match that selection")
+    if req.top_km <= req.bottom_km:
+        raise HTTPException(422, "top_km must be above bottom_km")
+    try:
+        sec = climatology.cross_section(
+            [(r["path"], r) for r in rows], req.field, req.vertical,
+            lat_step=req.lat_step, top_km=req.top_km, step_km=req.step_km,
+            bottom_km=req.bottom_km, good_only=req.good_only,
+            min_count=req.min_count, convert_kelvin=req.convert_kelvin)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    sec["selected"] = len(rows)
+    return _clean(sec)
+
+
 # ---------------------------------------------------------------------------
 # exports
 # ---------------------------------------------------------------------------

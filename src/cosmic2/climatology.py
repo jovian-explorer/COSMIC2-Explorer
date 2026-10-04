@@ -154,3 +154,124 @@ def sampling_statistics(rows: Sequence[dict], lat_step: float = 10.0,
         "penetration_thresholds_km": list(PENETRATION_THRESHOLDS_KM),
         "products": products,
     }
+
+
+# ---------------------------------------------------------------------------
+# latitude-height cross sections
+# ---------------------------------------------------------------------------
+
+def _section_column(task: tuple):
+    """One profile of a cross section: ``(lat, gridded column, units,
+    quantity)``.  Module-level so it runs on the worker processes."""
+    from .analysis import _composite_column
+    path, meta = task[0], task[1]
+    res = _composite_column(task)
+    if res is None or meta.get("lat") is None:
+        return None
+    _key, col, units, qty = res
+    return float(meta["lat"]), col, units, qty
+
+
+def cross_section(granule_paths: Sequence[tuple[str, dict]], field: str,
+                  vertical: str = "MSL_alt", lat_step: float = 5.0,
+                  top_km: float = 40.0, step_km: float = 0.5,
+                  bottom_km: float = 0.0, good_only: bool = True,
+                  min_count: int = 3, convert_kelvin: bool = True,
+                  workers: int | None = None) -> dict:
+    """Zonal-mean latitude-height section of one quantity.
+
+    Every profile is put on the common height grid exactly as for the
+    Compare tab's averages (log interpolation for pressure, density and
+    electron density, never across gaps wider than 2 km), then the columns
+    are averaged in latitude bands ``lat_step`` degrees wide.  A cell with
+    fewer than ``min_count`` profiles is blank.
+
+    Besides the mean (and standard deviation and count) of each cell, the
+    *departure* of each band from the mean of the whole selection at the
+    same height is returned in percent,
+
+        departure = 100 (mean_band(z) - mean_all(z)) / mean_all(z),
+
+    which for refractivity is the ``N_anom_pct`` of the vocabulary: the
+    latitude structure of N with its exponential fall-off removed.  It is a
+    departure from this selection's own mean, not a bias against an
+    independent reference (see the radiosonde comparison for that).
+
+    A selection mixing dry (atmPrf) and moist (wetPf2) ``Temp`` is refused
+    rather than averaged.
+    """
+    from . import vocab
+    from .analysis import make_grid
+    from .parallel import pmap
+    if not (lat_step > 0):
+        raise ValueError("lat_step must be > 0")
+    grid = make_grid(top_km, step_km, bottom_km)
+    tasks = [(path, meta, field, vertical, grid, "all", convert_kelvin)
+             for path, meta in granule_paths
+             if not (good_only and not meta.get("good", True))]
+    results = [r for r in pmap(_section_column, tasks, workers=workers)
+               if r is not None]
+    quantities = {r[3] for r in results}
+    if len(quantities) > 1:
+        raise ValueError(
+            f"the selection holds {field} as different quantities "
+            f"({', '.join(sorted(vocab.info(q)['label'] for q in quantities))}); "
+            f"choose one product")
+    edges = np.arange(-90.0, 90.0 + lat_step / 2, lat_step)
+    if not results:
+        return {"field": field, "vertical": vertical, "n_profiles": 0,
+                "grid": grid.tolist(), "lat_edges": [], "lat_centres": [],
+                "mean": [], "std": [], "count": [], "departure_pct": [],
+                "overall_mean": [], "units": "", "min_count": min_count}
+    lats = np.array([r[0] for r in results])
+    cols = np.vstack([r[1] for r in results])
+    units = results[0][2]
+    qty = next(iter(quantities))
+    idx = np.clip(np.digitize(lats, edges) - 1, 0, edges.size - 2)
+    used = np.arange(idx.min(), idx.max() + 1)
+    with np.errstate(invalid="ignore", divide="ignore"), \
+            warnings_off():
+        overall_n = np.isfinite(cols).sum(axis=0)
+        overall = np.nanmean(cols, axis=0)
+        overall[overall_n < min_count] = np.nan
+        mean = np.full((used.size, grid.size), np.nan)
+        std = np.full((used.size, grid.size), np.nan)
+        count = np.zeros((used.size, grid.size), dtype=int)
+        for k, b in enumerate(used):
+            m = cols[idx == b]
+            if not m.shape[0]:
+                continue
+            n = np.isfinite(m).sum(axis=0)
+            count[k] = n
+            mu = np.nanmean(m, axis=0)
+            sd = np.nanstd(m, axis=0, ddof=1) if m.shape[0] > 1 else np.full(grid.size, np.nan)
+            thin = n < min_count
+            mu[thin] = np.nan
+            sd[thin] = np.nan
+            mean[k], std[k] = mu, sd
+        departure = 100.0 * (mean - overall) / overall
+    return {
+        "field": field, "vertical": vertical, "quantity": qty, "units": units,
+        "field_label": vocab.axis_title(qty, units),
+        "vertical_label": vocab.axis_title(vertical),
+        "n_profiles": int(len(results)), "min_count": min_count,
+        "grid": grid.tolist(),
+        "lat_edges": edges[used[0]:used[-1] + 2].tolist(),
+        "lat_centres": (0.5 * (edges[used] + edges[used + 1])).tolist(),
+        "profiles_per_band": [int((idx == b).sum()) for b in used],
+        "mean": mean, "std": std, "count": count,
+        "departure_pct": departure, "overall_mean": overall,
+    }
+
+
+class warnings_off:
+    """Silence numpy's all-NaN-slice warnings (empty cells are expected)."""
+
+    def __enter__(self):
+        import warnings
+        self._cm = warnings.catch_warnings()
+        self._cm.__enter__()
+        warnings.simplefilter("ignore", RuntimeWarning)
+
+    def __exit__(self, *exc):
+        return self._cm.__exit__(*exc)

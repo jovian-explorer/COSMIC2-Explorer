@@ -532,7 +532,7 @@ VAR_INFO: dict[str, dict] = {
         doi="10.1029/97JD02400",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/",
         data_level="Derived Geophysical Diagnostic",
-        algorithm="Percentage deviation of individual refractivity from regional or temporal composite mean."
+        algorithm="Shown by the latitude-height section of the Statistics tab (Show: departure): the mean refractivity of each latitude band minus the mean of all selected profiles at the same height, in percent of the latter. Not stored as a per-profile field."
     ),
     "buoyancy_freq_sq": dict(
         label="Squared buoyancy frequency N^2", units="s^-2",

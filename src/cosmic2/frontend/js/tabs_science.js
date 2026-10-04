@@ -12,19 +12,19 @@ let diagCache = null;     // diagnostics table for the scatter panel
 // Profiles
 // ==========================================================================
 
-const FIELD_CHOICES = [
+export const FIELD_CHOICES = [
   'Temp', 'temp_dry', 'Pres', 'sph', 'rh', 'Vp', 'ref', 'Ref', 'Bend_ang',
   'ELEC_dens', 'TEC_cal', 's4_L1', 'sigma_phi_L1', 'ion_dens', 'ion_temp',
   'iv_zon', 'iv_mer', 'theta', 'dtheta_dz', 'lapse_rate', 'dNdz', 'buoyancy_freq_sq',
   'buoyancy_period', 'speed_of_sound', 'density', 'scale_height',
 ];
-const VERTICAL_CHOICES = ['MSL_alt', 'gph', 'Impact_height', 'occheight', 'alt'];
+export const VERTICAL_CHOICES = ['MSL_alt', 'gph', 'Impact_height', 'occheight', 'alt'];
 
 // What each product can draw ([quantities], [heights]); the first of each is
 // the default when a selection of that product cannot show the current pick.
 const THERMO_DERIVED = ['theta', 'dtheta_dz', 'lapse_rate', 'dNdz', 'buoyancy_freq_sq',
                         'buoyancy_period', 'speed_of_sound', 'density', 'scale_height'];
-const PRODUCT_AXES = {
+export const PRODUCT_AXES = {
   atmPrf: [['Temp', 'Pres', 'Ref', 'Bend_ang', ...THERMO_DERIVED],
            ['MSL_alt', 'Impact_height']],
   wetPf2: [['Temp', 'temp_dry', 'Pres', 'sph', 'rh', 'Vp', 'ref', ...THERMO_DERIVED],
@@ -50,7 +50,7 @@ function fitAxesToSelection() {
   if (!verticals.includes($('#p-vertical').value)) $('#p-vertical').value = verticals[0];
 }
 
-function labelled(names) {
+export function labelled(names) {
   return names.map((n) => ({value: n, label: `${vocabInfo(n).label} (${n})`,
                             title: vocabInfo(n).plain}));
 }

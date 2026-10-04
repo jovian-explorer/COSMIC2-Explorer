@@ -757,6 +757,41 @@
         each height.</p></div>
     <div class="card"><h2>Median lowest level by latitude</h2><div id="st-penlat-plot" class="plot"></div></div>
   </div>
+  <div class="grid-side">
+    <aside class="card filters">
+      <h2>Latitude-height section</h2>
+      <label>Quantity <select id="x-field"></select></label>
+      <label>Height <select id="x-vertical"></select></label>
+      <label>Show
+        <select id="x-show">
+          <option value="mean">mean in each cell</option>
+          <option value="departure_pct">departure from the mean of all profiles [%]</option>
+          <option value="std">standard deviation</option>
+          <option value="count">number of profiles</option>
+        </select>
+      </label>
+      <div class="row tight">
+        <label>Band (&deg;)<input type="number" id="x-lat" value="5" min="1" step="1"></label>
+        <label>Min. profiles<input type="number" id="x-min" value="3" min="1" step="1"></label>
+      </div>
+      <div class="row tight">
+        <label>Bottom (km)<input type="number" id="x-bottom" value="0" min="0" step="any"></label>
+        <label>Top (km)<input type="number" id="x-top" value="40" min="1" step="any"></label>
+        <label>Step (km)<input type="number" id="x-step" value="0.5" min="0.05" step="any"></label>
+      </div>
+      <label class="check"><input type="checkbox" id="x-selected-only">
+        Use only my selection</label>
+      <button class="primary" id="btn-section">Compute</button>
+      <p class="hint">Electron density: bottom 100, top 550, step 5 km.
+        Refractivity departure shows N's latitude structure with its
+        fall-off with height removed.</p>
+    </aside>
+    <div class="card">
+      <h2 id="section-title">Zonal mean by latitude and height</h2>
+      <div id="section-plot" class="plot tall"></div>
+      <p class="hint" id="section-caption"></p>
+    </div>
+  </div>
 </section>
 
 <!-- ==================== EXPORT ==================== -->
