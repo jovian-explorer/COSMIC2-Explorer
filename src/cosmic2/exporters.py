@@ -393,6 +393,44 @@ def export_json(payload: dict, basename: str = "cosmic2_data") -> dict:
             "mime": "application/json"}
 
 
+def export_radiosonde_csv(result: dict, granules: Sequence[dict],
+                          basename: str = "cosmic2_radiosonde") -> dict:
+    """The radiosonde comparison as CSV: the statistics by height, then one
+    row per colocated pair, under the usual provenance header."""
+    path = export_path(basename, "csv")
+    prov = provenance(granules, {
+        "comparison": "COSMIC-2 minus NOAA IGRA v2 radiosonde",
+        "colocation": f"within {result.get('max_km')} km and {result.get('max_hours')} h",
+        "radiosonde_source": "https://www.ncei.noaa.gov/data/integrated-global-radiosonde-archive/"})
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        for line in _header_lines(prov):
+            f.write(f"# {line}\n")
+        f.write(f"# Radiosondes: NOAA IGRA v2; {result['n_pairs']} pairs; "
+                f"differences are occultation minus sonde\n")
+        w = csv.writer(f)
+        stats = result.get("stats", {})
+        cols = ["bin_centre_km"]
+        for q, st in stats.items():
+            u = st["units"]
+            cols += [f"{q}_mean_diff_{u}", f"{q}_std_{u}", f"{q}_median_diff_{u}", f"{q}_n"]
+        w.writerow(cols)
+        for i, c in enumerate(result.get("bin_centres_km", [])):
+            row = [repr(float(c))]
+            for st in stats.values():
+                row += ["" if st[k][i] is None else repr(float(st[k][i]))
+                        for k in ("mean", "std", "median")] + [st["n"][i]]
+            w.writerow(row)
+        f.write("\n")
+        keys = ["file_name", "product", "time_utc", "lat", "lon", "station",
+                "station_name", "launch_utc", "sonde_lat", "sonde_lon",
+                "distance_km", "dt_hours", "sonde_top_km"]
+        w.writerow(keys)
+        for pr in result.get("pairs", []):
+            w.writerow([pr.get(k, "") for k in keys])
+    return {"path": str(path), "filename": path.name, "bytes": path.stat().st_size,
+            "mime": "text/csv", "provenance": prov}
+
+
 def export_figure(fig, fmt: str = "png", basename: str = "cosmic2_figure",
                   dpi: int | None = None) -> dict:
     data = plotting.render(fig, fmt, dpi)

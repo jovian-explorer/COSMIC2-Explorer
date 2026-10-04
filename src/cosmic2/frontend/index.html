@@ -832,6 +832,46 @@
       </div>
     </div>
   </div>
+  <div class="card">
+    <div class="card-head">
+      <h2>Comparison with radiosondes (NOAA IGRA v2)</h2>
+      <span class="pill" id="rs-count"></span>
+    </div>
+    <div class="row">
+      <label>Products
+        <select id="rs-product">
+          <option value="wetPf2">wetPf2 (temperature, refractivity, humidity)</option>
+          <option value="atmPrf">atmPrf (refractivity, dry temperature)</option>
+        </select>
+      </label>
+      <label>Within (km)<input type="number" id="rs-km" value="300" min="10" max="1000" step="10"></label>
+      <label>Within (h)<input type="number" id="rs-h" value="3" min="0.5" max="24" step="0.5"></label>
+      <label>Height bin (km)<input type="number" id="rs-bin" value="1" min="0.2" max="10" step="any"></label>
+      <label class="check"><input type="checkbox" id="rs-selected-only">
+        Use only my selection</label>
+      <label class="check"><input type="checkbox" id="rs-csv">
+        Also write a CSV</label>
+      <button class="primary" id="btn-radiosonde">Compare</button>
+    </div>
+    <p class="hint">Each occultation is paired with the nearest radiosonde launched
+      within the distance and time window; station files are downloaded from NOAA
+      NCEI the first time (no account needed) and cached. Differences are
+      occultation minus sonde on a common geopotential height.</p>
+    <div class="grid-3" id="rs-plots">
+      <div id="rs-temp-plot" class="plot"></div>
+      <div id="rs-ref-plot" class="plot"></div>
+      <div id="rs-sph-plot" class="plot"></div>
+    </div>
+    <p class="hint" id="rs-caption"></p>
+    <div class="scroll-x">
+      <table class="table" id="rs-table">
+        <thead><tr><th>Occultation (UTC)</th><th>Product</th><th>Lat</th><th>Lon</th>
+          <th>Station</th><th>Launch (UTC)</th><th>Distance (km)</th><th>&Delta;t (h)</th>
+          <th>Sonde top (km)</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
 </section>
 
 <!-- ==================== EXPORT ==================== -->

@@ -21,6 +21,8 @@ export function initStatsTab() {
   $('#btn-section').addEventListener('click', (e) =>
       withBusy(e.target, 'Averaging...', drawSection));
   initMapCard();
+  $('#btn-radiosonde').addEventListener('click', (e) =>
+      withBusy(e.target, 'Comparing...', drawRadiosonde));
 }
 
 /** The selection when asked for, otherwise the Explore tab's search. */
@@ -285,4 +287,75 @@ async function drawMap() {
     (gw ? ` Gravity-wave energy over ${gw.z_lo}-${gw.z_hi} km, background: ` +
           (gw.method === 'highpass' ? `high-pass, ${gw.cutoff_km} km cut-off.`
                                     : `degree-${gw.poly_order} polynomial.`) : '');
+}
+
+// ------------------------------------------------------- radiosonde comparison
+
+async function drawRadiosonde() {
+  const product = $('#rs-product').value;
+  const req = Object.assign({
+    max_km: Number($('#rs-km').value) || 300,
+    max_hours: Number($('#rs-h').value) || 3,
+    bin_km: Number($('#rs-bin').value) || 1,
+    export_csv: $('#rs-csv').checked,
+  }, statsSelection($('#rs-selected-only').checked));
+  if (req.search) {
+    req.search.good_only = true;
+    req.search.products = [product];
+    req.search.limit = req.max_profiles = 5000;
+  }
+  const res = await api.radiosonde(req);
+  $('#rs-count').textContent = `${res.n_pairs} pairs`;
+  const plots = [['temp_K', 'rs-temp-plot', 'Temperature difference [K]'],
+                 ['ref_N', 'rs-ref-plot', 'Refractivity difference [%]'],
+                 ['sph_gkg', 'rs-sph-plot', 'Specific humidity difference [g/kg]']];
+  for (const [key, id, title] of plots) {
+    const st = res.stats && res.stats[key];
+    if (!st) {
+      emptyPlot(id, res.n_pairs ? `${key === 'sph_gkg' ? 'Humidity needs wetPf2.' : 'No data.'}`
+                                : 'No colocated radiosonde.');
+      continue;
+    }
+    const lo = st.mean.map((m, i) => (m === null || st.std[i] === null ? null : m - st.std[i]));
+    const hi = st.mean.map((m, i) => (m === null || st.std[i] === null ? null : m + st.std[i]));
+    Plotly.react(id, [
+      {type: 'scatter', mode: 'lines', x: lo, y: res.bin_centres_km, line: {width: 0},
+       hoverinfo: 'skip', showlegend: false},
+      {type: 'scatter', mode: 'lines', x: hi, y: res.bin_centres_km, line: {width: 0},
+       fill: 'tonextx', fillcolor: 'rgba(2,132,199,0.18)', hoverinfo: 'skip',
+       name: '± 1 std'},
+      {type: 'scatter', mode: 'lines+markers', x: st.mean, y: res.bin_centres_km,
+       name: 'mean', marker: {color: PALETTE[0], size: 5}, text: st.n.map((n) => `n=${n}`),
+       hovertemplate: '%{y} km: %{x:.3g} (%{text})<extra></extra>'},
+    ], axesLayout(title, 'Geopotential height [km]', {
+      shapes: [{type: 'line', x0: 0, x1: 0, yref: 'paper', y0: 0, y1: 1,
+                line: {color: '#94a3b8', width: 1, dash: 'dot'}}],
+      showlegend: false,
+    }), PLOT_CONFIG);
+  }
+  const tb = $('#rs-table').tBodies[0];
+  clear(tb);
+  for (const p of res.pairs.slice(0, 300)) {
+    tb.append(el('tr', {},
+      el('td', {}, (p.time_utc || '').slice(0, 19).replace('T', ' ')),
+      el('td', {}, p.product),
+      el('td', {class: 'num'}, fmt(p.lat, 2)), el('td', {class: 'num'}, fmt(p.lon, 2)),
+      el('td', {}, `${p.station} ${p.station_name}`),
+      el('td', {}, (p.launch_utc || '').slice(0, 16).replace('T', ' ')),
+      el('td', {class: 'num'}, fmt(p.distance_km, 0)),
+      el('td', {class: 'num'}, fmt(p.dt_hours, 2)),
+      el('td', {class: 'num'}, fmt(p.sonde_top_km, 1))));
+  }
+  const notes = [`${res.n_pairs} of ${res.n_occultations} occultations (${res.products.join(', ')}) ` +
+                 `have a radiosonde within ${res.max_km} km and ${res.max_hours} h ` +
+                 `(${res.stations_with_data} of ${res.stations_considered} nearby stations had ` +
+                 `soundings then).`,
+                 'Shading: ± 1 standard deviation of the differences; each pair counts ' +
+                 'once per height bin.'];
+  if (res.products.includes('atmPrf')) {
+    notes.push('atmPrf temperature is dry temperature: below about 8-10 km its ' +
+               'difference from the sonde is the water vapour, not an error.');
+  }
+  if (res.export) notes.push(`Wrote ${res.export.filename}.`);
+  $('#rs-caption').textContent = notes.join(' ');
 }

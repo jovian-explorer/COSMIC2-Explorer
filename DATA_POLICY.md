@@ -70,4 +70,4 @@ Please cite the data set as UCAR asks and, if you used this software, COSMIC-2 E
 
 * COSMIC-2 Explorer stores downloaded granules, its index and its exports (CSV, netCDF, JSON, figures) on the local filesystem only: `%LOCALAPPDATA%\COSMIC2Explorer` on Windows, `~/Library/Application Support/COSMIC2Explorer` on macOS, `~/.local/share/COSMIC2Explorer` on Linux, or `COSMIC2_EXPLORER_HOME`.
 * The software never transmits downloaded scientific granules, profile coordinates, or user session data to third-party telemetric servers.
-* Once data are downloaded, everything except downloads works offline: mathematical rendering (KaTeX), plotting (Plotly.js) and map outlines (TopoJSON) are bundled.
+* Once data are downloaded, everything except downloads works offline: mathematical rendering (KaTeX), plotting (Plotly.js) and map outlines (TopoJSON) are bundled. The radiosonde comparison downloads NOAA IGRA v2 station files from https://www.ncei.noaa.gov/data/integrated-global-radiosonde-archive/ the first time they are needed (public, no account) and caches them under `cache/igra`.

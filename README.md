@@ -24,8 +24,9 @@ The retrievals themselves (bending angle, refractivity, temperature, humidity, e
 5. **Statistics**: counts by product, latitude and local time, the archive's quality flags, and penetration depth (lowest retrieved level, above sea level and, where the matching wetPf2 gives the terrain height, above the ground) for the current search.
    The same tab draws **zonal-mean latitude-height sections** of any quantity (temperature, refractivity, electron density, ...): the mean, spread or count in each latitude band and height, or each band's departure in percent from the mean of all profiles at that height.
    It also maps any per-profile diagnostic (gravity-wave energy, tropopause height, foF2, ...) in latitude-longitude cells with its zonal mean; the gravity-wave energy can be recomputed for any layer with a polynomial or high-pass background.
-6. **Parallel Processing**: Composites, diagnostics tables, regridded exports and indexing run on a user-chosen number of CPU worker processes.
-7. **Exports**: Matplotlib figures (PNG at 300 dpi by default, PDF, SVG, EPS), regridded netCDF-4 with CF-style attributes and UDUNITS units, CSV tables and JSON. Data files carry their provenance (input files, software version, data citation); figure files do not.
+6. **Validation against radiosondes**: pairs each atmPrf or wetPf2 profile with the nearest NOAA IGRA v2 radiosonde within a chosen distance and time (300 km and 3 h by default) and shows the mean and spread of the differences in temperature, refractivity and specific humidity by geopotential height, with the list of pairs and an optional CSV. Station files are downloaded from NOAA NCEI on first use (no account) and cached.
+7. **Parallel Processing**: Composites, diagnostics tables, regridded exports and indexing run on a user-chosen number of CPU worker processes.
+8. **Exports**: Matplotlib figures (PNG at 300 dpi by default, PDF, SVG, EPS), regridded netCDF-4 with CF-style attributes and UDUNITS units, CSV tables and JSON. Data files carry their provenance (input files, software version, data citation); figure files do not.
 
 ---
 
@@ -99,6 +100,7 @@ Work that reads many granules (composites, profile plots, the diagnostics table,
 * Profile error bars are the running scatter of the values about their running mean (an estimate of level-to-level noise), not a retrieval uncertainty.
 * The integrated water vapour starts at the lowest retrieved level; the height of that level is given alongside the value.
 * Penetration depth is the lowest retrieved level of good atmPrf/wetPf2 profiles. Above the ground it uses the terrain height stored in the wetPf2 retrieved from the same atmPrf; on the 600 atmPrf profiles of 2026-06-20 and 2026-09-30, 84.5 % reach within 1 km of the ground (76.8 % below 1 km above sea level), in line with the more than 80 % reported by Schreiner et al. (2020).
+* The radiosonde comparison works on geopotential height: wetPf2's own `gph`, or atmPrf's height converted with Mahoney's (2001) normal gravity (within 2 m of wetPf2's `gph` on the real sample). Sonde refractivity is 77.6 p/T + 3.73e5 e/T^2 with e from the dew point (Bolton 1980); sonde humidity is compared only where the sonde is warmer than -40 C. On the 2026 sample (45 wetPf2-sonde pairs within 300 km and 3 h) the mean temperature difference stays within 0.5 K from 0 to 25 km (standard deviation 1-1.7 K), refractivity within 0.6 % from 3 to 30 km, and refractivity is 2.6 % low at 0-1 km, like the 3-4 % negative bias near the surface reported by Ho et al. (2020).
 * Exports contain the archive values and derived fields. The outlier, smoothing and uncertainty settings on the Profiles tab affect the on-screen plot only, and the export provenance says so.
 
 ### Platform notes

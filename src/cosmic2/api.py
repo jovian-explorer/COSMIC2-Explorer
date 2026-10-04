@@ -23,7 +23,7 @@ from pydantic import BaseModel, Field
 from contextlib import asynccontextmanager
 
 from . import (analysis, climatology, exporters, fetch, parallel, plotting,
-               readers, store, vocab)
+               radiosonde, readers, store, vocab)
 from .catalog import (COLLECTIONS, PRODUCTS, STREAMS, Archive, date_to_doy,
                       describe_product, doy_to_date)
 from .config import (APP_TITLE, APP_VERSION, CACHE_DIR, EXPORT_DIR, SETTINGS,
@@ -742,6 +742,42 @@ def climatology_map(req: MapRequest) -> dict:
         raise HTTPException(400, str(exc)) from exc
     res["selected"] = len(rows)
     res["title"] = vocab.column_title(req.column)
+    return _clean(res)
+
+
+class RadiosondeRequest(BaseModel):
+    granule_ids: list[str] | None = None
+    search: SearchRequest | None = None
+    max_km: float = Field(default=300.0, gt=0, le=1000)
+    max_hours: float = Field(default=3.0, gt=0, le=24)
+    top_km: float = Field(default=30.0, gt=1, le=40)
+    bin_km: float = Field(default=1.0, gt=0.1, le=10)
+    download: bool = True
+    export_csv: bool = False
+    max_profiles: int = Field(default=5000, ge=1)
+
+
+@app.post("/api/validation/radiosonde")
+def validation_radiosonde(req: RadiosondeRequest) -> dict:
+    """Occultation minus radiosonde (NOAA IGRA v2) by height.
+
+    Fetches the station files it needs from NCEI on first use (cached
+    afterwards), so the first comparison of a period takes a minute or two.
+    """
+    rows = _resolve_selection(req.granule_ids, req.search, req.max_profiles)
+    rows = [r for r in rows if r["product"] in ("atmPrf", "wetPf2") and r.get("good")]
+    if not rows:
+        raise HTTPException(400, "No good atmPrf or wetPf2 profiles in that selection")
+    try:
+        res = radiosonde.compare(rows, req.max_km, req.max_hours, req.top_km,
+                                 bin_km=req.bin_km, download=req.download)
+    except RuntimeError as exc:
+        raise HTTPException(502, str(exc)) from exc
+    res["products"] = sorted({r["product"] for r in rows})
+    if req.export_csv and res["n_pairs"]:
+        used = {p["granule_id"] for p in res["pairs"]}
+        res["export"] = exporters.export_radiosonde_csv(
+            res, [r for r in rows if r["id"] in used])
     return _clean(res)
 
 
