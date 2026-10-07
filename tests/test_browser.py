@@ -36,7 +36,9 @@ def test_every_tab_and_main_action_without_script_errors(page):
     page.goto(BASE + "/")
     page.wait_for_selector("#version-tag:not(:empty)")
     page.click("#btn-samples")
-    page.wait_for_timeout(1500)
+    page.wait_for_function("document.querySelectorAll('#f-product option').length >= 5")
+    assert {"atmPrf", "ionPrf", "ivmL2m", "scnLv2", "wetPf2"} <= set(
+        page.eval_on_selector_all("#f-product option", "o => o.map(x => x.value)"))
     page.click("button[data-tab=explore]")
     page.select_option("#f-product", "wetPf2")
     _press(page, "#btn-search")

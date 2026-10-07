@@ -51,6 +51,7 @@
 
 ### Interface
 
+- Loading the bundled examples now refreshes the Explore filters. On a new installation the product list kept offering only wetPf2 (and the date range stayed empty) until the app was reopened, so the ionPrf, scnLv2, ivmL2m and atmPrf examples could not be searched.
 - Links use the theme's colours. No colour was set, so on the dark theme every link (About, data portals, help, release notes) was the browser's dark blue on a near-black background.
 - **Compare tab with an ivmL2m selection**: the average came back as a bare empty plot. It now says why: the ion velocity meter samples the ions in situ along the orbit at one height (575 km median in the bundled file, 573-581 km in the 2026 files), so a file is a day of samples, not a height profile. The composite response lists the products of the selection (`products`).
 - The Compare and Export tabs follow the product of the Explore search, as the Profiles tab follows a selection: after searching ionPrf, scnLv2 or ivmL2m they no longer stay on Temp (every average and overlay figure came back empty), the Compare grid switches to 0-600 km in 5 km steps for ionospheric products, and regridded CSV/netCDF exports use a height the product has (they failed with "No readable granules with the requested vertical coordinate" for scnLv2 and ivmL2m). The relationship plot picks each product's headline diagnostic for y (hmF2, peak S4, ion density) when the tropopause is not available, and its caption no longer describes the previous plot when nothing can be drawn.

@@ -142,6 +142,9 @@ export async function loadSamples(button) {
     const res = await api.loadSamples();
     toast(`Indexed ${res.indexed} bundled granules.`, 'good');
     await refreshLocal();
+    // The Explore filters list the products and dates on this computer: on an
+    // empty index they offered only wetPf2 until the app was reopened.
+    await refreshFacets();
     await runSearch();
   };
   if (button) {
