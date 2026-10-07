@@ -791,3 +791,10 @@ body.no-curious [data-curious] { display: none; }
 
 /* Settings > Updates: Check now and its status */
 .settings-update-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 4px 0 6px; }
+/* After an update: what is new and the settings to review */
+.settings-changes h3 { margin: 12px 0 4px; }
+.settings-changes .settings-change { display: block; margin: 6px 0; }
+.settings-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+.whats-new { border-left: 3px solid var(--line, #94a3b8); padding-left: 10px; }
+.whats-new h4 { margin: 8px 0 2px; }
+.whats-new ul { margin: 2px 0 6px 18px; padding: 0; }

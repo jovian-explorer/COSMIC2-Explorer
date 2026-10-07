@@ -32,6 +32,8 @@ export const api = {
   saveSettings:  (patch)     => call('/api/settings', {method: 'POST', body: patch}),
   updateStatus:  ()          => call('/api/update/status'),
   updateCheck:   ()          => call('/api/update/check', {method: 'POST'}),
+  settingsChanges: ()        => call('/api/settings/changes'),
+  ackSettingsChanges: (settings) => call('/api/settings/changes/ack', {method: 'POST', body: {settings}}),
 
   archiveDay:    (date, streams) =>
       call(`/api/archive/day?date=${date}` + (streams ? `&streams=${streams}` : '')),

@@ -174,6 +174,41 @@ def ensure_dirs() -> None:
         d.mkdir(parents=True, exist_ok=True)
 
 
+# Allowed values of every user setting (settings_migration.py compares them across
+# versions): ("bool",), ("int", lo, hi), ("float", lo, hi) or ("choice", values).
+# The stream and product codes are catalog.STREAMS and catalog.PRODUCTS (catalog.py
+# imports this module; tests/test_settings_migration.py checks they agree).
+SETTING_RULES: dict = {
+    "max_profiles_per_download": ("int", 0, 100000),
+    "concurrent_downloads": ("int", 1, 16),
+    "request_timeout_s": ("int", 5, 3600),
+    "listing_cache_hours": ("int", 0, 8760),
+    "cache_quota_gb": ("float", 0, 100000),
+    "warn_download_mb": ("int", 0, 10_000_000),
+    "default_stream": ("choice", ("nrt", "rapid", "postProc", "provisional")),
+    "default_product": ("choice", ("atmPrf", "wetPf2", "ionPrf", "scnLv2", "ivmL2m", "avnPrf",
+                                   "echPrf", "bfrPrf", "conPhs", "podTc2", "leoOrb")),
+    "qc_require_good": ("bool",),
+    "grid_top_km": ("float", 1, 1000),
+    "grid_step_km": ("float", 0.001, 50),
+    "analysis_workers": ("int", 0, 512),
+    "plot_dpi": ("int", 50, 1200),
+    "plot_theme": ("choice", ("light", "dark")),
+    "ui_theme": ("choice", ("light", "dark")),
+    "ui_font_size": ("int", 10, 24),
+    "ui_mode": ("choice", ("educational", "research")),
+    "units_temperature": ("choice", ("C", "K")),
+    "explain_mode": ("bool",),
+    "auto_update": ("bool",),
+}
+
+# Options renamed between versions: old name -> new name (settings_migration.py)
+RENAMED_SETTINGS: dict = {}
+
+# Whether this start created settings.json (a first start: nothing to migrate)
+SETTINGS_CREATED = False
+
+
 @dataclass
 class Settings:
     """User-tunable options, persisted as JSON."""
@@ -210,30 +245,95 @@ class Settings:
     user_agent: str = f"{APP_NAME}/{APP_VERSION} (desktop client; python-requests)"
     extra: dict = field(default_factory=dict)
 
+    @staticmethod
+    def validate(key: str, value):
+        """The value as stored for ``key``; ValueError when this version does not
+        accept it (an unknown option, a wrong type, a value out of range)."""
+        rule = SETTING_RULES.get(key)
+        if rule is None:
+            if key == "extra" and isinstance(value, dict):
+                return value
+            raise ValueError(f"{key} is not a setting of this version")
+        kind = rule[0]
+        if kind == "bool":
+            if isinstance(value, bool):
+                return value
+            raise ValueError(f"{key} must be true or false, not {value!r}")
+        if kind == "choice":
+            if value in rule[1]:
+                return value
+            raise ValueError(f"{key} must be one of {', '.join(map(str, rule[1]))}, not {value!r}")
+        lo, hi = rule[1], rule[2]
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or value != value                 or value in (float("inf"), float("-inf")):
+            raise ValueError(f"{key} must be a number, not {value!r}")
+        if kind == "int":
+            if float(value) != int(value):
+                raise ValueError(f"{key} must be a whole number, not {value!r}")
+            value = int(value)
+        if not lo <= value <= hi:
+            raise ValueError(f"{key} must be between {lo:g} and {hi:g}, not {value!r}")
+        return value
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+    def preserved(self) -> dict:
+        """Entries of settings.json this version cannot use (options it does not
+        have, values outside an option's present range).  They are written back
+        unchanged until the user has seen them (settings_migration.py), so that
+        starting another version never loses a stored value."""
+        if "_preserved" not in self.__dict__:
+            object.__setattr__(self, "_preserved", {})
+        return self.__dict__["_preserved"]
+
     @classmethod
     def load(cls) -> "Settings":
+        global SETTINGS_CREATED
         ensure_dirs()
-        if SETTINGS_PATH.exists():
-            try:
-                raw = json.loads(SETTINGS_PATH.read_text(encoding="utf-8"))
-            except (OSError, ValueError):
-                raw = {}
-            known = {f for f in cls.__dataclass_fields__}
-            return cls(**{k: v for k, v in raw.items() if k in known})
         obj = cls()
-        obj.save()
+        if not SETTINGS_PATH.exists():
+            SETTINGS_CREATED = True
+            try:
+                obj.save()
+            except OSError:
+                pass
+            return obj
+        try:
+            raw = json.loads(SETTINGS_PATH.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            raw = {}
+        if not isinstance(raw, dict):
+            raw = {}
+        # an option renamed since: its value moves to the new name when valid there
+        for old, new in RENAMED_SETTINGS.items():
+            if old in raw and new not in raw:
+                try:
+                    setattr(obj, new, cls.validate(new, raw[old]))
+                except ValueError:
+                    pass
+        for k, v in raw.items():
+            if k == "user_agent":
+                continue          # always this version's (the stored one names the old version)
+            try:
+                setattr(obj, k, cls.validate(k, v))
+            except ValueError:
+                # unknown or invalid here: the default is used, the stored entry kept
+                obj.preserved()[k] = v
         return obj
 
     def save(self) -> None:
         ensure_dirs()
         tmp = SETTINGS_PATH.with_suffix(".json.tmp")
-        tmp.write_text(json.dumps(asdict(self), indent=2), encoding="utf-8")
+        tmp.write_text(json.dumps({**self.to_dict(), **self.preserved()}, indent=2), encoding="utf-8")
         os.replace(tmp, SETTINGS_PATH)
 
     def update(self, **kw) -> "Settings":
-        for k, v in kw.items():
-            if k in self.__dataclass_fields__:
-                setattr(self, k, v)
+        """Set the given options (unknown names are ignored) and save; ValueError,
+        with nothing changed, when a value is not allowed."""
+        clean = {k: self.validate(k, v) for k, v in kw.items() if k in SETTING_RULES or k == "extra"}
+        for k, v in clean.items():
+            setattr(self, k, v)
+            self.preserved().pop(k, None)       # the user has chosen a value now
         self.save()
         return self
 

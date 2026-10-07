@@ -159,7 +159,7 @@ def meta() -> dict:
                       for lo, hi, n in analysis.LAT_BANDS],
         "group_by_options": ["all", "lat_band", "hemisphere", "day_night", "date",
                              "product", "satellite"],
-        "settings": vars(SETTINGS),
+        "settings": SETTINGS.to_dict(),
         "cpu_count": parallel.cpu_count(),
         "effective_workers": parallel.resolve_workers(),
         "sample_data_available": sampledata_dir().is_dir(),
@@ -226,10 +226,40 @@ def update_settings(patch: SettingsPatch) -> dict:
     if patch.default_product is not None and patch.default_product not in PRODUCTS:
         raise HTTPException(422, f"default_product must be one of {sorted(PRODUCTS)}")
     before = parallel.resolve_workers()
-    SETTINGS.update(**{k: v for k, v in patch.model_dump().items() if v is not None})
+    try:
+        SETTINGS.update(**{k: v for k, v in patch.model_dump().items() if v is not None})
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
     if parallel.resolve_workers() != before:
         parallel.warm_up()   # a new pool size starts a new pool
-    return _clean(vars(SETTINGS))
+    return _clean(SETTINGS.to_dict())
+
+
+@app.get("/api/settings/changes")
+def settings_changes() -> dict:
+    """Settings added, removed or changed since the version the user last saw
+    and, after an automatic update, the new build's release notes (shown once)."""
+    from . import settings_migration
+    return _clean(settings_migration.pending())
+
+
+@app.post("/api/settings/changes/ack")
+async def settings_changes_ack(request: Request) -> dict:
+    """The user has seen the changes; ``{"settings": {...}}`` holds their choices."""
+    from . import settings_migration
+    try:
+        body = await request.json()
+    except ValueError:
+        body = {}
+    patch = (body or {}).get("settings") if isinstance(body, dict) else None
+    if patch is not None and not isinstance(patch, dict):
+        raise HTTPException(400, "settings must be a JSON object")
+    try:
+        return _clean(settings_migration.acknowledge(patch))
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    except OSError as exc:
+        raise HTTPException(500, f"The settings could not be saved: {exc}") from exc
 
 
 @app.get("/api/update/status")

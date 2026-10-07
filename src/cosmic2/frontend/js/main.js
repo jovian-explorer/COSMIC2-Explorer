@@ -1,7 +1,7 @@
 // Bootstrap: load metadata, wire tabs, install the help drawer.
 
 import {api, state} from './api.js';
-import {$, $$, el, banner, toast, drawer, renderMath, updatePlotlyFonts} from './ui.js';
+import {$, $$, el, banner, toast, drawer, closeDrawer, renderMath, updatePlotlyFonts} from './ui.js';
 import {initGetTab, initExploreTab, refreshLocal, refreshFacets,
         runSearch, loadSamples, updateProfileCounter} from './tabs_data.js';
 import {initProfileTab, initCompositeTab, initExportTab} from './tabs_science.js';
@@ -81,10 +81,9 @@ function wireChrome() {
   $('#btn-settings').addEventListener('click', () => drawer('Settings', settingsBody()));
   $('#btn-about').addEventListener('click', () => drawer('About', aboutBody()));
   $('#btn-help').addEventListener('click', () => drawer('Help', helpBody()));
-  $('#drawer-close').addEventListener('click', () =>
-      $('#drawer').classList.add('hidden'));
+  $('#drawer-close').addEventListener('click', () => closeDrawer());
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') $('#drawer').classList.add('hidden');
+    if (e.key === 'Escape' && !$('#drawer').classList.contains('hidden')) closeDrawer();
   });
 
   wireGuideTab();
@@ -119,6 +118,169 @@ function applyScienceDefaults(settings) {
   }
   if (settings.grid_top_km) set('#e-top', (n) => { n.value = settings.grid_top_km; });
   if (settings.grid_step_km) set('#e-step', (n) => { n.value = settings.grid_step_km; });
+}
+
+const SETTING_LABELS = {
+  max_profiles_per_download: 'Most profiles per download', concurrent_downloads: 'Parallel downloads',
+  request_timeout_s: 'Download timeout (s)', listing_cache_hours: 'Keep archive listings for (hours)',
+  cache_quota_gb: 'Cache quota (GB)', warn_download_mb: 'Warn before downloads larger than (MB)',
+  default_stream: 'Default stream', default_product: 'Default product',
+  qc_require_good: 'Require Good QC by default', grid_top_km: 'Export grid top (km)',
+  grid_step_km: 'Export grid step (km)', analysis_workers: 'CPU workers (0 = automatic)',
+  plot_dpi: 'Plot DPI (export)', plot_theme: 'Plot theme', ui_theme: 'Interface theme',
+  ui_font_size: 'Base font size (px)', ui_mode: 'Interface mode', units_temperature: 'Temperature units',
+  explain_mode: 'Plain-language captions', auto_update: 'Update automatically (weekly)',
+};
+
+function ruleText(rule) {
+  if (rule == null) return '';
+  if (Array.isArray(rule)) return rule.map(String).join(', ');
+  if (typeof rule === 'object') return `${rule.min} to ${rule.max}`;
+  return String(rule);
+}
+
+/** An input for one setting in the after-update panel, from its allowed values. */
+function settingControl(key, rule, value) {
+  const id = `su-${key}`;
+  if (Array.isArray(rule) && rule.length === 2 && rule.every((v) => typeof v === 'boolean')) {
+    return el('input', {type: 'checkbox', id, 'data-key': key, 'data-kind': 'bool', checked: value === true});
+  }
+  if (Array.isArray(rule)) {
+    return el('select', {id, 'data-key': key, 'data-kind': 'text'},
+      ...rule.map((v) => el('option', {value: String(v), selected: String(v) === String(value)}, String(v))));
+  }
+  if (rule && typeof rule === 'object') {
+    return el('input', {type: 'number', id, 'data-key': key, 'data-kind': 'number', value,
+                        min: rule.min, max: rule.max, step: rule.type === 'int' ? 1 : 'any'});
+  }
+  return el('input', {type: 'text', id, 'data-key': key, 'data-kind': 'text', value: value == null ? '' : String(value)});
+}
+
+/** Release notes (Markdown from GitHub) as plain elements: headings, list items, links. */
+function notesNode(md) {
+  const box = el('div', {class: 'whats-new'});
+  let list = null;
+  const inline = (text) => {
+    const out = [];
+    const re = /\[([^\]]+)\]\((https?:[^)\s]+)\)|\*\*([^*]+)\*\*|`([^`]+)`|(https?:\/\/\S+)/g;
+    let last = 0;
+    let m;
+    while ((m = re.exec(text))) {
+      if (m.index > last) out.push(text.slice(last, m.index));
+      if (m[1]) out.push(el('a', {href: m[2], target: '_blank', rel: 'noopener'}, m[1]));
+      else if (m[3]) out.push(el('strong', {}, m[3]));
+      else if (m[4]) out.push(el('code', {}, m[4]));
+      else out.push(el('a', {href: m[5], target: '_blank', rel: 'noopener'}, m[5]));
+      last = re.lastIndex;
+    }
+    if (last < text.length) out.push(text.slice(last));
+    return out;
+  };
+  for (const raw of String(md || '').split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line) { list = null; continue; }
+    const h = line.match(/^#{1,6}\s+(.*)$/);
+    if (h) { list = null; box.append(el('h4', {}, ...inline(h[1]))); continue; }
+    const li = line.match(/^[-*]\s+(.*)$/);
+    if (li) {
+      if (!list) { list = el('ul'); box.append(list); }
+      list.append(el('li', {}, ...inline(li[1])));
+      continue;
+    }
+    list = null;
+    box.append(el('p', {}, ...inline(line)));
+  }
+  return box;
+}
+
+/**
+ * Once after an update (or after another version wrote settings.json): what is new
+ * in this build and which settings were added, removed or changed, with the stored
+ * values kept and editable.  Closing the panel keeps everything as it is.
+ */
+async function showSettingsChanges() {
+  let r;
+  try { r = await api.settingsChanges(); } catch (_) { return; }
+  if (!r || !r.show) return;
+  const c = r.changes || {};
+  const label = (k) => SETTING_LABELS[k] || k;
+  const fmtVal = (v) => (v === undefined || v === null ? 'none' : typeof v === 'object' ? JSON.stringify(v) : String(v));
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  const name = (x) => (x && (x.tag || x.version)) || '';
+  const body = el('div', {class: 'stack settings-changes', id: 'settings-changes'});
+  const prev = name(r.previous);
+  body.append(el('p', {}, `This is COSMIC-2 Explorer ${name(r)}${prev && prev !== name(r) ? ` (before: ${prev})` : ''}. ` +
+    'Your settings are kept as they were; check the ones listed below.'));
+  if (r.whats_new) {
+    body.append(el('h3', {}, `What's new in ${r.whats_new.name || r.whats_new.tag}`), notesNode(r.whats_new.notes));
+    if (r.whats_new.url) body.append(el('p', {}, el('a', {href: r.whats_new.url, target: '_blank', rel: 'noopener'}, 'Release page')));
+  }
+  const rows = [];
+  const row = (key, rule, value, note) => {
+    const ctl = settingControl(key, rule, value);
+    rows.push(ctl);
+    if (ctl.dataset.kind === 'bool') {
+      return el('label', {class: 'check settings-change'}, ctl, ` ${label(key)}`, el('br'), el('span', {class: 'hint'}, note));
+    }
+    return el('label', {class: 'settings-change'}, `${label(key)} `, ctl, el('br'), el('span', {class: 'hint'}, note));
+  };
+  if ((c.new || []).length) {
+    body.append(el('h3', {}, 'New settings'),
+      ...c.new.map((n) => row(n.key, n.rule, n.default, `New in this version. Default: ${fmtVal(n.default)}` +
+        `${n.rule && !Array.isArray(n.rule) ? ` (allowed: ${ruleText(n.rule)})` : ''}.`)));
+  }
+  const changed = [...(c.changed || []), ...(c.invalid || []).map((x) => ({...x, valid: false}))];
+  if (changed.length) {
+    body.append(el('h3', {}, 'Changed settings'),
+      ...changed.map((x) => row(x.key, x.rule, x.valid ? x.stored : x.default,
+        (x.old_rule !== undefined && !same(x.old_rule, x.rule) ? `Allowed values were ${ruleText(x.old_rule)}, now ${ruleText(x.rule)}. ` : '') +
+        (x.old_default !== undefined && !same(x.old_default, x.default) ? `Default was ${fmtVal(x.old_default)}, now ${fmtVal(x.default)}. ` : '') +
+        (x.valid ? `Your value ${fmtVal(x.stored)} is kept.`
+          : x.stored === undefined || x.stored === null ? `The default ${fmtVal(x.default)} is used.`
+          : `Your stored value ${fmtVal(x.stored)} is not allowed now (${ruleText(x.rule)}); the default ${fmtVal(x.default)} is used until you choose.`))));
+  }
+  if ((c.renamed || []).length) {
+    body.append(el('h3', {}, 'Renamed settings'),
+      el('ul', {}, ...c.renamed.map((x) => el('li', {},
+        `${x.old} is now ${label(x.key)}; your value ${fmtVal(x.stored)} ${x.valid ? 'is kept' : 'is not allowed there, the default is used'}.`))));
+  }
+  if ((c.removed || []).length) {
+    body.append(el('h3', {}, 'Settings no longer used'),
+      el('ul', {}, ...c.removed.map((x) => el('li', {}, `${x.key} (your value: ${fmtVal(x.stored)})`))));
+  }
+  let sent = false;
+  const send = async (withChoices) => {
+    if (sent) return;
+    sent = true;
+    const patch = {};
+    if (withChoices) {
+      for (const ctl of rows) {
+        const key = ctl.dataset.key;
+        if (ctl.dataset.kind === 'bool') patch[key] = ctl.checked;
+        else if (ctl.dataset.kind === 'number') patch[key] = Number(ctl.value);
+        else patch[key] = ctl.value;
+      }
+    }
+    try {
+      const updated = await api.ackSettingsChanges(patch);
+      state.meta.settings = updated;
+      applySettings(updated);
+      if (withChoices) toast('Settings saved');
+    } catch (err) {
+      sent = false;
+      toast(`Could not save the settings: ${err.message}`, 'bad');
+      throw err;
+    }
+  };
+  body.append(el('div', {class: 'settings-actions'},
+    el('button', {
+      class: 'primary', type: 'button', id: 'su-accept',
+      onclick: async () => { try { await send(true); closeDrawer(); } catch (_) { /* message shown */ } },
+    }, 'Use these settings')),
+    el('p', {class: 'hint'}, 'Closing this panel changes nothing: every stored value stays in settings.json, ' +
+      'and one this version cannot use is replaced by its default only while the app runs.'));
+  drawer(r.whats_new ? 'COSMIC-2 Explorer was updated' : 'Settings changed', body,
+         {onClose: () => { send(false).catch(() => {}); }});
 }
 
 /** "Check now" for the weekly automatic update, with what it last did. */
@@ -592,6 +754,7 @@ async function boot() {
   initStatsTab();
   initExportTab();
   renderMath(document.body);
+  showSettingsChanges();
 
   await refreshFacets();
   const summary = await api.localSummary().catch(() => null);

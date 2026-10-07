@@ -272,13 +272,26 @@ export function updatePlotlyFonts() {
   }
 }
 
-export function drawer(title, bodyNode) {
+let drawerOnClose = null;
+
+/** Open the side drawer; ``onClose`` runs once when it is next closed or replaced. */
+export function drawer(title, bodyNode, {onClose = null} = {}) {
+  const previous = drawerOnClose;
+  drawerOnClose = onClose;
+  if (previous) { try { previous(); } catch (err) { console.error(err); } }
   $('#drawer-title').textContent = title;
   const body = $('#drawer-body');
   clear(body);
   body.append(bodyNode);
   renderMath(body);
   $('#drawer').classList.remove('hidden');
+}
+
+export function closeDrawer() {
+  const cb = drawerOnClose;
+  drawerOnClose = null;
+  if (cb) { try { cb(); } catch (err) { console.error(err); } }
+  $('#drawer').classList.add('hidden');
 }
 
 export function fillSelect(select, options, value) {

@@ -81,3 +81,28 @@ def test_settings_updates_row(page):
     assert page.is_checked("#s-auto-update")
     page.click("#drawer-close")
     assert not page.errors, page.errors
+
+
+def test_settings_changed_panel_once(page):
+    """A data folder last used by an older version: the panel lists the new option
+    once; closing it keeps settings.json as it was."""
+    import json
+    from cosmic2 import settings_migration as sm
+    from cosmic2.config import SETTINGS_PATH
+    schema = sm.current_schema()
+    schema.pop("auto_update")
+    sm.MARKER_PATH.write_text(json.dumps({"version": "0.0.0", "tag": None, "schema": schema}), encoding="utf-8")
+    before = SETTINGS_PATH.read_text(encoding="utf-8")
+    page.goto(BASE + "/")
+    page.wait_for_selector("#settings-changes")
+    text = page.text_content("#settings-changes")
+    assert "New settings" in text and "Update automatically" in text and "before: 0.0.0" in text
+    page.click("#drawer-close")
+    page.wait_for_timeout(500)
+    assert SETTINGS_PATH.read_text(encoding="utf-8") == before
+    assert json.loads(sm.MARKER_PATH.read_text(encoding="utf-8"))["schema"] == sm.current_schema()
+    page.reload()
+    page.wait_for_selector("#version-tag:not(:empty)")
+    page.wait_for_timeout(800)
+    assert not page.is_visible("#settings-changes")
+    assert not page.errors, page.errors
