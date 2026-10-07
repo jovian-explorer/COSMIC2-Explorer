@@ -662,6 +662,12 @@ def make_composite(req: CompositeRequest) -> dict:
         convert_kelvin=req.convert_kelvin)
     out = comp.to_json()
     out["selected"] = len(rows)
+    # what the selection holds, so an empty result can say why (an ivmL2m
+    # selection has no height profiles to average)
+    products: dict[str, int] = {}
+    for r in rows:
+        products[r["product"]] = products.get(r["product"], 0) + 1
+    out["products"] = products
     return _clean(out)
 
 

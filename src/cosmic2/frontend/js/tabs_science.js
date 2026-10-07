@@ -460,6 +460,17 @@ async function drawComposite() {
   }, selection($('#c-selected-only').checked));
   const res = await api.composite(req);
   const names = Object.keys(res.groups);
+  const products = Object.keys(res.products || {});
+  if (!res.n_profiles && products.length === 1 && products[0] === 'ivmL2m') {
+    // IVM files hold a day of in-situ samples along the orbit (573-581 km in
+    // the 2026 files), not height profiles, so there is nothing to average.
+    emptyPlot('composite-plot',
+      'The ion velocity meter (ivmL2m) measures the ions in situ along the satellite orbit, ' +
+      'at one height (about 575 km): its files are a day of samples, not height profiles, so ' +
+      'there is no average over height to draw.');
+    $('#composite-caption').textContent = '';
+    return;
+  }
   if (!res.n_profiles) {
     emptyPlot('composite-plot',
       `None of the ${res.selected} selected profiles carry ${req.field} on ` +

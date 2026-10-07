@@ -149,3 +149,15 @@ def test_composite_figure_uses_the_requested_grid(monkeypatch):
     api._build_figure(req, rows)
     grid = seen["comp"]["grid"]
     assert grid[-1] == 600 and grid[1] - grid[0] == 10
+
+
+def test_composite_of_ivm_says_what_the_selection_holds():
+    """ivmL2m files are a day of in-situ samples at one height: the composite is
+    empty and the response names the product, so the Compare tab can say why."""
+    res = post("/api/composite", {"search": {"products": ["ivmL2m"], "limit": 10},
+                                  "field": "ion_dens", "vertical": "alt",
+                                  "top_km": 40, "step_km": 0.5})
+    assert res["n_profiles"] == 0 and res["products"] == {"ivmL2m": res["selected"]}
+    res = post("/api/composite", {"search": {"products": ["wetPf2"], "limit": 10},
+                                  "field": "Temp", "top_km": 30, "step_km": 1})
+    assert res["n_profiles"] > 0 and set(res["products"]) == {"wetPf2"}
