@@ -92,6 +92,9 @@ h3 { font-size: calc(13px * var(--font-scale, 1.0)); margin: 14px 0 6px; color: 
 p { margin: 0 0 8px; font-size: inherit; }
 code, pre { font-family: var(--mono); font-size: calc(12px * var(--font-scale, 1.0)); }
 hr { border: 0; border-top: 1px solid var(--line); margin: 16px 0; }
+/* Links in the theme's colours (the browser's dark blue was unreadable on the dark theme) */
+a { color: var(--focal); }
+a:hover { color: var(--focal-hover); }
 
 .katex {
   font-size: 1.12em !important;
