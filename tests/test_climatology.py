@@ -97,6 +97,8 @@ def test_cross_section_band_means_and_departure_by_hand(monkeypatch):
     assert np.allclose(dep[0], 100 * (np.array([11, 21, 31]) - overall) / overall)
     assert np.asarray(s["count"])[2].tolist() == [2, 2, 0]
     assert np.allclose(np.asarray(s["std"], float)[0], [np.sqrt(2)] * 3)
+    # standard error of each cell's mean: std / sqrt(n)
+    assert np.allclose(np.asarray(s["sem"], float)[0], [1.0] * 3)
 
 
 def test_cross_section_refuses_dry_and_moist_temperature(monkeypatch):
@@ -136,6 +138,13 @@ def test_diagnostic_map_cells_and_zonal_mean_by_hand(monkeypatch):
     assert m["zonal"]["median"][i0] == pytest.approx(4.0)
     assert m["zonal"]["n"][i0] == 3
     assert m["zonal"]["std"][i0] == pytest.approx(np.std([2, 4, 9], ddof=1))
+    # 95 % interval of the zonal mean: t(0.975, 2) = 4.303 (t table)
+    se = np.std([2, 4, 9], ddof=1) / np.sqrt(3)
+    assert m["zonal"]["sem"][i0] == pytest.approx(se)
+    assert m["zonal"]["ci95_hi"][i0] - 5.0 == pytest.approx(4.303 * se, rel=1e-3)
+    assert 5.0 - m["zonal"]["ci95_lo"][i0] == pytest.approx(4.303 * se, rel=1e-3)
+    i25 = m["lat_centres"].index(-25.0)
+    assert m["zonal"]["n"][i25] == 1 and m["zonal"]["ci95_lo"][i25] is None
     # min_count blanks thin cells but not the zonal mean
     m2 = climatology.diagnostic_map(rows, "x", lat_step=10, lon_step=20,
                                     min_count=2, workers=1)

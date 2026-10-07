@@ -221,7 +221,7 @@ def cross_section(granule_paths: Sequence[tuple[str, dict]], field: str,
     if not results:
         return {"field": field, "vertical": vertical, "n_profiles": 0,
                 "grid": grid.tolist(), "lat_edges": [], "lat_centres": [],
-                "mean": [], "std": [], "count": [], "departure_pct": [],
+                "mean": [], "std": [], "count": [], "sem": [], "departure_pct": [],
                 "overall_mean": [], "units": "", "min_count": min_count}
     lats = np.array([r[0] for r in results])
     cols = np.vstack([r[1] for r in results])
@@ -250,6 +250,8 @@ def cross_section(granule_paths: Sequence[tuple[str, dict]], field: str,
             sd[thin] = np.nan
             mean[k], std[k] = mu, sd
         departure = 100.0 * (mean - overall) / overall
+        # standard error of each cell's mean (profiles taken as independent)
+        sem = std / np.sqrt(np.where(count > 0, count, np.nan))
     return {
         "field": field, "vertical": vertical, "quantity": qty, "units": units,
         "field_label": vocab.axis_title(qty, units),
@@ -259,7 +261,7 @@ def cross_section(granule_paths: Sequence[tuple[str, dict]], field: str,
         "lat_edges": edges[used[0]:used[-1] + 2].tolist(),
         "lat_centres": (0.5 * (edges[used] + edges[used + 1])).tolist(),
         "profiles_per_band": [int((idx == b).sum()) for b in used],
-        "mean": mean, "std": std, "count": count,
+        "mean": mean, "std": std, "count": count, "sem": sem,
         "departure_pct": departure, "overall_mean": overall,
     }
 
@@ -346,7 +348,7 @@ def diagnostic_map(rows: Sequence[dict], column: str = EP_COLUMN,
            "lon_centres": (0.5 * (lon_edges[:-1] + lon_edges[1:])).tolist()}
     mean = np.full((nlat, nlon), np.nan)
     count = np.zeros((nlat, nlon), dtype=int)
-    zonal = {k: [None] * nlat for k in ("mean", "median", "std")}
+    zonal = {k: [None] * nlat for k in ("mean", "median", "std", "sem", "ci95_lo", "ci95_hi")}
     zonal["n"] = [0] * nlat
     if vals.size:
         li = np.clip(np.digitize(vals[:, 0], lat_edges) - 1, 0, nlat - 1)
@@ -364,6 +366,13 @@ def diagnostic_map(rows: Sequence[dict], column: str = EP_COLUMN,
                 zonal["mean"][i] = float(v.mean())
                 zonal["median"][i] = float(np.median(v))
                 zonal["std"][i] = float(v.std(ddof=1)) if v.size > 1 else None
+                if v.size > 1:
+                    # 95 % confidence interval of the zonal mean (Student's t)
+                    from .analysis import mean_uncertainty
+                    se, lo, hi = mean_uncertainty(np.array([v.mean()]), np.array([v.std(ddof=1)]),
+                                                  np.array([v.size]))
+                    zonal["sem"][i], zonal["ci95_lo"][i], zonal["ci95_hi"][i] = \
+                        float(se[0]), float(lo[0]), float(hi[0])
         out["overall"] = {"mean": float(vals[:, 2].mean()),
                           "median": float(np.median(vals[:, 2]))}
     out.update(mean=mean, count=count, zonal=zonal)

@@ -203,6 +203,7 @@ async function drawSection() {
   }
   const zTitle = show === 'mean' ? res.field_label
                : show === 'std' ? `Std. dev. of ${res.field_label}`
+               : show === 'sem' ? `Std. error of ${res.field_label}`
                : show === 'count' ? 'Profiles' : 'Departure [%]';
   Plotly.react('section-plot', [{
     type: 'heatmap', x: res.lat_centres, y: res.grid, z: zT,
@@ -214,14 +215,17 @@ async function drawSection() {
   }], axesLayout('Latitude [°N] (band centre)', cleanPlotlyMath(res.vertical_label)),
   PLOT_CONFIG);
   const kind = {mean: 'Mean', departure_pct: 'Departure from the all-profile mean of',
-                std: 'Spread of', count: 'Profiles behind'}[show];
+                std: 'Spread of', sem: 'Standard error of the mean of',
+                count: 'Profiles behind'}[show];
   $('#section-title').textContent = `${kind} ${res.field_label.replace(/\s*\[[^\]]*\]$/, '')}`;
   $('#section-caption').textContent =
     `${res.n_profiles} ${product ? product + ' ' : ''}profiles in ${res.lat_centres.length} bands of ${req.lat_step}° ` +
     `(${res.profiles_per_band.join(', ')} profiles from south to north), on a ` +
     `${req.step_km} km grid; cells with fewer than ${res.min_count} profiles are blank.` +
     (diverging ? ' Departure = 100 (band mean - mean of all profiles) / mean of all ' +
-                 'profiles, at each height.' : '');
+                 'profiles, at each height.' : '') +
+    (show === 'sem' ? ' Standard error = standard deviation / sqrt(profiles in the cell); it ' +
+                      'treats the profiles as independent and leaves out sampling error.' : '');
 }
 
 // ------------------------------------------------------------ diagnostic map
@@ -294,6 +298,13 @@ async function drawMap() {
      hovertemplate: '%{x}°: %{y:.3g} (%{text})<extra></extra>'},
     {type: 'scatter', mode: 'lines+markers', name: 'median', x: res.lat_centres,
      y: z.median, marker: {color: PALETTE[1]}, line: {dash: 'dot'}},
+    // the uncertainty of the zonal mean itself, as thick bars over the spread
+    {type: 'scatter', mode: 'markers', name: '95% CI of the mean', x: res.lat_centres,
+     y: z.mean, marker: {color: PALETTE[2], size: 1},
+     error_y: {type: 'data', symmetric: false, thickness: 5, width: 0, color: PALETTE[2],
+               array: z.mean.map((m, i) => (m === null || z.ci95_hi[i] === null ? 0 : z.ci95_hi[i] - m)),
+               arrayminus: z.mean.map((m, i) => (m === null || z.ci95_lo[i] === null ? 0 : m - z.ci95_lo[i]))},
+     hoverinfo: 'skip'},
   ], axesLayout('Latitude [°N] (band centre)', cleanPlotlyMath(res.title)), PLOT_CONFIG);
   const gw = res.gw;
   $('#mapgrid-title').textContent = `${res.title}: mean in each cell`;
@@ -301,7 +312,8 @@ async function drawMap() {
     `${res.n} of ${res.selected} profiles have a value; overall mean ` +
     `${fmt(res.overall.mean, 3)}, median ${fmt(res.overall.median, 3)}. ` +
     `Cells of ${req.lat_step}° × ${req.lon_step}° with fewer than ` +
-    `${res.min_count} profiles are blank.` +
+    `${res.min_count} profiles are blank. Zonal mean: thin bars ± 1 standard deviation, ` +
+    `thick bars the 95% confidence interval of the mean (Student's t, profiles taken as independent).` +
     (gw ? ` Gravity-wave energy over ${gw.z_lo}-${gw.z_hi} km, background: ` +
           (gw.method === 'highpass' ? `high-pass, ${gw.cutoff_km} km cut-off.`
                                     : `degree-${gw.poly_order} polynomial.`) : '');
