@@ -117,7 +117,10 @@ def test_no_horizontal_scroll(page, width):
     page.set_viewport_size({"width": width, "height": 900})
     page.goto(BASE + "/")
     page.wait_for_selector("#version-tag:not(:empty)")
-    sw, vw = page.evaluate("[document.documentElement.scrollWidth, document.documentElement.clientWidth]")
-    assert sw <= vw
+    for tab in ("guide", "get", "explore", "profile", "composite", "stats", "export"):
+        page.click(f"button[data-tab={tab}]")
+        page.wait_for_timeout(150)
+        sw, vw = page.evaluate("[document.documentElement.scrollWidth, document.documentElement.clientWidth]")
+        assert sw <= vw, tab
     assert page.evaluate("document.querySelector('.tabs').getBoundingClientRect().height") < 60
     page.set_viewport_size({"width": 1400, "height": 900})

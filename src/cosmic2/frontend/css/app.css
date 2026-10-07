@@ -242,6 +242,9 @@ main { padding: 20px 22px 60px; max-width: 1600px; margin: 0 auto; }
 
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .grid-side { display: grid; grid-template-columns: 290px 1fr; gap: 16px; align-items: start; }
+/* grid columns may shrink below their content (a citation <pre> with long lines
+   widened the Tutorial page past the window at 1366 px); wide content scrolls */
+.grid-2 > *, .grid-side > * { min-width: 0; }
 .stack > .card:last-child { margin-bottom: 0; }
 .row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 12px; }
 .row.tight { gap: 8px; }
