@@ -61,6 +61,9 @@ def test_every_tab_and_main_action_without_script_errors(page):
     assert page.inner_text("#pp-count") == "2 pairs"
     _press(page, "#btn-nwp")
     assert page.inner_text("#nwp-count") == "2 occultations"
+    page.select_option("#nwp-kind", "differences:bending_angle")
+    _press(page, "#btn-nwp")
+    assert page.inner_text("#nwp-count") == "2 occultations"
     page.select_option("#nwp-kind", "tch:refractivity")
     _press(page, "#btn-nwp")
     assert "at least 30 occultations" in page.inner_text("#nwp-plot")

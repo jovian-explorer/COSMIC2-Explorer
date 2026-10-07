@@ -471,7 +471,7 @@ async function drawModels() {
                  hovertemplate: `${name}<br>%{y} km: %{x:.3g} (%{text})<extra></extra>`});
   });
   Plotly.react('nwp-plot', traces, axesLayout(`${res.label} [${res.units}]`,
-    'Altitude above mean sea level [km]', {shapes: [zline]}), PLOT_CONFIG);
+    res.vertical_label || 'Altitude above mean sea level [km]', {shapes: [zline]}), PLOT_CONFIG);
   $('#nwp-caption').textContent =
     `${res.n_profiles} occultations of ${res.selected} selected profiles have model profiles. ` +
     (res.relative ? 'Differences in percent of the model value. ' : '') +
@@ -479,6 +479,9 @@ async function drawModels() {
     'interval of the mean (Student\'s t, occultations taken as independent). The model ' +
     'profiles come on their own levels, which for NCEP are about 2 km apart around the ' +
     'tropical tropopause, so part of the difference between levels is interpolation.' +
+    (res.quantity === 'bending_angle' ? ' ECMWF bending angles (echPrf) are placed at the ' +
+      'impact height of their tangent points, n (Rc + z) - Rc, with the occultation\'s radius ' +
+      'of curvature Rc; NCEP profiles carry no bending angle.' : '') +
     (res.quantity === 'temperature' ? ' wetPf2 temperature comes from a 1D-Var retrieval ' +
       'whose background is a model forecast, so in the troposphere it is not independent of the models.' : '');
 }

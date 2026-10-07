@@ -76,3 +76,27 @@ def test_model_comparison_endpoint_on_bundled_samples():
     assert res["units"] == "K" and res["models"]["echPrf"]["n_profiles"] == 2
     res = post("/api/compare/models", {"search": {"products": ["atmPrf"]}, "kind": "tch"})
     assert res["n_triplets"] == 2 and all(v is None for v in res["variance"][0])   # too few
+
+
+def test_impact_height_relation_matches_atmprf():
+    """atmPrf's Impact_height is n (Rc + z) - Rc of its own MSL_alt and Ref."""
+    from cosmic2 import readers
+    from cosmic2.config import sampledata_dir
+    for f in sampledata_dir().glob("atmPrf_*"):
+        g = readers.load(str(f), "atmPrf")
+        x = nwp.model_impact_height(g.data["MSL_alt"], g.data["Ref"], float(g.attrs["rfict"]))
+        ok = np.isfinite(x) & np.isfinite(g.data["Impact_height"])
+        assert ok.sum() > 1000
+        assert np.max(np.abs(x[ok] - g.data["Impact_height"][ok])) < 1e-3     # km
+
+
+def test_bending_angle_against_ecmwf_on_bundled_samples():
+    post("/api/local/load-samples", {})
+    res = post("/api/compare/models", {"search": {"products": ["atmPrf"]},
+                                       "kind": "differences", "quantity": "bending_angle",
+                                       "min_count": 1, "top_km": 35})
+    assert list(res["models"]) == ["echPrf"] and res["models"]["echPrf"]["n_profiles"] == 2
+    assert res["vertical_label"].startswith("Impact height")
+    g = res["grid"]
+    m = [res["models"]["echPrf"]["mean"][g.index(z)] for z in (12.0, 20.0, 30.0)]
+    assert all(v is not None and abs(v) < 5 for v in m)

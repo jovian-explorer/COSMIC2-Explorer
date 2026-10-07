@@ -782,7 +782,7 @@ class ModelCompareRequest(BaseModel):
     granule_ids: list[str] | None = None
     search: SearchRequest | None = None
     kind: Literal["differences", "tch"] = "differences"
-    quantity: Literal["refractivity", "temperature"] = "refractivity"
+    quantity: Literal["refractivity", "temperature", "bending_angle"] = "refractivity"
     bottom_km: float = Field(default=0.0, ge=0)
     top_km: float = Field(default=30.0, gt=0, le=60)
     step_km: float = Field(default=0.5, ge=0.1, le=5)
