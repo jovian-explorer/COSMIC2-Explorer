@@ -170,7 +170,7 @@
       </p>
       <ul class="guide-list">
         <li><strong>Grouped averages:</strong> average profiles by latitude band (equatorial 10&deg;S-10&deg;N, subtropics 10-30&deg;, mid-latitudes 30-60&deg;), hemisphere, day or night (06-18 h local solar time), date, product or satellite, on a common height grid.</li>
-        <li><strong>Statistical Spread:</strong> Display group mean profiles with standard deviation (&plusmn;1 sigma) envelopes or 10th-90th percentile ranges.</li>
+        <li><strong>Statistical Spread:</strong> Display group mean profiles with standard deviation (&plusmn;1 sigma) envelopes, 10th-90th percentile ranges, or the 95% confidence interval of the mean (Student's t; profiles taken as independent, sampling error not included).</li>
         <li><strong>Derived Relationship Scatter:</strong> plot any per-profile diagnostic against another (tropopause height against latitude, foF2 against local time, gravity-wave energy against latitude), coloured by a third.</li>
       </ul>
       <div class="step-actions">
@@ -708,6 +708,7 @@
         <select id="c-spread">
           <option value="std">mean &plusmn; 1 standard deviation</option>
           <option value="p10p90">10th-90th percentile</option>
+          <option value="ci95">95% confidence interval of the mean</option>
         </select>
       </label>
       <div class="row tight">

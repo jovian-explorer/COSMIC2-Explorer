@@ -746,6 +746,10 @@ class Composite:
             # such as N^2 or density at 60 km.
             return [None if (v is None or not np.isfinite(v)) else float(v)
                     for v in np.asarray(a, dtype="float64")]
+        for g in self.groups.values():
+            if "sem" not in g:            # a group built by hand
+                g["sem"], g["ci95_lo"], g["ci95_hi"] = mean_uncertainty(
+                    np.asarray(g["mean"], float), np.asarray(g["std"], float), np.asarray(g["count"]))
         return {
             "field": self.field, "vertical": self.vertical,
             "units": self.units, "n_profiles": self.n_profiles,
@@ -759,6 +763,8 @@ class Composite:
                     "n": g["n"], "n_per_level": [int(v) for v in g["count"]],
                     "mean": _l(g["mean"]), "median": _l(g["median"]),
                     "std": _l(g["std"]), "p10": _l(g["p10"]), "p90": _l(g["p90"]),
+                    "sem": _l(g["sem"]), "ci95_lo": _l(g["ci95_lo"]),
+                    "ci95_hi": _l(g["ci95_hi"]),
                 }
                 for name, g in self.groups.items()
             },
@@ -844,11 +850,13 @@ def composite(granule_paths: Sequence[tuple[str, dict]], field: str,
             std = np.nanstd(m, axis=0, ddof=1)
             p10 = np.nanpercentile(m, 10, axis=0)
             p90 = np.nanpercentile(m, 90, axis=0)
+        sem, ci_lo, ci_hi = mean_uncertainty(mean, std, count)
         thin = count < min_count
-        for a in (mean, median, std, p10, p90):
+        for a in (mean, median, std, p10, p90, sem, ci_lo, ci_hi):
             a[thin] = np.nan
         groups[name] = {"n": int(m.shape[0]), "count": count, "mean": mean,
-                        "median": median, "std": std, "p10": p10, "p90": p90}
+                        "median": median, "std": std, "p10": p10, "p90": p90,
+                        "sem": sem, "ci95_lo": ci_lo, "ci95_hi": ci_hi}
     # A group with fewer than min_count profiles is blank at every level, so
     # keeping it would put an entry in the key with no mark beside it. Drop it
     # and report it instead, so the omission is stated rather than silent.
@@ -859,6 +867,27 @@ def composite(granule_paths: Sequence[tuple[str, dict]], field: str,
     return Composite(field, vertical, grid, ordered, used, units,
                      min_count=min_count, dropped_groups=dropped,
                      quantity=next(iter(quantities)) if len(quantities) == 1 else "")
+
+
+def mean_uncertainty(mean: np.ndarray, std: np.ndarray, count: np.ndarray,
+                     level: float = 0.95) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Standard error of a mean of ``count`` values with sample standard
+    deviation ``std``, and the two-sided ``level`` confidence interval of the
+    mean from Student's t with count - 1 degrees of freedom:
+
+        sem = s / sqrt(n),   mean -/+ t(1 - (1 - level)/2, n - 1) * sem.
+
+    This treats the profiles as independent draws (true for separate
+    occultations, but profiles close in space and time are correlated, which
+    makes the real uncertainty larger) and says nothing about sampling: a
+    mean of profiles that miss part of the day or region is not the mean of
+    the atmosphere there.  Undefined (NaN) below two values."""
+    from scipy.stats import t as student_t
+    n = np.asarray(count, dtype="float64")
+    with np.errstate(invalid="ignore", divide="ignore"):
+        sem = np.where(n >= 2, std / np.sqrt(n), np.nan)
+        q = np.where(n >= 2, student_t.ppf(0.5 + level / 2.0, np.maximum(n - 1, 1)), np.nan)
+    return sem, mean - q * sem, mean + q * sem
 
 
 def anomaly_against(reference: np.ndarray, grid: np.ndarray,

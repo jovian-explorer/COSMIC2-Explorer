@@ -238,3 +238,38 @@ def test_fields_with_derives_only_when_asked():
     assert "theta" not in native and "Temp" in native
     derived = analysis.fields_with(g, "theta", "MSL_alt")
     np.testing.assert_array_equal(derived["theta"], analysis.derived_fields(g)["theta"])
+
+
+def test_mean_uncertainty_textbook_value_and_coverage():
+    """sem = s/sqrt(n) and the 95 % interval uses Student's t (t(0.975, 9) =
+    2.262 in every t table); on Gaussian samples the interval covers the true
+    mean in 95 % of draws."""
+    import numpy as np
+    from cosmic2.analysis import mean_uncertainty
+    x = np.array([1.0, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    m, s, n = x.mean(), x.std(ddof=1), np.array([10])
+    sem, lo, hi = mean_uncertainty(np.array([m]), np.array([s]), n)
+    assert sem[0] == pytest.approx(s / np.sqrt(10))
+    assert (hi[0] - m) / sem[0] == pytest.approx(2.262, abs=5e-4)
+    assert np.isnan(mean_uncertainty(np.array([1.0]), np.array([np.nan]), np.array([1]))[0][0])
+    rng = np.random.default_rng(42)
+    draws = rng.normal(5.0, 2.0, size=(20000, 6))
+    mu, sd = draws.mean(axis=1), draws.std(axis=1, ddof=1)
+    _, lo, hi = mean_uncertainty(mu, sd, np.full(mu.size, 6))
+    cover = np.mean((lo <= 5.0) & (5.0 <= hi))
+    assert cover == pytest.approx(0.95, abs=0.006)
+
+
+def test_composite_reports_the_confidence_interval_of_the_mean(tmp_path):
+    import numpy as np
+    from cosmic2 import analysis
+    paths = sorted(str(p) for p in sampledata_dir().glob("wetPf2_*"))
+    comp = analysis.composite([(p, {"good": True, "lat": 0.0}) for p in paths], "Temp",
+                              group_by="all", top_km=20, step_km=1.0, min_count=2).to_json()
+    g = next(iter(comp["groups"].values()))
+    for k in range(len(comp["grid"])):
+        if g["mean"][k] is None:
+            continue
+        n = g["n_per_level"][k]
+        assert g["sem"][k] == pytest.approx(g["std"][k] / np.sqrt(n))
+        assert g["ci95_lo"][k] < g["mean"][k] < g["ci95_hi"][k]

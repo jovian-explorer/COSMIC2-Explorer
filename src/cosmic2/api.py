@@ -939,7 +939,7 @@ class FigureRequest(BaseModel):
     fmt: Literal["png", "pdf", "svg", "eps", "jpg"] = "png"
     dpi: int | None = Field(default=None, ge=50, le=1200)
     logx: bool = False
-    spread: Literal["std", "p10p90"] = "std"
+    spread: Literal["std", "p10p90", "ci95"] = "std"
     convert_kelvin: bool = False
     top_km: float = Field(default=60.0, gt=0)     # composite grid
     step_km: float = Field(default=0.5, gt=0)

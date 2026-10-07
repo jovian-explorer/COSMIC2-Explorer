@@ -257,7 +257,8 @@ def composite_figure(comp: dict, show: str = "mean", spread: str = "std",
     """Group-mean profiles with a shaded spread band.
 
     ``comp`` is :meth:`analysis.Composite.to_json` output.  ``spread`` is
-    ``"std"`` (mean +/- 1 sigma) or ``"p10p90"`` (10th-90th percentile).
+    ``"std"`` (mean +/- 1 sigma), ``"p10p90"`` (10th-90th percentile) or
+    ``"ci95"`` (95 % confidence interval of the mean).
     """
     with _styled(dpi):
         fig, ax = plt.subplots(figsize=figsize)
@@ -270,6 +271,9 @@ def composite_figure(comp: dict, show: str = "mean", spread: str = "std",
             if spread == "p10p90":
                 lo = np.array([np.nan if v is None else v for v in g["p10"]])
                 hi = np.array([np.nan if v is None else v for v in g["p90"]])
+            elif spread == "ci95":
+                lo = np.array([np.nan if v is None else v for v in g["ci95_lo"]])
+                hi = np.array([np.nan if v is None else v for v in g["ci95_hi"]])
             else:
                 sd = np.array([np.nan if v is None else v for v in g["std"]])
                 lo, hi = mid - sd, mid + sd
@@ -285,7 +289,9 @@ def composite_figure(comp: dict, show: str = "mean", spread: str = "std",
         if logx:
             _log_x(ax)
         ax.set_title(safe_mathtext(title or f"{show.title()} profile by group"), fontsize=SIZES[0])
-        band = "+/-1 sigma" if spread == "std" else "10th-90th percentile"
+        band = {"std": "+/-1 sigma", "p10p90": "10th-90th percentile",
+                "ci95": "95% confidence interval of the mean (Student's t, "
+                        "profiles taken as independent)"}.get(spread, spread)
         mc = comp.get("min_count", 3)
         cap = caption or (f"Shading: {band}. {comp['n_profiles']} profiles "
                           f"interpolated to a common {grid[1] - grid[0]:.2g} km grid "

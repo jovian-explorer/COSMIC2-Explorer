@@ -487,10 +487,10 @@ async function drawComposite() {
   names.forEach((name, i) => {
     const g = res.groups[name];
     const colour = PALETTE[i % PALETTE.length];
-    const lo = spread === 'p10p90' ? g.p10
+    const lo = spread === 'p10p90' ? g.p10 : spread === 'ci95' ? g.ci95_lo
              : g.mean.map((m, k) => (m === null || g.std[k] === null
                                      ? null : m - g.std[k]));
-    const hi = spread === 'p10p90' ? g.p90
+    const hi = spread === 'p10p90' ? g.p90 : spread === 'ci95' ? g.ci95_hi
              : g.mean.map((m, k) => (m === null || g.std[k] === null
                                      ? null : m + g.std[k]));
     traces.push({
@@ -530,8 +530,12 @@ async function drawComposite() {
     legend: {x: .02, y: .02, xanchor: 'left', yanchor: 'bottom', font: {size: Math.round(10.5 * fontScale)}},
   }), PLOT_CONFIG);
 
-  const band = spread === 'std' ? 'mean \u00b1 1 standard deviation'
-                                : '10th-90th percentile';
+  const band = {
+    std: 'mean \u00b1 1 standard deviation',
+    p10p90: '10th-90th percentile',
+    ci95: '95% confidence interval of the mean (Student\'s t; it treats the profiles as ' +
+          'independent and does not include sampling error, so the true uncertainty is larger)',
+  }[spread] || spread;
   let cap = `Shading: ${band}. ${res.n_profiles} profiles interpolated to a ` +
             `common ${fmt(res.grid[1] - res.grid[0], 2)} km grid before ` +
             `averaging; levels with fewer than ${res.min_count} profiles are blank.`;
