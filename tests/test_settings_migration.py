@@ -188,8 +188,10 @@ def test_closing_the_panel_keeps_every_value(home, monkeypatch):
     load({"plot_dpi": 600, "units_temperature": "K", "ui_font_size": 99, "legacy": "abc"})
     r = sm.pending()
     assert r["show"] and r["changes"]["invalid"] and r["changes"]["removed"]
+    before = path.read_bytes()
     out = sm.acknowledge(None)
     assert out["plot_dpi"] == 600 and out["units_temperature"] == "K" and out["auto_update"] is True
+    assert path.read_bytes() == before                     # closing writes nothing
     on_disk = json.loads(path.read_text(encoding="utf-8"))
     assert on_disk["ui_font_size"] == 99 and on_disk["legacy"] == "abc"      # kept as stored
     assert sm.pending() == {"show": False}           # values already shown are not reported again
@@ -209,3 +211,21 @@ def test_api_refuses_values_out_of_range():
     assert r.status_code == 200 and r.json() == {"show": False}       # a first start
     r = requests.post(f"{base}/api/settings/changes/ack", json={"settings": {"plot_dpi": 5}}, timeout=10)
     assert r.status_code == 422
+
+
+def test_an_option_the_next_version_drops_is_reported_by_it(home, monkeypatch):
+    """The older build wrote its marker while its own option was valid there; the
+    newer build, which has no such option, must still list it as no longer used."""
+    path, load = home
+    load({"plot_dpi": 600})
+    sm.acknowledge(None)                                  # marker of "this" (older) version
+    marker = json.loads(sm.MARKER_PATH.read_text(encoding="utf-8"))
+    assert marker["unusable_seen"] == {}
+    # the newer version: plot_dpi is gone, ui_theme allows other values
+    monkeypatch.setitem(SETTING_RULES, "ui_theme", ("choice", ("dark",)))
+    monkeypatch.delitem(SETTING_RULES, "plot_dpi")
+    r = sm.pending()
+    assert r["show"] and r["changes"]["removed"] == [{"key": "plot_dpi", "stored": 600}]
+    sm.acknowledge(None)
+    assert json.loads(sm.MARKER_PATH.read_text(encoding="utf-8"))["unusable_seen"]["plot_dpi"] == 600
+    assert sm.pending() == {"show": False}

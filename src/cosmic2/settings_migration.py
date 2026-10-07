@@ -6,10 +6,11 @@ changed when that happens: every stored value this version can use is used as it
 is, and the others stay in settings.json (``Settings.preserved``) while the
 default stands in for them.  Once per version and build the user is shown what
 changed (with what is new in the release, after an automatic update) and can
-change the values; nothing is deleted from settings.json either way.  The schema
-they saw and the stored values they were shown are then kept in
+change the values; nothing is deleted from settings.json either way, and closing
+the panel does not write it at all.  The schema they saw, and the stored values
+this version cannot use that they were shown, are then kept in
 ``settings_seen.json`` beside settings.json: the next comparison starts from that
-schema, and a stored value they have already been shown is not reported again.
+schema, and such a value is not reported again while it stays the same.
 
 A first start (no settings.json yet) has nothing to compare and shows nothing.
 """
@@ -110,15 +111,20 @@ def _identity() -> Dict[str, Any]:
 
 
 def _write_marker() -> None:
-    stored = {k: v for k, v in (_read_json(SETTINGS_PATH) or {}).items() if k not in _INTERNAL}
+    # the stored entries this version cannot use (unknown here, or not allowed):
+    # the user has been shown them, so they are not reported again unchanged.
+    # Values this version can use are not listed: once another version drops or
+    # restricts the option, they are news.
+    stored = _read_json(SETTINGS_PATH) or {}
+    unusable = {k: v for k, v in stored.items() if k not in _INTERNAL and not _valid(k, v)}
     tmp = MARKER_PATH.with_suffix(".json.tmp")
     with open(tmp, "w", encoding="utf-8") as fh:
-        json.dump({**_identity(), "schema": current_schema(), "seen": stored}, fh, indent=2)
+        json.dump({**_identity(), "schema": current_schema(), "unusable_seen": unusable}, fh, indent=2)
     os.replace(tmp, MARKER_PATH)
 
 
 def _not_seen(entries: List[Dict[str, Any]], stored: Dict[str, Any], seen: Optional[Dict[str, Any]]) -> List:
-    """The entries whose stored value the user has not been shown yet."""
+    """The entries whose stored value the user has not been shown as unusable yet."""
     if not isinstance(seen, dict):
         return entries
     return [e for e in entries if e["key"] not in seen or seen[e["key"]] != stored.get(e["key"])]
@@ -139,7 +145,7 @@ def pending() -> Dict[str, Any]:
         return {"show": False}
     stored = _read_json(SETTINGS_PATH) or {}
     changes = compare(stored, (marker or {}).get("schema"), current_schema(), RENAMED_SETTINGS)
-    seen = (marker or {}).get("seen")
+    seen = (marker or {}).get("unusable_seen")
     changes["invalid"] = _not_seen(changes["invalid"], stored, seen)
     changes["removed"] = _not_seen(changes["removed"], stored, seen)
     seen_here = marker is not None and marker.get("version") == ident["version"] and marker.get("tag") == ident["tag"]
@@ -159,11 +165,13 @@ def acknowledge(patch: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """The user has seen the changes: apply their choices (all validated first;
     ValueError for an invalid one, and nothing is changed then) and remember the
     schema and the stored values they saw.  Entries this version cannot use and
-    the user did not replace stay in settings.json."""
+    the user did not replace stay in settings.json, which is not written at all
+    when there are no choices (the panel was closed)."""
     settings = config.SETTINGS
     patch = {k: v for k, v in dict(patch or {}).items() if k in SETTING_RULES}
     for k, v in patch.items():
         Settings.validate(k, v)
-    settings.update(**patch)
+    if patch:
+        settings.update(**patch)
     _write_marker()
     return settings.to_dict()
