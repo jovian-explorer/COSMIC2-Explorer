@@ -216,6 +216,7 @@ class SettingsPatch(BaseModel):
     # choice was silently dropped.
     default_stream: str | None = None
     default_product: str | None = None
+    auto_update: bool | None = None
 
 
 @app.post("/api/settings")
@@ -229,6 +230,26 @@ def update_settings(patch: SettingsPatch) -> dict:
     if parallel.resolve_workers() != before:
         parallel.warm_up()   # a new pool size starts a new pool
     return _clean(vars(SETTINGS))
+
+
+@app.get("/api/update/status")
+def update_status() -> dict:
+    """The weekly automatic update: this build's tag, the last check, a build
+    waiting to be installed, a download in progress, or why this copy does not
+    update itself."""
+    from . import autoupdate
+    return _clean(autoupdate.status())
+
+
+@app.post("/api/update/check")
+def update_check() -> dict:
+    """Check now: look for a newer published build and download it in the
+    background; it is installed when the app next starts."""
+    from . import autoupdate
+    problem = autoupdate.install_problem()
+    if problem:
+        raise HTTPException(409, f"This copy cannot update itself: {problem}")
+    return _clean(autoupdate.start_check(force=True))
 
 
 # ---------------------------------------------------------------------------

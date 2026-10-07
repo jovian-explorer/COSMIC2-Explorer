@@ -69,3 +69,15 @@ def test_every_tab_and_main_action_without_script_errors(page):
     bad = [t.inner_text() for t in page.query_selector_all("#toasts .toast.bad")]
     assert not bad, bad
     assert not page.errors, page.errors
+
+
+def test_settings_updates_row(page):
+    page.goto(BASE + "/")
+    page.wait_for_selector("#version-tag:not(:empty)")
+    page.click("#btn-settings")
+    page.wait_for_function("document.querySelector('#s-update-status')?.textContent.length > 0")
+    assert "not a published build" in page.inner_text("#s-update-status")
+    assert page.is_disabled("#s-update-now")
+    assert page.is_checked("#s-auto-update")
+    page.click("#drawer-close")
+    assert not page.errors, page.errors

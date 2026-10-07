@@ -121,6 +121,38 @@ function applyScienceDefaults(settings) {
   if (settings.grid_step_km) set('#e-step', (n) => { n.value = settings.grid_step_km; });
 }
 
+/** "Check now" for the weekly automatic update, with what it last did. */
+function autoUpdateRow() {
+  const status = el('span', {class: 'hint', id: 's-update-status'}, '');
+  const button = el('button', {type: 'button', class: 'ghost', id: 's-update-now'}, 'Check now');
+  const when = (t) => (t ? new Date(t * 1000).toLocaleString() : 'never');
+  let timer = null;
+  const show = (st) => {
+    const job = st.job || {};
+    const build = st.tag ? `This is build ${st.tag}` + (st.build_date ? ` (${st.build_date})` : '') + '. ' : '';
+    let text;
+    if (st.problem) text = `Automatic updates are not available: ${st.problem}.`;
+    else if (job.running) text = job.total ? `${job.message}: ${Math.round(100 * job.done / job.total)} %` : (job.message || 'Checking...');
+    else if (job.error) text = `The last check failed: ${job.error}`;
+    else if (st.staged) text = `${st.staged.name || st.staged.tag} is downloaded and will be installed when the app next starts.`;
+    else text = (job.message ? `${job.message}. ` : '') + `Last checked: ${when(st.last_check)}.`;
+    status.textContent = build + text;
+    button.disabled = !!st.problem || !!job.running;
+    clearTimeout(timer);
+    if (job.running) timer = setTimeout(refresh, 1000);
+  };
+  const refresh = async () => {
+    if (timer && !document.body.contains(status)) return;   // the drawer was closed
+    try { show(await api.updateStatus()); } catch (err) { status.textContent = err.message; }
+  };
+  button.addEventListener('click', async () => {
+    button.disabled = true;
+    try { show(await api.updateCheck()); } catch (err) { status.textContent = err.message; button.disabled = false; }
+  });
+  refresh();
+  return el('div', {class: 'settings-update-row'}, button, status);
+}
+
 // Every number input in this form must accept its own default: the browser
 // refuses to submit a form when value is not min + k * step, and the old DPI
 // field (min 72, step 10, value 300) silently blocked every Settings save.
@@ -140,7 +172,8 @@ function settingsBody() {
       qc_require_good: $('#s-qc').checked,
       grid_top_km: Number($('#s-grid-top').value) || 60,
       grid_step_km: Number($('#s-grid-step').value) || 0.2,
-      default_stream: $('#s-stream').value
+      default_stream: $('#s-stream').value,
+      auto_update: $('#s-auto-update').checked,
     };
     try {
       const updated = await api.saveSettings(patch);
@@ -230,6 +263,17 @@ function settingsBody() {
       'Composites, the diagnostics table, regridded exports and indexing read ' +
       'granules on this many processes when the selection is large (24 or more ' +
       'profiles). 1 runs everything in the main process.'),
+    el('hr'),
+    el('h3', {}, 'Updates'),
+    el('label', {class: 'check'},
+      el('input', {type: 'checkbox', id: 's-auto-update', checked: state.meta.settings.auto_update !== false}),
+      ' Update automatically: look for a new release once a week, download it in the ' +
+      'background and install it when the app next starts'
+    ),
+    autoUpdateRow(),
+    el('p', {class: 'hint'},
+      'Only the app folder is replaced. Your downloads, exports, index and settings are ' +
+      'kept in the data folder, which an update never touches.'),
     el('hr'),
     el('button', {class: 'primary', type: 'submit'}, 'Save Settings')
   );

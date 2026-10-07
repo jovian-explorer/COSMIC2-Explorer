@@ -44,6 +44,10 @@ Grab the archive for your OS from the [Releases page](https://github.com/jovian-
 
 Each archive unpacks to one `COSMIC2-Explorer` folder. Keep the app in that folder: the weekly automatic update replaces the folder with the new build (and only a folder that holds its `INSTALL_FOLDER.json`), so keep nothing else in it. Your downloads, exports and settings live in a separate data folder and are never touched by an update.
 
+#### Automatic updates
+
+A downloaded build looks for a newer release once a week (**Settings > Updates**; on by default, with **Check now**). It asks the GitHub releases API of this repository anonymously, like any visitor (a `GITHUB_TOKEN` or `GH_TOKEN` in the environment, or a logged-in `gh`, is used when present, and only towards api.github.com). When a newer release exists, the archive for your platform is downloaded into the data folder in the background and checked against the SHA-256 digest GitHub lists for it (or the release's `SHA256SUMS.txt`); an archive that fails the check is discarded. The next time you start the app it closes, a small script swaps the `COSMIC2-Explorer` folder for the new one (the old one is kept as `COSMIC2-Explorer.previous` until the new build has started) and starts the new build with the same command-line arguments. Copies run from source or with pip, and an app moved out of its unpacked folder, never update themselves.
+
 ### Option 2: install with pip (any OS, Python 3.10+)
 
 ```bash
@@ -121,7 +125,7 @@ python scripts/build_exe.py            # dist/COSMIC2-Explorer(.exe|.app)
 python scripts/build_exe.py --archive  # plus the release archive for this OS
 ```
 
-PyInstaller can only build for the OS it runs on. Pushing a `v*` tag runs `.github/workflows/release.yml`, which builds Windows, macOS and Linux and attaches all three archives to a GitHub Release.
+PyInstaller can only build for the OS it runs on. Pushing a tag `v<version>` or `v<version>-build.<n>` (`<version>` as in `pyproject.toml`) runs `.github/workflows/release.yml`, which builds Windows, macOS and Linux with `--archive --tag <tag>`, and attaches the three archives and `SHA256SUMS.txt` to a GitHub Release. Only builds stamped with a tag update themselves; releases are ordered by tag, so a later build of the same version is `v<version>-build.<n+1>`.
 
 ---
 

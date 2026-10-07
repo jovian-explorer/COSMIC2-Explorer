@@ -203,6 +203,9 @@ class Settings:
     ui_mode: str = "educational"  # "educational" or "research"
     units_temperature: str = "C"  # "C" or "K"
     explain_mode: bool = True  # plain-language captions for non-specialists
+    # Weekly automatic update of a published build (autoupdate.py): look for a
+    # newer release once a week, download it and install it on the next start
+    auto_update: bool = True
     # Network
     user_agent: str = f"{APP_NAME}/{APP_VERSION} (desktop client; python-requests)"
     extra: dict = field(default_factory=dict)

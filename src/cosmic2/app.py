@@ -189,6 +189,17 @@ def main(argv: list[str] | None = None) -> int:
 
     ensure_dirs()
 
+    if getattr(sys, "frozen", False):
+        # a newer build downloaded by the weekly update: install it now (autoupdate.py)
+        try:
+            from . import autoupdate
+            autoupdate.finish_install()
+            if autoupdate.install_staged_on_start(sys.argv[1:] if argv is None else list(argv)):
+                _log("A newer build is staged: handing over to the update script.")
+                return 0
+        except Exception as exc:  # noqa: BLE001 - never keep the app from starting
+            _log(f"Automatic update skipped: {exc!r}")
+
     fe = frontend_dir()
     if not fe.is_dir():
         msg = f"Frontend assets are missing.\nExpected: {fe}"
@@ -208,6 +219,12 @@ def main(argv: list[str] | None = None) -> int:
         return 3
 
     _log("Backend healthy.")
+    if getattr(sys, "frozen", False):
+        try:
+            from . import autoupdate
+            autoupdate.scheduler()
+        except Exception as exc:  # noqa: BLE001
+            _log(f"Update scheduler not started: {exc!r}")
 
     if args.no_window:
         _log("--no-window flag set; running server-only mode.")
