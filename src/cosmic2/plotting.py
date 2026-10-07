@@ -297,6 +297,10 @@ def composite_figure(comp: dict, show: str = "mean", spread: str = "std",
                           f"interpolated to a common {grid[1] - grid[0]:.2g} km grid "
                           f"before averaging; levels with fewer than {mc} profiles "
                           f"are blank.")
+        if comp.get("screen_k"):
+            out = sum((comp.get("screened_out") or {}).values())
+            cap += (f" Outlier screen: {out} profile(s) more than {comp['screen_k']:g} robust "
+                    "standard deviations from their group median over at least 1 km left out.")
         dropped = comp.get("dropped_groups") or {}
         if dropped:
             cap += (" Omitted for having fewer than "

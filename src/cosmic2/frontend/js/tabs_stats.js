@@ -172,6 +172,7 @@ async function drawSection() {
     step_km: Number($('#x-step').value) || 0.5,
     convert_kelvin: field === 'Temp' || field === 'temp_dry',
     good_only: true,
+    screen_k: $('#x-screen').checked ? (Number($('#x-screen-k').value) || 5) : null,
   }, statsSelection($('#x-selected-only').checked));
   let product = null;
   if (req.search) {
@@ -221,6 +222,7 @@ async function drawSection() {
                 count: 'Profiles behind'}[show];
   $('#section-title').textContent = `${kind} ${res.field_label.replace(/\s*\[[^\]]*\]$/, '')}`;
   $('#section-caption').textContent =
+    (res.screen_k ? `Outlier screen (k = ${res.screen_k}): ${res.screened_out} profile(s) left out. ` : '') +
     `${res.n_profiles} ${product ? product + ' ' : ''}profiles in ${res.lat_centres.length} bands of ${req.lat_step}° ` +
     `(${res.profiles_per_band.join(', ')} profiles from south to north), on a ` +
     `${req.step_km} km grid; cells with fewer than ${res.min_count} profiles are blank.` +

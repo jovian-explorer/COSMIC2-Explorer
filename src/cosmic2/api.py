@@ -633,6 +633,8 @@ class CompositeRequest(BaseModel):
     min_count: int = Field(default=3, ge=1)
     convert_kelvin: bool = True
     max_profiles: int = 2000
+    # drop each group's outlying profiles first (analysis.robust_screen)
+    screen_k: float | None = Field(default=None, ge=2, le=20)
 
 
 def _resolve_selection(granule_ids: list[str] | None,
@@ -659,7 +661,7 @@ def make_composite(req: CompositeRequest) -> dict:
         [(r["path"], r) for r in rows], req.field, req.vertical,
         group_by=req.group_by, top_km=req.top_km, step_km=req.step_km,
         good_only=req.good_only, min_count=req.min_count,
-        convert_kelvin=req.convert_kelvin)
+        convert_kelvin=req.convert_kelvin, screen_k=req.screen_k)
     out = comp.to_json()
     out["selected"] = len(rows)
     # what the selection holds, so an empty result can say why (an ivmL2m
@@ -740,6 +742,7 @@ class SectionRequest(BaseModel):
     min_count: int = Field(default=3, ge=1)
     convert_kelvin: bool = True
     max_profiles: int = Field(default=5000, ge=1)
+    screen_k: float | None = Field(default=None, ge=2, le=20)
 
 
 class ProductPairRequest(BaseModel):
@@ -789,7 +792,8 @@ def climatology_section(req: SectionRequest) -> dict:
             [(r["path"], r) for r in rows], req.field, req.vertical,
             lat_step=req.lat_step, top_km=req.top_km, step_km=req.step_km,
             bottom_km=req.bottom_km, good_only=req.good_only,
-            min_count=req.min_count, convert_kelvin=req.convert_kelvin)
+            min_count=req.min_count, convert_kelvin=req.convert_kelvin,
+            screen_k=req.screen_k)
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
     sec["selected"] = len(rows)
@@ -974,6 +978,7 @@ class FigureRequest(BaseModel):
     logx: bool = False
     spread: Literal["std", "p10p90", "ci95"] = "std"
     convert_kelvin: bool = False
+    screen_k: float | None = Field(default=None, ge=2, le=20)
     top_km: float = Field(default=60.0, gt=0)     # composite grid
     step_km: float = Field(default=0.5, gt=0)
     max_profiles: int = 2000
@@ -1017,7 +1022,8 @@ def _build_figure(req: FigureRequest, rows: list[dict]):
         comp = analysis.composite([(r["path"], r) for r in rows], req.field,
                                   req.vertical, group_by=req.group_by,
                                   top_km=req.top_km, step_km=req.step_km,
-                                  convert_kelvin=req.convert_kelvin).to_json()
+                                  convert_kelvin=req.convert_kelvin,
+                                  screen_k=req.screen_k).to_json()
         return plotting.composite_figure(comp, spread=req.spread, title=req.title,
                                          caption=req.caption, logx=req.logx)
     if req.kind == "panels":

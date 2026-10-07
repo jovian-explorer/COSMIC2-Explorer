@@ -177,8 +177,11 @@ def cross_section(granule_paths: Sequence[tuple[str, dict]], field: str,
                   top_km: float = 40.0, step_km: float = 0.5,
                   bottom_km: float = 0.0, good_only: bool = True,
                   min_count: int = 3, convert_kelvin: bool = True,
-                  workers: int | None = None) -> dict:
+                  workers: int | None = None, screen_k: float | None = None) -> dict:
     """Zonal-mean latitude-height section of one quantity.
+
+    ``screen_k`` drops each latitude band's outlying profiles before
+    averaging (:func:`analysis.robust_screen`).
 
     Every profile is put on the common height grid exactly as for the
     Compare tab's averages (log interpolation for pressure, density and
@@ -228,6 +231,15 @@ def cross_section(granule_paths: Sequence[tuple[str, dict]], field: str,
     units = results[0][2]
     qty = next(iter(quantities))
     idx = np.clip(np.digitize(lats, edges) - 1, 0, edges.size - 2)
+    screened = 0
+    if screen_k:
+        from .analysis import robust_screen
+        keep = np.ones(len(lats), dtype=bool)
+        for b in np.unique(idx):
+            sel = np.flatnonzero(idx == b)
+            keep[sel] = robust_screen(cols[sel], grid, k=screen_k)
+        screened = int((~keep).sum())
+        lats, cols, idx = lats[keep], cols[keep], idx[keep]
     used = np.arange(idx.min(), idx.max() + 1)
     with np.errstate(invalid="ignore", divide="ignore"), \
             warnings_off():
@@ -256,7 +268,8 @@ def cross_section(granule_paths: Sequence[tuple[str, dict]], field: str,
         "field": field, "vertical": vertical, "quantity": qty, "units": units,
         "field_label": vocab.axis_title(qty, units),
         "vertical_label": vocab.axis_title(vertical),
-        "n_profiles": int(len(results)), "min_count": min_count,
+        "n_profiles": int(len(lats)), "min_count": min_count,
+        "screen_k": screen_k, "screened_out": screened,
         "grid": grid.tolist(),
         "lat_edges": edges[used[0]:used[-1] + 2].tolist(),
         "lat_centres": (0.5 * (edges[used] + edges[used + 1])).tolist(),

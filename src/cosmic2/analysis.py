@@ -739,6 +739,8 @@ class Composite:
     min_count: int = 3
     dropped_groups: dict = field(default_factory=dict)
     quantity: str = ""   # vocabulary key when it differs from the name
+    screen_k: float | None = None
+    screened_out: dict = field(default_factory=dict)
 
     def to_json(self) -> dict:
         def _l(a):
@@ -756,6 +758,7 @@ class Composite:
             "grid": _l(self.grid),
             "min_count": self.min_count,
             "dropped_groups": self.dropped_groups,
+            "screen_k": self.screen_k, "screened_out": self.screened_out,
             "field_label": vocab.axis_title(self.quantity or self.field, self.units),
             "vertical_label": vocab.axis_title(self.vertical),
             "groups": {
@@ -805,13 +808,15 @@ def composite(granule_paths: Sequence[tuple[str, dict]], field: str,
               top_km: float = 60.0, step_km: float = 0.5,
               good_only: bool = True, min_count: int = 3,
               convert_kelvin: bool = False,
-              workers: int | None = None) -> Composite:
+              workers: int | None = None,
+              screen_k: float | None = None) -> Composite:
     """Mean/median/spread profile on a common grid, optionally grouped.
 
     ``granule_paths`` is a sequence of ``(path, index_metadata)``.  Each
     profile is interpolated onto the shared grid before averaging, which is
     the correct order of operations: averaging raw levels of different
-    profiles would mix heights.  Granules are read on ``workers`` processes
+    profiles would mix heights.  ``screen_k`` drops each group's outlying
+    profiles first (:func:`robust_screen`); how many is reported.  Granules are read on ``workers`` processes
     (``None``: the Settings value; see :mod:`.parallel`).
     """
     from .parallel import pmap
@@ -836,8 +841,14 @@ def composite(granule_paths: Sequence[tuple[str, dict]], field: str,
         used += 1
 
     groups: dict[str, dict] = {}
+    screened: dict[str, int] = {}
     for name, cols in buckets.items():
         m = np.vstack(cols)
+        if screen_k:
+            keep = robust_screen(m, grid, k=screen_k)
+            screened[name] = int((~keep).sum())
+            m = m[keep]
+            used -= screened[name]
         count = np.isfinite(m).sum(axis=0)
         # Levels sampled by no profile legitimately produce all-NaN slices.
         with np.errstate(invalid="ignore", all="ignore"), \
@@ -866,7 +877,45 @@ def composite(granule_paths: Sequence[tuple[str, dict]], field: str,
     ordered = dict(sorted(groups.items(), key=lambda kv: -kv[1]["n"]))
     return Composite(field, vertical, grid, ordered, used, units,
                      min_count=min_count, dropped_groups=dropped,
+                     screen_k=screen_k, screened_out=screened,
                      quantity=next(iter(quantities)) if len(quantities) == 1 else "")
+
+
+def robust_screen(m: np.ndarray, grid: np.ndarray, k: float = 5.0,
+                  min_depth_km: float = 1.0, min_profiles: int = 10) -> np.ndarray:
+    """Which profiles (rows of ``m``, on ``grid``) to keep after a robust
+    outlier screen.
+
+    At each level the profiles' median and robust standard deviation
+    (1.4826 times the median absolute deviation, which equals the standard
+    deviation for Gaussian data) are taken; a profile is dropped when it is
+    more than ``k`` robust standard deviations from the median at
+    consecutive levels spanning at least ``min_depth_km``, so a single
+    spiky level does not count.  Levels with fewer than ``min_profiles``
+    values, and groups of fewer than ``min_profiles`` profiles, are not
+    screened.  This is a statistical screen against the group itself, not
+    a physical quality check: with few profiles, or a group mixing different
+    air masses, real but unusual profiles can be dropped."""
+    n_prof = m.shape[0]
+    keep = np.ones(n_prof, dtype=bool)
+    if n_prof < min_profiles or grid.size < 2:
+        return keep
+    with np.errstate(invalid="ignore", divide="ignore"), warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        med = np.nanmedian(m, axis=0)
+        rsd = 1.4826 * np.nanmedian(np.abs(m - med), axis=0)
+        ok = (np.isfinite(m).sum(axis=0) >= min_profiles) & (rsd > 0)
+        z = np.where(ok, np.abs(m - med) / np.where(ok, rsd, 1.0), np.nan)
+    bad = np.nan_to_num(z, nan=0.0) > k
+    # consecutive levels whose first and last are min_depth_km apart
+    need = 1 + max(1, int(np.ceil(min_depth_km / float(grid[1] - grid[0]) - 1e-9)))
+    for i in range(n_prof):
+        run = best = 0
+        for b in bad[i]:
+            run = run + 1 if b else 0
+            best = max(best, run)
+        keep[i] = best < need
+    return keep
 
 
 def mean_uncertainty(mean: np.ndarray, std: np.ndarray, count: np.ndarray,

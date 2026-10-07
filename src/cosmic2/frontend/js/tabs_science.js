@@ -457,6 +457,7 @@ async function drawComposite() {
     step_km: Number($('#c-step').value) || 0.5,
     good_only: true,
     convert_kelvin: $('#c-field').value === 'Temp',
+    screen_k: $('#c-screen').checked ? (Number($('#c-screen-k').value) || 5) : null,
   }, selection($('#c-selected-only').checked));
   const res = await api.composite(req);
   const names = Object.keys(res.groups);
@@ -539,6 +540,11 @@ async function drawComposite() {
   let cap = `Shading: ${band}. ${res.n_profiles} profiles interpolated to a ` +
             `common ${fmt(res.grid[1] - res.grid[0], 2)} km grid before ` +
             `averaging; levels with fewer than ${res.min_count} profiles are blank.`;
+  if (res.screen_k) {
+    const out = Object.values(res.screened_out || {}).reduce((a, b) => a + b, 0);
+    cap += ` Outlier screen: ${out} profile(s) more than ${res.screen_k} robust standard ` +
+           'deviations from their group median over at least 1 km were left out.';
+  }
   const dropped = Object.entries(res.dropped_groups || {});
   if (dropped.length) {
     cap += ` Omitted for having fewer than ${res.min_count} profiles: ` +
@@ -709,6 +715,7 @@ async function exportFigure() {
       top_km: Number($('#c-top').value) || 40,
       step_km: Number($('#c-step').value) || 0.5,
       convert_kelvin: $('#c-field').value === 'Temp',
+      screen_k: $('#c-screen').checked ? (Number($('#c-screen-k').value) || 5) : null,
     });
   }
   

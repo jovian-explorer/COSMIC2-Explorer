@@ -273,3 +273,36 @@ def test_composite_reports_the_confidence_interval_of_the_mean(tmp_path):
         n = g["n_per_level"][k]
         assert g["sem"][k] == pytest.approx(g["std"][k] / np.sqrt(n))
         assert g["ci95_lo"][k] < g["mean"][k] < g["ci95_hi"][k]
+
+
+def test_robust_screen_drops_layer_outliers_not_spikes_or_small_groups():
+    from cosmic2.analysis import robust_screen, make_grid
+    grid = make_grid(20.0, 0.5)
+    rng = np.random.default_rng(0)
+    m = 250.0 + rng.normal(0.0, 1.0, size=(60, grid.size))
+    layer = m[0].copy(); layer[(grid >= 5) & (grid <= 8)] += 10.0     # 10 sigma over 3 km
+    thin = m[1].copy(); thin[(grid >= 5) & (grid < 5.6)] += 10.0      # only 0.5 km deep
+    spike = m[2].copy(); spike[grid == 10.0] += 50.0
+    keep = robust_screen(np.vstack([m, layer, thin, spike]), grid, k=5)
+    assert keep[:60].mean() > 0.98
+    assert not keep[60] and keep[61] and keep[62]
+    # Gaussian noise alone: nothing dropped
+    assert robust_screen(m, grid, k=5).all()
+    # too few profiles to judge: nothing dropped
+    assert robust_screen(np.vstack([m[:5], layer]), grid, k=5).all()
+
+
+def test_composite_reports_screened_profiles(monkeypatch):
+    from cosmic2 import analysis
+    grid = analysis.make_grid(10.0, 0.5)
+    rng = np.random.default_rng(1)
+    cols = {f"p{i}": 250 + rng.normal(0, 1, grid.size) for i in range(20)}
+    cols["bad"] = 250 + rng.normal(0, 1, grid.size) + np.where(grid > 3, 15.0, 0.0)
+    monkeypatch.setattr(analysis, "_composite_column",
+                        lambda t: ("all", cols[t[0]], "K", "Temp"))
+    rows = [(k, {"good": True}) for k in cols]
+    plain = analysis.composite(rows, "Temp", top_km=10, step_km=0.5, workers=1)
+    comp = analysis.composite(rows, "Temp", top_km=10, step_km=0.5, workers=1, screen_k=5)
+    assert plain.n_profiles == 21 and comp.n_profiles == 20
+    assert comp.to_json()["screened_out"] == {"all": 1}
+    assert abs(np.nanmean(comp.groups["all"]["mean"][grid > 3]) - 250) < 0.5
