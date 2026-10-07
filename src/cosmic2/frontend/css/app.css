@@ -241,7 +241,8 @@ main { padding: 20px 22px 60px; max-width: 1600px; margin: 0 auto; }
 .card-head h2 { margin: 0; }
 
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.grid-side { display: grid; grid-template-columns: 290px 1fr; gap: 16px; align-items: start; }
+/* 380 px: the longest quantity and height names (about 320 px of text) fit their dropdowns */
+.grid-side { display: grid; grid-template-columns: 380px 1fr; gap: 16px; align-items: start; }
 /* grid columns may shrink below their content (a citation <pre> with long lines
    widened the Tutorial page past the window at 1366 px); wide content scrolls */
 .grid-2 > *, .grid-side > * { min-width: 0; }

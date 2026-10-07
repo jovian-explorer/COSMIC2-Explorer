@@ -304,7 +304,9 @@ async function drawMap() {
      y: z.median, marker: {color: PALETTE[1]}, line: {dash: 'dot'}},
     // the uncertainty of the zonal mean itself, as thick bars over the spread
     {type: 'scatter', mode: 'markers', name: '95% CI of the mean', x: res.lat_centres,
-     y: z.mean, marker: {color: PALETTE[2], size: 1},
+     // a thick vertical bar, so the legend shows what the thick error bars are
+     y: z.mean, marker: {symbol: 'line-ns', size: 12, color: PALETTE[2],
+                         line: {width: 5, color: PALETTE[2]}},
      error_y: {type: 'data', symmetric: false, thickness: 5, width: 0, color: PALETTE[2],
                array: z.mean.map((m, i) => (m === null || z.ci95_hi[i] === null ? 0 : z.ci95_hi[i] - m)),
                arrayminus: z.mean.map((m, i) => (m === null || z.ci95_lo[i] === null ? 0 : m - z.ci95_lo[i]))},

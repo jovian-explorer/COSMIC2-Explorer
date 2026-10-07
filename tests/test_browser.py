@@ -126,3 +126,26 @@ def test_no_horizontal_scroll(page, width):
         assert sw <= vw, tab
     assert page.evaluate("document.querySelector('.tabs').getBoundingClientRect().height") < 60
     page.set_viewport_size({"width": 1400, "height": 900})
+
+
+_LONGEST_OPTION_FITS = """() => { const c = document.createElement('canvas').getContext('2d'); const bad = [];
+  for (const s of document.querySelectorAll('select')) {
+    if (!s.offsetParent) continue;
+    const cs = getComputedStyle(s);
+    c.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    const avail = s.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    for (const o of s.options) if (c.measureText(o.text).width > avail + 1) { bad.push(`#${s.id}: ${o.text}`); break; }
+  } return bad; }"""
+
+
+def test_dropdown_labels_fit_at_1366(page):
+    """The 290 px controls column cut quantity and height names short
+    ("Altitude above mean sea level (MSL")."""
+    page.set_viewport_size({"width": 1366, "height": 900})
+    page.goto(BASE + "/")
+    page.wait_for_selector("#version-tag:not(:empty)")
+    for tab in ("profile", "composite", "stats"):
+        page.click(f"button[data-tab={tab}]")
+        page.wait_for_timeout(150)
+        assert page.evaluate(_LONGEST_OPTION_FITS) == [], tab
+    page.set_viewport_size({"width": 1400, "height": 900})
