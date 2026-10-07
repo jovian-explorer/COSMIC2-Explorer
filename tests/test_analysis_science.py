@@ -306,3 +306,16 @@ def test_composite_reports_screened_profiles(monkeypatch):
     assert plain.n_profiles == 21 and comp.n_profiles == 20
     assert comp.to_json()["screened_out"] == {"all": 1}
     assert abs(np.nanmean(comp.groups["all"]["mean"][grid > 3]) - 250) < 0.5
+
+
+def test_refractivity_is_interpolated_in_log_space():
+    """Model refractivity comes on levels 2-3 km apart above 17 km (NCEP);
+    straight-line interpolation of N = N0 exp(-z/H) was 2 % too large there."""
+    from cosmic2.analysis import interp_field
+    z = np.arange(15.0, 41.0, 2.7)
+    n = 300.0 * np.exp(-z / 6.5)
+    grid = np.arange(16.0, 40.0, 0.1)
+    truth = 300.0 * np.exp(-grid / 6.5)
+    for name in ("Ref", "ref"):
+        got = interp_field(z, n, grid, name)
+        assert np.nanmax(np.abs(got / truth - 1)) < 1e-9

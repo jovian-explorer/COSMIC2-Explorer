@@ -77,6 +77,9 @@ def interp_to_grid(z: np.ndarray, v: np.ndarray, grid: np.ndarray,
 # across a 2 km gap in pressure, more for steep electron-density bottomsides).
 LOG_INTERP_FIELDS = frozenset({
     "Pres", "pres_dry", "density", "Vp", "sph", "ELEC_dens", "ion_dens",
+    # refractivity is close to exponential too: linear interpolation across the
+    # 2-3 km between NCEP model levels above 17 km made it 2 % too large
+    "Ref", "ref",
 })
 
 
