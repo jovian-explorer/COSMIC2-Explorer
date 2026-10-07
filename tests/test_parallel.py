@@ -123,3 +123,38 @@ def test_warm_up_starts_the_pool_before_the_first_job():
         assert parallel._get_pool(2) is pool
     finally:
         parallel.shutdown()
+
+
+def _alive(pid: int) -> bool:
+    import os, subprocess, sys
+    if sys.platform == "win32":
+        out = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/NH"], capture_output=True, text=True).stdout
+        return str(pid) in out
+    try:
+        os.kill(pid, 0)
+        return True
+    except OSError:
+        return False
+
+
+def test_workers_exit_when_their_parent_is_killed():
+    """A server killed outright used to leave its workers running (and, in a
+    one-file build, the executable locked against an automatic update)."""
+    import subprocess, sys, time
+    code = ("import sys, time\n"
+            "from cosmic2 import parallel\n"
+            "pool = parallel._get_pool(2)\n"
+            "pids = {pool.submit(parallel._warm, i).result(timeout=120) for i in range(6)}\n"
+            "print(' '.join(map(str, sorted(pids))), flush=True)\n"
+            "time.sleep(600)\n")
+    proc = subprocess.Popen([sys.executable, "-c", code], stdout=subprocess.PIPE, text=True)
+    try:
+        pids = [int(x) for x in proc.stdout.readline().split()]
+        assert pids and all(_alive(p) for p in pids)
+    finally:
+        proc.kill()          # TerminateProcess / SIGKILL: no atexit, no pool shutdown
+        proc.wait(timeout=30)
+    deadline = time.time() + 15
+    while time.time() < deadline and any(_alive(p) for p in pids):
+        time.sleep(0.5)
+    assert not [p for p in pids if _alive(p)]

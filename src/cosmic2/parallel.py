@@ -63,13 +63,33 @@ def resolve_workers(requested: int | None = None) -> int:
     return max(1, min(n, cpus))
 
 
+def _exit_with_parent() -> None:
+    """Worker initializer: end this worker as soon as the process that started
+    it ends, however it ends.  A server killed outright (Task Manager, a
+    crash) used to leave its workers running for good, and in a one-file
+    build each worker is a copy of the executable, so they kept it locked and
+    an automatic update could not replace the installation.  The watch waits
+    on the parent's process handle (``multiprocessing.parent_process()``'s
+    sentinel), so it costs nothing while the parent lives."""
+    import multiprocessing
+    parent = multiprocessing.parent_process()
+    if parent is None:
+        return
+
+    def watch() -> None:
+        parent.join()
+        os._exit(0)
+
+    threading.Thread(target=watch, name="parent-watch", daemon=True).start()
+
+
 def _get_pool(workers: int) -> ProcessPoolExecutor:
     global _pool, _pool_size
     with _lock:
         if _pool is None or _pool_size != workers:
             if _pool is not None:
                 _pool.shutdown(wait=False, cancel_futures=True)
-            _pool = ProcessPoolExecutor(max_workers=workers)
+            _pool = ProcessPoolExecutor(max_workers=workers, initializer=_exit_with_parent)
             _pool_size = workers
         return _pool
 
