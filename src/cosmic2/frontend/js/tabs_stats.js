@@ -51,6 +51,25 @@ export function axesLayout(xTitle, yTitle, extra = {}) {
   }, extra));
 }
 
+/** The "below 1 km above the ground" cell.  Only atmPrf has it: a wetPf2
+ *  profile's lowest level is not the depth the occultation reached (on the
+ *  2026 sample it sits up to 1.7 km above its atmPrf's, 95th percentile). */
+function groundCell(product, pen) {
+  if (pen && pen.above_ground && pen.above_ground.n) {
+    return el('td', {class: 'num'},
+              `${pct(pen.above_ground.fraction_below['1'])} (n=${pen.above_ground.n})`);
+  }
+  if (product === 'atmPrf' && pen) {
+    return el('td', {class: 'num', title: 'Needs the wetPf2 files of the same occultations on disk (they carry the terrain height).'},
+              'needs wetPf2');
+  }
+  if (product === 'wetPf2') {
+    return el('td', {class: 'num', title: "A wetPf2 profile's lowest level is not the depth the occultation reached; see the atmPrf row."},
+              'atmPrf only');
+  }
+  return el('td', {class: 'num'}, '-');
+}
+
 async function drawStats() {
   const res = await api.statsSampling(statsSelection($('#st-selected-only').checked));
   const products = Object.keys(res.products);
@@ -69,8 +88,7 @@ async function drawStats() {
       el('td', {}, p.lat_range ? `${fmt(p.lat_range[0], 1)} to ${fmt(p.lat_range[1], 1)}` : '-'),
       el('td', {class: 'num'}, pen ? `${fmt(pen.median_km, 2)} km` : '-'),
       el('td', {class: 'num'}, pen ? pct(pen.fraction_below['1']) : '-'),
-      el('td', {class: 'num'}, pen && pen.above_ground && pen.above_ground.n
-          ? `${pct(pen.above_ground.fraction_below['1'])} (n=${pen.above_ground.n})` : '-')));
+      groundCell(name, pen)));
   }
   const atm = res.products.atmPrf && res.products.atmPrf.penetration;
   const notes = [`${res.n} profiles.`];

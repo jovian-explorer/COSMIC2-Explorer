@@ -52,6 +52,7 @@
 
 ### Interface
 
+- Statistics table: the "below 1 km (ground)" cell of a wetPf2 search said only "-". It now says "atmPrf only": a wetPf2 profile's lowest level is not the depth the occultation reached (on the 549 real 2026 pairs it lies up to 1.7 km above its atmPrf's, 95th percentile; 66 % vs 85 % within 1 km of the ground), so the penetration depth above the ground is given for atmPrf. An atmPrf search without the matching wetPf2 files says "needs wetPf2".
 - **Header fits the window.** The header was one row 1455 px wide, so at 1366 px (and anything below about 1460 px wide) the whole app scrolled sideways, and below 1100 px the tab bar was squeezed into a column. The buttons on the right now move to a second row when needed, the tab bar stays on one line, and the Explore filters stick below the header's real height. Checked at 1024, 1280, 1366, 1440, 1600 and 1920 px and at the largest text scale.
 - Loading the bundled examples now refreshes the Explore filters. On a new installation the product list kept offering only wetPf2 (and the date range stayed empty) until the app was reopened, so the ionPrf, scnLv2, ivmL2m and atmPrf examples could not be searched.
 - Links use the theme's colours. No colour was set, so on the dark theme every link (About, data portals, help, release notes) was the browser's dark blue on a near-black background.
