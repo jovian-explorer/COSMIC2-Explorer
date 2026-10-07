@@ -499,3 +499,73 @@ def product_differences(pairs: Sequence[tuple[dict, dict]], quantity: str = "ref
         a[thin] = np.nan
     out.update(mean=mean, median=median, std=std, n=n, sem=sem, ci95_lo=lo, ci95_hi=hi)
     return out
+
+
+# ---------------------------------------------------------------------------
+# tropopause and cold point by latitude
+# ---------------------------------------------------------------------------
+
+TROPOPAUSE_COLUMNS = {
+    "wmo_height_km": "tropopause.height_km",
+    "wmo_temp_K": "tropopause.temp_K",
+    "cp_height_km": "cold_point.height_km",
+    "cp_temp_K": "cold_point.temp_K",
+}
+# CDAAC's own values in atmPrf files (index extras), for comparison
+ARCHIVE_TROPOPAUSE = {
+    "wmo_height_km": ("tropopause_height_wmo_km", 0.0),
+    "wmo_temp_K": ("tropopause_temp_wmo_C", 273.15),
+    "cp_height_km": ("cold_point_height_km", 0.0),
+    "cp_temp_K": ("cold_point_temp_C", 273.15),
+}
+
+
+def _band_stats(values: Sequence[float], min_count: int) -> dict:
+    from .analysis import mean_uncertainty
+    v = np.asarray([x for x in values if x is not None and np.isfinite(x)], float)
+    out = {"n": int(v.size), "mean": None, "ci95_lo": None, "ci95_hi": None,
+           "median": None, "std": None}
+    if v.size >= max(min_count, 1):
+        out["mean"], out["median"] = float(v.mean()), float(np.median(v))
+        if v.size > 1:
+            sd = float(v.std(ddof=1))
+            _, lo, hi = mean_uncertainty(np.array([v.mean()]), np.array([sd]), np.array([v.size]))
+            out.update(std=sd, ci95_lo=float(lo[0]), ci95_hi=float(hi[0]))
+    return out
+
+
+def tropopause_table(rows: Sequence[dict], lat_step: float = 10.0, min_count: int = 3,
+                     workers: int | None = None) -> dict:
+    """WMO (lapse-rate) tropopause and cold point by latitude band: mean,
+    95 % confidence interval of the mean, median, standard deviation and count
+    of the height and temperature, from the per-profile diagnostics of the
+    good neutral profiles in ``rows``; for atmPrf, CDAAC's own values from the
+    same files beside them.  The cold point is the coldest level between 10
+    and 30 km, which is a tropopause in the tropics only."""
+    from .analysis import diagnostics_row
+    from .parallel import pmap
+    if not lat_step > 0:
+        raise ValueError("lat_step must be > 0")
+    good = [r for r in rows if r.get("product") in ("atmPrf", "wetPf2") and r.get("good", True)
+            and r.get("lat") is not None]
+    diag = [d for d in pmap(diagnostics_row, good, workers=workers) if d]
+    edges = np.arange(-90.0, 90.0 + lat_step / 2, lat_step)
+    bands = []
+    for lo, hi in zip(edges[:-1], edges[1:]):
+        sel = [d for d in diag if d.get("lat") is not None and lo <= d["lat"] < hi]
+        if not sel:
+            continue
+        band = {"lat_lo": float(lo), "lat_hi": float(hi), "n_profiles": len(sel)}
+        for key, col in TROPOPAUSE_COLUMNS.items():
+            band[key] = _band_stats([d.get(col) for d in sel], min_count)
+        arch = [r for r in good if r.get("product") == "atmPrf" and lo <= r["lat"] < hi]
+        if arch:
+            band["archive"] = {}
+            for key, (name, off) in ARCHIVE_TROPOPAUSE.items():
+                vals = [(r.get("extras") or {}).get(name) for r in arch]
+                band["archive"][key] = _band_stats(
+                    [v + off for v in vals if isinstance(v, (int, float)) and v > -900], min_count)
+        bands.append(band)
+    products = sorted({r["product"] for r in good})
+    return {"lat_step": lat_step, "min_count": min_count, "n_profiles": len(diag),
+            "products": products, "bands": bands}

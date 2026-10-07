@@ -190,6 +190,7 @@
         <li><strong>Latitude-height sections:</strong> zonal means of temperature, refractivity, electron density or any other quantity, or each band's departure from the mean of all profiles.</li>
         <li><strong>Maps of a diagnostic:</strong> gravity-wave energy (any layer, polynomial or high-pass background), tropopause height, foF2 and more, in latitude-longitude cells with the zonal mean.</li>
         <li><strong>atmPrf and wetPf2 of the same occultations:</strong> the difference between the observed (dry) retrieval and the 1D-Var moist retrieval made from it, occultation by occultation: refractivity, dry temperature and pressure, and how much colder the dry temperature is than the real one (the moisture effect), with spread and 95% confidence interval by height.</li>
+        <li><strong>Tropopause and cold point by latitude:</strong> the WMO lapse-rate tropopause and the cold point in each latitude band, with the 95% confidence interval of the mean, beside CDAAC's own tropopause values.</li>
         <li><strong>Weather models at the same occultations:</strong> RO minus the ECMWF and NCEP profiles CDAAC colocates with each occultation (refractivity, temperature), and the three-cornered hat, which estimates the refractivity error of each of the three from the spread of their differences, with bootstrap 95% intervals.</li>
         <li><strong>Radiosonde comparison:</strong> each profile against the nearest NOAA IGRA v2 radiosonde within a distance and time window, as mean and spread of the temperature, refractivity and humidity differences by height.</li>
       </ul>
@@ -886,6 +887,29 @@
       1D-Var moist retrieval made from it.</p>
     <div id="pp-plot" class="plot"></div>
     <p class="hint" id="pp-caption"></p>
+  </div>
+  <div class="card">
+    <div class="card-head">
+      <h2>Tropopause and cold point by latitude</h2>
+      <span class="pill" id="tp-count"></span>
+    </div>
+    <div class="row">
+      <label>Band (&deg;)<input type="number" id="tp-lat" value="10" min="1" max="90" step="1"></label>
+      <label>Min. profiles<input type="number" id="tp-min" value="3" min="1" step="1"></label>
+      <label class="check"><input type="checkbox" id="tp-selected-only">
+        Use only my selection</label>
+      <button class="primary" id="btn-tropopause">Compute</button>
+    </div>
+    <div class="scroll-x">
+      <table class="table" id="tp-table">
+        <thead><tr><th>Latitude</th><th>Profiles</th>
+          <th>WMO tropopause height (km)</th><th>WMO tropopause temperature (K)</th>
+          <th>Cold-point height (km)</th><th>Cold-point temperature (K)</th>
+          <th>CDAAC WMO height (km)</th><th>CDAAC WMO temperature (K)</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="hint" id="tp-caption"></p>
   </div>
   <div class="card">
     <div class="card-head">

@@ -821,6 +821,25 @@ def compare_models(req: ModelCompareRequest) -> dict:
     return _clean(out)
 
 
+class TropopauseRequest(BaseModel):
+    granule_ids: list[str] | None = None
+    search: SearchRequest | None = None
+    lat_step: float = Field(default=10.0, gt=0, le=90)
+    min_count: int = Field(default=3, ge=1)
+    max_profiles: int = Field(default=20000, ge=1)
+
+
+@app.post("/api/climatology/tropopause")
+def climatology_tropopause(req: TropopauseRequest) -> dict:
+    """WMO tropopause and cold point by latitude band, with 95 % intervals,
+    and CDAAC's own values for atmPrf."""
+    rows = _resolve_selection(req.granule_ids, req.search, req.max_profiles)
+    if not rows:
+        raise HTTPException(400, "No local profiles match that selection")
+    return _clean(climatology.tropopause_table(rows, lat_step=req.lat_step,
+                                               min_count=req.min_count))
+
+
 @app.post("/api/climatology/section")
 def climatology_section(req: SectionRequest) -> dict:
     """Zonal-mean latitude-height section (mean, spread, count, and the

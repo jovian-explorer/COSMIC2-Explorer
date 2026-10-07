@@ -193,3 +193,29 @@ def test_compare_products_endpoint_on_bundled_samples():
     assert res["n_pairs"] == 2
     m = [v for v in res["mean"] if v is not None]
     assert max(m) > 5 and abs(res["mean"][g.index(20.0)]) < 0.2
+
+
+def test_tropopause_table_by_hand(monkeypatch):
+    """Band statistics of the per-profile diagnostics, with CDAAC's own values."""
+    from cosmic2 import analysis
+    diag = {"a": (5.0, 16.0, 190.0), "b": (6.0, 17.0, 192.0), "c": (7.0, 16.5, 191.0),
+            "d": (45.0, 11.0, 215.0)}
+    monkeypatch.setattr(analysis, "diagnostics_row", lambda r: {
+        "lat": diag[r["file_name"]][0], "tropopause.height_km": diag[r["file_name"]][1],
+        "tropopause.temp_K": diag[r["file_name"]][2], "cold_point.height_km": None,
+        "cold_point.temp_K": None})
+    rows = [{"file_name": k, "product": "atmPrf", "good": True, "lat": v[0],
+             "extras": {"tropopause_height_wmo_km": v[1] - 0.1, "tropopause_temp_wmo_C": v[2] - 273.15}}
+            for k, v in diag.items()]
+    rows.append({"file_name": "x", "product": "ionPrf", "good": True, "lat": 1.0})
+    t = climatology.tropopause_table(rows, lat_step=10, min_count=2, workers=1)
+    assert t["n_profiles"] == 4 and t["products"] == ["atmPrf"]
+    b0 = t["bands"][0]
+    assert (b0["lat_lo"], b0["lat_hi"], b0["n_profiles"]) == (0.0, 10.0, 3)
+    assert b0["wmo_height_km"]["mean"] == pytest.approx(16.5)
+    # t(0.975, 2) = 4.303, s = 0.5, n = 3
+    assert b0["wmo_height_km"]["ci95_hi"] - 16.5 == pytest.approx(4.303 * 0.5 / np.sqrt(3), rel=1e-3)
+    assert b0["archive"]["wmo_height_km"]["mean"] == pytest.approx(16.4)
+    assert b0["archive"]["wmo_temp_K"]["mean"] == pytest.approx(191.0)
+    assert b0["cp_height_km"]["n"] == 0 and b0["cp_height_km"]["mean"] is None
+    assert t["bands"][1]["wmo_height_km"]["mean"] is None     # one profile < min_count

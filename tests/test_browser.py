@@ -59,6 +59,9 @@ def test_every_tab_and_main_action_without_script_errors(page):
     _press(page, "#btn-map")
     _press(page, "#btn-pairs")
     assert page.inner_text("#pp-count") == "2 pairs"
+    _press(page, "#btn-tropopause")
+    assert page.inner_text("#tp-count") == "2 profiles"
+    assert page.query_selector_all("#tp-table tbody tr")
     _press(page, "#btn-nwp")
     assert page.inner_text("#nwp-count") == "2 occultations"
     page.select_option("#nwp-kind", "differences:bending_angle")

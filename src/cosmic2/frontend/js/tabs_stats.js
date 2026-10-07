@@ -21,6 +21,8 @@ export function initStatsTab() {
   $('#btn-section').addEventListener('click', (e) =>
       withBusy(e.target, 'Averaging...', drawSection));
   initMapCard();
+  $('#btn-tropopause').addEventListener('click', (e) =>
+      withBusy(e.target, 'Computing...', drawTropopause));
   $('#btn-nwp').addEventListener('click', (e) =>
       withBusy(e.target, 'Comparing...', drawModels));
   $('#btn-pairs').addEventListener('click', (e) =>
@@ -384,6 +386,62 @@ async function drawPairs() {
     (res.relative ? 'Differences in percent of the wetPf2 value. ' : '') +
     `${PAIR_NOTES[res.quantity] || ''} Shading: ± 1 standard deviation and the 95% ` +
     'confidence interval of the mean (Student\'s t, occultations taken as independent).';
+}
+
+/** "mean [lo, hi]" of one band statistic. */
+function meanCI(st, digits) {
+  if (!st || st.mean === null || st.mean === undefined) return '-';
+  const m = fmt(st.mean, digits);
+  return st.ci95_lo === null || st.ci95_lo === undefined ? m
+    : `${m} [${fmt(st.ci95_lo, digits)}, ${fmt(st.ci95_hi, digits)}]`;
+}
+
+async function drawTropopause() {
+  const req = Object.assign({
+    lat_step: Number($('#tp-lat').value) || 10,
+    min_count: Number($('#tp-min').value) || 3,
+  }, statsSelection($('#tp-selected-only').checked));
+  if (req.search) {
+    req.search.good_only = true;
+    const prods = (req.search.products || []).filter((p) => p === 'atmPrf' || p === 'wetPf2');
+    req.search.products = prods.length ? prods : ['wetPf2'];
+    req.search.limit = req.max_profiles = 20000;
+  }
+  const res = await api.tropopause(req);
+  $('#tp-count').textContent = `${res.n_profiles} profiles`;
+  const tb = $('#tp-table').tBodies[0];
+  clear(tb);
+  if (!res.bands.length) {
+    tb.append(el('tr', {}, el('td', {colspan: 8, class: 'hint'},
+      'No good atmPrf or wetPf2 profiles in the selection.')));
+    $('#tp-caption').textContent = '';
+    return;
+  }
+  const lat = (v) => `${Math.abs(v)}°${v < 0 ? 'S' : v > 0 ? 'N' : ''}`;
+  for (const b of res.bands) {
+    const a = b.archive || {};
+    tb.append(el('tr', {},
+      el('td', {}, `${lat(b.lat_lo)} to ${lat(b.lat_hi)}`),
+      el('td', {class: 'num'}, String(b.n_profiles)),
+      el('td', {class: 'num'}, meanCI(b.wmo_height_km, 2)),
+      el('td', {class: 'num'}, meanCI(b.wmo_temp_K, 1)),
+      el('td', {class: 'num'}, meanCI(b.cp_height_km, 2)),
+      el('td', {class: 'num'}, meanCI(b.cp_temp_K, 1)),
+      el('td', {class: 'num'}, meanCI(a.wmo_height_km, 2)),
+      el('td', {class: 'num'}, meanCI(a.wmo_temp_K, 1))));
+  }
+  $('#tp-caption').textContent =
+    `${res.n_profiles} good ${res.products.join(' and ')} profiles. Mean and, in brackets, the ` +
+    '95% confidence interval of the mean (Student\'s t, profiles taken as independent); bands ' +
+    `with fewer than ${res.min_count} values are left blank. WMO tropopause: the lowest level above ` +
+    '500 hPa where the lapse rate falls to 2 K/km or less and its mean to every level within the ' +
+    'next 2 km stays at or below 2 K/km (on atmPrf dry temperature, only levels colder than 235 K ' +
+    'are considered). Cold point: the coldest level ' +
+    'between 10 and 30 km, a tropopause only in the tropics; in the winter extratropics it lies in ' +
+    'the stratosphere. CDAAC\'s own values come from the atmPrf files (trhwmo, trtwmo). For ' +
+    'comparison, Rieckh et al. (2014) find tropical tropopauses mainly at 16-17 km with mean ' +
+    'temperatures of 190 K in January and 195 K in July, and extratropical ones at 8-12 km and ' +
+    '215-220 K, from RO data of 2001-2013: https://doi.org/10.5194/amt-7-3947-2014';
 }
 
 /** Shaded band between two x series on a common height axis. */
