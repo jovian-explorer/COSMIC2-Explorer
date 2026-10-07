@@ -43,6 +43,7 @@ VERIFIED = {
     "10.1029/1999JD901005": "Tsuda",
     "10.5065/T353-C093": "UCAR",
     "10.3390/rs12244099": "Ho",
+    "10.1175/JTECH-D-20-0209.1": "Rieckh",
 }
 
 FRONTEND = Path(__file__).resolve().parents[1] / "src" / "cosmic2" / "frontend"

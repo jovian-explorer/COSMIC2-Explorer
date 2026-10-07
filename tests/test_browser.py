@@ -59,6 +59,11 @@ def test_every_tab_and_main_action_without_script_errors(page):
     _press(page, "#btn-map")
     _press(page, "#btn-pairs")
     assert page.inner_text("#pp-count") == "2 pairs"
+    _press(page, "#btn-nwp")
+    assert page.inner_text("#nwp-count") == "2 occultations"
+    page.select_option("#nwp-kind", "tch:refractivity")
+    _press(page, "#btn-nwp")
+    assert "at least 30 occultations" in page.inner_text("#nwp-plot")
     page.click("button[data-tab=export]")
     page.select_option("#e-kind", "grid_csv")
     _press(page, "#btn-export-data")

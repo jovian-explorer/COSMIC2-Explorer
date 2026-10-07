@@ -4,7 +4,7 @@
 import {api, state, selectedIds} from './api.js';
 import {$, el, clear, fmt, withBusy, layoutBase, PLOT_CONFIG, PALETTE,
         emptyPlot, fillSelect, cleanPlotlyMath} from './ui.js';
-import {FIELD_CHOICES, VERTICAL_CHOICES, PRODUCT_AXES, labelled} from './tabs_science.js';
+import {FIELD_CHOICES, VERTICAL_CHOICES, PRODUCT_AXES, labelled, hexToRgba} from './tabs_science.js';
 
 export function initStatsTab() {
   $('#btn-stats').addEventListener('click', (e) =>
@@ -21,6 +21,8 @@ export function initStatsTab() {
   $('#btn-section').addEventListener('click', (e) =>
       withBusy(e.target, 'Averaging...', drawSection));
   initMapCard();
+  $('#btn-nwp').addEventListener('click', (e) =>
+      withBusy(e.target, 'Comparing...', drawModels));
   $('#btn-pairs').addEventListener('click', (e) =>
       withBusy(e.target, 'Comparing...', drawPairs));
   $('#btn-radiosonde').addEventListener('click', (e) =>
@@ -382,6 +384,103 @@ async function drawPairs() {
     (res.relative ? 'Differences in percent of the wetPf2 value. ' : '') +
     `${PAIR_NOTES[res.quantity] || ''} Shading: ± 1 standard deviation and the 95% ` +
     'confidence interval of the mean (Student\'s t, occultations taken as independent).';
+}
+
+/** Shaded band between two x series on a common height axis. */
+function bandTraces(lo, hi, y, fill, name, legendgroup) {
+  return [
+    {type: 'scatter', mode: 'lines', x: lo, y, line: {width: 0}, hoverinfo: 'skip',
+     showlegend: false, legendgroup},
+    {type: 'scatter', mode: 'lines', x: hi, y, line: {width: 0}, fill: 'tonextx',
+     fillcolor: fill, hoverinfo: 'skip', name, legendgroup, showlegend: !!name},
+  ];
+}
+
+async function drawModels() {
+  const [kind, quantity] = $('#nwp-kind').value.split(':');
+  const req = Object.assign({
+    kind, quantity,
+    top_km: Number($('#nwp-top').value) || 30,
+    step_km: Number($('#nwp-step').value) || 0.5,
+  }, statsSelection($('#nwp-selected-only').checked));
+  if (req.search) {
+    req.search.good_only = true;
+    // the occultations come from the RO product the comparison uses
+    req.search.products = [quantity === 'temperature' ? 'wetPf2' : 'atmPrf'];
+    req.search.limit = req.max_profiles = 20000;
+  }
+  const res = await api.compareModels(req);
+  const f = res.products_found || {};
+  const missing = ['echPrf', 'avnPrf'].filter((p) => !f[p]);
+  const y = res.grid;
+  const zline = {type: 'line', x0: 0, x1: 0, yref: 'paper', y0: 0, y1: 1,
+                 line: {color: '#94a3b8', width: 1, dash: 'dot'}};
+  if (kind === 'tch') {
+    $('#nwp-count').textContent = `${res.n_triplets} triplets`;
+    if (res.n_triplets < 30) {
+      emptyPlot('nwp-plot', `The three-cornered hat needs at least 30 occultations with their atmPrf, ` +
+        `echPrf and avnPrf all on this computer (${res.n_triplets} here). ` +
+        (missing.length ? `Download ${missing.join(' and ')} for the same days on the Get data tab.` : ''));
+      $('#nwp-caption').textContent = '';
+      return;
+    }
+    const sq = (a) => a.map((v) => (v === null ? null : Math.sqrt(Math.max(v, 0))));
+    const traces = [];
+    res.datasets.forEach((name, i) => {
+      const colour = PALETTE[i];
+      traces.push(...bandTraces(sq(res.lo[i]), sq(res.hi[i]), y, hexToRgba(colour, 0.22), null, name));
+      traces.push({type: 'scatter', mode: 'lines', x: res.std_pct[i], y, name,
+                   legendgroup: name, line: {color: colour, width: 2},
+                   text: res.n.map((n) => `n=${n}`),
+                   hovertemplate: `${name}<br>%{y} km: %{x:.3g} % (%{text})<extra></extra>`});
+    });
+    Plotly.react('nwp-plot', traces, axesLayout('Refractivity error standard deviation [%]',
+      'Altitude above mean sea level [km]'), PLOT_CONFIG);
+    $('#nwp-caption').textContent =
+      `${res.n_triplets} occultations with RO (atmPrf), ECMWF (echPrf) and NCEP (avnPrf) ` +
+      'refractivity, in percent of the mean of the three. Each error variance is ' +
+      '(var(X - Y) + var(X - Z) - var(Y - Z)) / 2 (the three-cornered hat); the line is its square ' +
+      `root, the shading the 95% interval from ${res.n_boot} bootstrap resamples of the ` +
+      'occultations. It assumes independent errors: both models assimilate COSMIC-2, which ' +
+      'makes the RO estimate too small, and share most other observations, which makes it ' +
+      'too large; the estimates also include representativeness differences. A negative ' +
+      'variance (no line) means the assumptions fail at that height. Method: Rieckh et al. ' +
+      '(2021), J. Atmos. Oceanic Technol., https://doi.org/10.1175/JTECH-D-20-0209.1';
+    return;
+  }
+  $('#nwp-count').textContent = `${res.n_profiles} occultations`;
+  if (!res.n_profiles) {
+    emptyPlot('nwp-plot', 'No occultation of the selection has its model profiles on this ' +
+      `computer. Download ${missing.length ? missing.join(' and ') : 'echPrf and avnPrf'} ` +
+      'for the same days on the Get data tab.');
+    $('#nwp-caption').textContent = '';
+    return;
+  }
+  const traces = [];
+  Object.entries(res.models).forEach(([code, st], i) => {
+    if (!st.n_profiles) return;
+    const colour = PALETTE[i];
+    const name = `RO - ${st.name}`;
+    const lo = st.mean.map((m, k) => (m === null || st.std[k] === null ? null : m - st.std[k]));
+    const hi = st.mean.map((m, k) => (m === null || st.std[k] === null ? null : m + st.std[k]));
+    traces.push(...bandTraces(lo, hi, y, hexToRgba(colour, 0.12), null, name));
+    traces.push(...bandTraces(st.ci95_lo, st.ci95_hi, y, hexToRgba(colour, 0.40), null, name));
+    traces.push({type: 'scatter', mode: 'lines', x: st.mean, y, name: `${name} (n=${st.n_profiles})`,
+                 legendgroup: name, line: {color: colour, width: 2},
+                 text: st.n.map((n) => `n=${n}`),
+                 hovertemplate: `${name}<br>%{y} km: %{x:.3g} (%{text})<extra></extra>`});
+  });
+  Plotly.react('nwp-plot', traces, axesLayout(`${res.label} [${res.units}]`,
+    'Altitude above mean sea level [km]', {shapes: [zline]}), PLOT_CONFIG);
+  $('#nwp-caption').textContent =
+    `${res.n_profiles} occultations of ${res.selected} selected profiles have model profiles. ` +
+    (res.relative ? 'Differences in percent of the model value. ' : '') +
+    'Line: mean; light shading ± 1 standard deviation; dark shading the 95% confidence ' +
+    'interval of the mean (Student\'s t, occultations taken as independent). The model ' +
+    'profiles come on their own levels, which for NCEP are about 2 km apart around the ' +
+    'tropical tropopause, so part of the difference between levels is interpolation.' +
+    (res.quantity === 'temperature' ? ' wetPf2 temperature comes from a 1D-Var retrieval ' +
+      'whose background is a model forecast, so in the troposphere it is not independent of the models.' : '');
 }
 
 async function drawRadiosonde() {

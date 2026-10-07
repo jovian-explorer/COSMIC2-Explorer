@@ -558,7 +558,7 @@ async function drawComposite() {
     `${$('#c-groupby').value.replace(/_/g, ' ')}`;
 }
 
-function hexToRgba(hex, alpha) {
+export function hexToRgba(hex, alpha) {
   const n = parseInt(hex.slice(1), 16);
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
 }

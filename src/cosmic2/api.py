@@ -778,6 +778,49 @@ def compare_products(req: ProductPairRequest) -> dict:
     return _clean(out)
 
 
+class ModelCompareRequest(BaseModel):
+    granule_ids: list[str] | None = None
+    search: SearchRequest | None = None
+    kind: Literal["differences", "tch"] = "differences"
+    quantity: Literal["refractivity", "temperature"] = "refractivity"
+    bottom_km: float = Field(default=0.0, ge=0)
+    top_km: float = Field(default=30.0, gt=0, le=60)
+    step_km: float = Field(default=0.5, ge=0.1, le=5)
+    # levels with fewer profiles are blank (default 3, or 30 triplets for the
+    # three-cornered hat)
+    min_count: int | None = Field(default=None, ge=1)
+    n_boot: int = Field(default=200, ge=20, le=2000)
+    good_only: bool = True
+    max_profiles: int = Field(default=20000, ge=1)
+
+
+@app.post("/api/compare/models")
+def compare_models(req: ModelCompareRequest) -> dict:
+    """Radio occultation against the ECMWF (echPrf) and NCEP (avnPrf)
+    profiles CDAAC colocates with each occultation of the selection: RO minus
+    model by height, or the three-cornered-hat error estimates of all three."""
+    from . import nwp
+    rows = _resolve_selection(req.granule_ids, req.search, req.max_profiles)
+    if not rows:
+        raise HTTPException(400, "No local profiles match that selection")
+    if req.top_km <= req.bottom_km:
+        raise HTTPException(422, "top_km must be above bottom_km")
+    index = store.query_granules(products=["atmPrf", "wetPf2", "echPrf", "avnPrf"],
+                                 limit=10 ** 7)["granules"]
+    groups = nwp.stamp_groups(rows, index, good_only=req.good_only)
+    if req.kind == "tch":
+        out = nwp.three_cornered_hat(groups, top_km=req.top_km, step_km=req.step_km,
+                                     bottom_km=req.bottom_km, min_count=req.min_count or 30,
+                                     n_boot=req.n_boot)
+    else:
+        out = nwp.model_differences(groups, req.quantity, top_km=req.top_km,
+                                    step_km=req.step_km, bottom_km=req.bottom_km,
+                                    min_count=req.min_count or 3)
+    have = {p: sum(1 for g in groups if p in g) for p in ("atmPrf", "wetPf2", "echPrf", "avnPrf")}
+    out.update(kind=req.kind, selected=len(rows), occultations=len(groups), products_found=have)
+    return _clean(out)
+
+
 @app.post("/api/climatology/section")
 def climatology_section(req: SectionRequest) -> dict:
     """Zonal-mean latitude-height section (mean, spread, count, and the

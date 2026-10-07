@@ -85,6 +85,7 @@ export const api = {
   coastlines:    ()          => call('/api/coastlines'),
   radiosonde:    (req)       => call('/api/validation/radiosonde', {method: 'POST', body: req}),
   productPairs:  (req)       => call('/api/compare/products', {method: 'POST', body: req}),
+  compareModels: (req)       => call('/api/compare/models', {method: 'POST', body: req}),
 
   exportData:    (req)       => call('/api/export/data', {method: 'POST', body: req}),
   exportFigure:  (req)       => call('/api/export/figure', {method: 'POST', body: req}),
