@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Updates and releases
+
+- **Release archives for the automatic update.** `scripts/build_exe.py --archive` now packs one `COSMIC2-Explorer/` folder holding the app and `INSTALL_FOLDER.json` (the archive used to hold the bare executable), and `--tag v<version>[-build.<n>]` stamps the build with its release tag (checked against the version in `pyproject.toml`) in `src/cosmic2/_build.py`, which is removed after the build. The release workflow builds every pushed tag for Windows (x64), macOS (arm64) and Linux (x64), checks that each platform has exactly one archive named `COSMIC2-Explorer-<version>-<os>-<arch>.zip` (`.tar.gz` on Linux), adds `SHA256SUMS.txt`, and writes the release notes from the commits since the previous tag. A manual run builds unstamped archives and publishes nothing.
+
 ### Documentation and references
 
 - **References and DOIs corrected** in the Variables catalogue, the product descriptions and the tutorial. 23 variables cited `10.1029/97RG02808`, which does not exist; others linked to unrelated papers (the ivmL2m ion density to a Mars 2020 overview, electron density to an Arctic Ocean study, S4/sigma-phi to an HF propagation correction). Every DOI the app shows has now been resolved at doi.org and its first author checked (Kursinski et al. 1997 is `10.1029/97JD01569`; COSMIC-2 products cite Schreiner et al. 2020, GRL; the IVM cites Heelis et al. 2017; and so on). Where no DOI exists (WGS-84, US Standard Atmosphere, textbooks without one) the reference text stays and the DOI is left empty. `tests/test_references.py` keeps the list honest and re-resolves it with `COSMIC2_NETWORK_TESTS=1`.

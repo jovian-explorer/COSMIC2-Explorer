@@ -10,3 +10,4 @@ venv/
 *.log
 .DS_Store
 Thumbs.db
+src/cosmic2/_build.py

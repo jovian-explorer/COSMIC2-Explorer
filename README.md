@@ -38,9 +38,11 @@ Grab the archive for your OS from the [Releases page](https://github.com/jovian-
 
 | OS | File | Run |
 |---|---|---|
-| Windows | `COSMIC2-Explorer-<version>-windows-x64.zip` | unzip, double-click `COSMIC2-Explorer.exe` |
-| macOS | `COSMIC2-Explorer-<version>-macos-<arch>.zip` | unzip, right-click `COSMIC2-Explorer.app` and choose **Open** the first time (the app is not notarised) |
-| Linux | `COSMIC2-Explorer-<version>-linux-x64.tar.gz` | `tar xzf ...` then `./COSMIC2-Explorer` |
+| Windows | `COSMIC2-Explorer-<version>-windows-x64.zip` | unzip, double-click `COSMIC2-Explorer\COSMIC2-Explorer.exe` |
+| macOS | `COSMIC2-Explorer-<version>-macos-arm64.zip` | unzip, right-click `COSMIC2-Explorer/COSMIC2-Explorer.app` and choose **Open** the first time (the app is not notarised) |
+| Linux | `COSMIC2-Explorer-<version>-linux-x64.tar.gz` | `tar xzf ...` then `./COSMIC2-Explorer/COSMIC2-Explorer` |
+
+Each archive unpacks to one `COSMIC2-Explorer` folder. Keep the app in that folder: the weekly automatic update replaces the folder with the new build (and only a folder that holds its `INSTALL_FOLDER.json`), so keep nothing else in it. Your downloads, exports and settings live in a separate data folder and are never touched by an update.
 
 ### Option 2: install with pip (any OS, Python 3.10+)
 

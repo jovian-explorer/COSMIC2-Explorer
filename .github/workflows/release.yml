@@ -1,5 +1,21 @@
 name: Release
 
+# A pushed tag v<version> or v<version>-build.<n> (<version> as in pyproject.toml)
+# is built for Windows, macOS and Linux and published as a GitHub release with one
+# archive per platform:
+#
+#   COSMIC2-Explorer-<version>-windows-x64.zip
+#   COSMIC2-Explorer-<version>-macos-arm64.zip
+#   COSMIC2-Explorer-<version>-linux-x64.tar.gz
+#   SHA256SUMS.txt
+#
+# Each build is stamped with its tag (scripts/build_exe.py --tag), which is how the
+# app's weekly automatic update (src/cosmic2/autoupdate.py) orders releases and
+# picks the archive for its platform by the "-<os>-<arch>." part of the name; it
+# checks the download against the SHA-256 digest GitHub lists for the asset, or
+# against SHA256SUMS.txt.  A manual run (workflow_dispatch) builds unstamped
+# archives as workflow artifacts and publishes nothing.
+
 on:
   push:
     tags: ["v*"]
@@ -14,7 +30,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 40
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
@@ -27,7 +43,13 @@ jobs:
       - name: Install
         run: python -m pip install ".[build]"
       - name: Build
-        run: python scripts/build_exe.py --archive
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            python scripts/build_exe.py --archive --tag "${GITHUB_REF_NAME}"
+          else
+            python scripts/build_exe.py --archive
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: COSMIC2-Explorer-${{ matrix.os }}
@@ -41,13 +63,54 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # history and tags, for the list of changes
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
           merge-multiple: true
+      - name: Check the archives
+        shell: bash
+        run: |
+          # one archive per platform, named so the updater can pick it
+          cd artifacts
+          ls -l
+          for p in windows-x64.zip macos-arm64.zip linux-x64.tar.gz; do
+            n=$(ls -1 | grep -c -- "-${p}\$" || true)
+            if [[ "$n" != 1 ]]; then echo "::error::expected one *-${p}, found ${n}"; exit 1; fi
+          done
+          sha256sum *.zip *.tar.gz > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+      - name: Write the release notes
+        shell: bash
+        run: |
+          # The changes since the previous tag, one line per commit; the app shows
+          # these as "What's new" after it has updated itself.
+          prev=$(git describe --tags --abbrev=0 --match 'v[0-9]*' "${GITHUB_REF_NAME}^" 2>/dev/null || true)
+          {
+            echo "Unzip the archive for your computer and run COSMIC2-Explorer from the COSMIC2-Explorer folder (see [Install](https://github.com/${GITHUB_REPOSITORY}#install)). Your data, downloads and settings are kept in a separate folder; an installed copy updates itself once a week (Settings > Updates)."
+            echo
+            if [[ -n "$prev" ]]; then
+              echo "### Changes since ${prev}"
+              echo
+              git log --no-merges --format='- %s' "${prev}..${GITHUB_REF_NAME}"
+            else
+              echo "### Latest changes"
+              echo
+              git log --no-merges --format='- %s' -n 20 "${GITHUB_REF_NAME}"
+            fi
+            echo
+            echo "All changes, grouped by topic: [CHANGELOG.md](https://github.com/${GITHUB_REPOSITORY}/blob/main/CHANGELOG.md)."
+          } > release-notes.md
+          cat release-notes.md
       - uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/*
-          generate_release_notes: true
-          # Until the public 1.0.0 release, every build is a pre-release (version 0.0.1)
+          files: |
+            artifacts/*.zip
+            artifacts/*.tar.gz
+            artifacts/SHA256SUMS.txt
+          body_path: release-notes.md
+          # Until the public 1.0.0 release, every build is a pre-release (version 0.x);
+          # the updater reads the release list, so it sees pre-releases too.
           prerelease: ${{ startsWith(github.ref_name, 'v0.') }}
