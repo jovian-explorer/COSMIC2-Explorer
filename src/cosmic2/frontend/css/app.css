@@ -134,7 +134,8 @@ a:hover { color: var(--focal-hover); }
 
 /* ---------- top bar ---------- */
 .topbar {
-  display: flex; align-items: center; gap: 18px;
+  /* wraps: at 1366 px the single row was 1455 px wide (horizontal scroll) */
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px;
   padding: 10px 22px;
   background: var(--surface);
   backdrop-filter: blur(18px);
@@ -156,7 +157,7 @@ a:hover { color: var(--focal-hover); }
   box-shadow: 0 0 18px rgba(56, 189, 248, 0.6);
 }
 .sub { margin: 0; font-size: calc(11.5px * var(--font-scale, 1.0)); color: var(--ink-soft); }
-.topright { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.topright { margin-left: auto; display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px 10px; }
 
 /* Modern Pill Container Tab Bar */
 .tabs {
@@ -166,6 +167,9 @@ a:hover { color: var(--focal-hover); }
   border: 1px solid var(--line);
   padding: 4px;
   border-radius: 12px;
+  /* never squeezed into a column: the bar moves to its own row instead, and
+     wraps inside only when it is wider than the window */
+  flex-shrink: 0; flex-wrap: wrap; max-width: 100%;
 }
 :root[data-theme="dark"] .tabs {
   background: rgba(15, 23, 42, 0.65);
@@ -241,12 +245,11 @@ main { padding: 20px 22px 60px; max-width: 1600px; margin: 0 auto; }
 .stack > .card:last-child { margin-bottom: 0; }
 .row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 12px; }
 .row.tight { gap: 8px; }
-.filters { position: sticky; top: 72px; }
+.filters { position: sticky; top: calc(var(--topbar-h, 62px) + 10px); }
 
 @media (max-width: 1100px) {
   .grid-2, .grid-side { grid-template-columns: 1fr; }
   .filters { position: static; }
-  .tabs { flex-wrap: wrap; }
 }
 
 /* ---------- controls ---------- */

@@ -52,6 +52,7 @@
 
 ### Interface
 
+- **Header fits the window.** The header was one row 1455 px wide, so at 1366 px (and anything below about 1460 px wide) the whole app scrolled sideways, and below 1100 px the tab bar was squeezed into a column. The buttons on the right now move to a second row when needed, the tab bar stays on one line, and the Explore filters stick below the header's real height. Checked at 1024, 1280, 1366, 1440, 1600 and 1920 px and at the largest text scale.
 - Loading the bundled examples now refreshes the Explore filters. On a new installation the product list kept offering only wetPf2 (and the date range stayed empty) until the app was reopened, so the ionPrf, scnLv2, ivmL2m and atmPrf examples could not be searched.
 - Links use the theme's colours. No colour was set, so on the dark theme every link (About, data portals, help, release notes) was the browser's dark blue on a near-black background.
 - **Compare tab with an ivmL2m selection**: the average came back as a bare empty plot. It now says why: the ion velocity meter samples the ions in situ along the orbit at one height (575 km median in the bundled file, 573-581 km in the 2026 files), so a file is a day of samples, not a height profile. The composite response lists the products of the selection (`products`).

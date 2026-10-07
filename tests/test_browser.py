@@ -108,3 +108,16 @@ def test_settings_changed_panel_once(page):
     page.wait_for_timeout(800)
     assert not page.is_visible("#settings-changes")
     assert not page.errors, page.errors
+
+
+@pytest.mark.parametrize("width", [1024, 1280, 1366, 1920])
+def test_no_horizontal_scroll(page, width):
+    """The header used to be one row 1455 px wide (scrolling sideways at 1366 px)
+    and squeezed the tab bar into a column below 1100 px."""
+    page.set_viewport_size({"width": width, "height": 900})
+    page.goto(BASE + "/")
+    page.wait_for_selector("#version-tag:not(:empty)")
+    sw, vw = page.evaluate("[document.documentElement.scrollWidth, document.documentElement.clientWidth]")
+    assert sw <= vw
+    assert page.evaluate("document.querySelector('.tabs').getBoundingClientRect().height") < 60
+    page.set_viewport_size({"width": 1400, "height": 900})

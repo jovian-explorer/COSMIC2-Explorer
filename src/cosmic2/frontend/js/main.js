@@ -72,6 +72,13 @@ function showTab(name) {
 
 function wireChrome() {
   wireFontScaling();
+  // The header wraps onto two rows on narrower windows; sticky panels below it
+  // (the Explore filters) are placed under its real height.
+  const topbar = $('.topbar');
+  if (topbar && window.ResizeObserver) {
+    new ResizeObserver(() => document.documentElement.style.setProperty(
+      '--topbar-h', `${topbar.offsetHeight}px`)).observe(topbar);
+  }
   $$('.tab').forEach((t) =>
       t.addEventListener('click', () => showTab(t.dataset.tab)));
   document.addEventListener('goto-profile', () => showTab('profile'));
