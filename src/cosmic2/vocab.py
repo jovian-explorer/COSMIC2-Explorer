@@ -603,6 +603,8 @@ DEFAULT_FIELD = {
     "ionPrf": "ELEC_dens",
     "scnLv2": "s4_L1",
     "ivmL2m": "ion_dens",
+    "echPrf": "Ref",
+    "avnPrf": "Ref",
 }
 DEFAULT_VERTICAL = {
     "atmPrf": "MSL_alt",
@@ -610,6 +612,8 @@ DEFAULT_VERTICAL = {
     "ionPrf": "MSL_alt",
     "scnLv2": "occheight",
     "ivmL2m": "alt",
+    "echPrf": "MSL_alt",
+    "avnPrf": "MSL_alt",
 }
 
 

@@ -101,7 +101,7 @@ def test_profile_series_parallel_matches_serial(force_parallel):
     par = parallel.pmap(profile_series, tasks, workers=force_parallel)
     assert [("skip" in s) for s in serial] == [("skip" in p) for p in par]
     drawn = [(s, p) for s, p in zip(serial, par) if "skip" not in s]
-    assert len(drawn) == 4                       # 2 atmPrf + 2 wetPf2 samples
+    assert len(drawn) == 8      # 2 atmPrf, 2 wetPf2, 2 echPrf, 2 avnPrf samples carry Temp
     for s, p in drawn:
         assert s["units"] == p["units"] == "K"
         np.testing.assert_array_equal(s["series"]["x"], p["series"]["x"])

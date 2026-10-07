@@ -32,6 +32,8 @@ export const PRODUCT_AXES = {
   ionPrf: [['ELEC_dens', 'TEC_cal'], ['MSL_alt']],
   scnLv2: [['s4_L1', 'sigma_phi_L1'], ['occheight']],
   ivmL2m: [['ion_dens', 'ion_temp', 'iv_zon', 'iv_mer'], ['alt']],
+  echPrf: [['Ref', 'Temp', 'Pres', 'Vp', 'Bend_ang'], ['MSL_alt']],
+  avnPrf: [['Ref', 'Temp', 'Pres', 'Vp'], ['MSL_alt']],
 };
 
 /** When every selected profile is one product that cannot draw the chosen

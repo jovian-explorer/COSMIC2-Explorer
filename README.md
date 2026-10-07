@@ -150,7 +150,7 @@ COSMIC2-Explorer/
 │   ├── vocab.py              Variable labels, units, physical definitions
 │   ├── config.py             Paths, settings, citation
 │   ├── frontend/             Static HTML/CSS/JS (no build step), bundled Plotly, TopoJSON, KaTeX
-│   └── sampledata/           8 real CDAAC granules (5 products) for offline use
+│   └── sampledata/           12 real CDAAC granules (7 products) for offline use
 ├── tests/                    Pytest suite: science, API, exports, frontend, compliance, EXE launch
 ├── packaging/                PyInstaller spec (Windows, macOS, Linux) and launcher
 ├── scripts/build_exe.py      Cross-platform build script
@@ -180,6 +180,8 @@ Supported products:
 | `ionPrf` | Ionospheric electron density profile, up to the satellite's orbit (about 550-580 km) |
 | `scnLv2` | Signal scintillation indices (S4, sigma-phi) |
 | `ivmL2m` | In-situ plasma density, temperature and drift at spacecraft altitude |
+| `echPrf` | ECMWF model temperature, pressure, water vapour, refractivity and simulated bending angle along the path of each occultation (same file stamp as its atmPrf) |
+| `avnPrf` | NCEP model temperature, pressure, water vapour and refractivity along the path of each occultation (same file stamp as its atmPrf) |
 
 Streams: `nrt` (near-real-time, about 30-120 minutes after observation), `rapid` (reprocessed within days; scnLv2 and ivmL2m), `postProc` (final, weeks to months later), `provisional` (space weather; ionPrf).
 

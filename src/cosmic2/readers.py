@@ -569,8 +569,45 @@ def _read_ivml2m(path: str) -> Granule:
     return g
 
 
+def _read_model(path: str, product: str) -> Granule:
+    """echPrf / avnPrf: weather-model fields (ECMWF / NCEP) that CDAAC
+    interpolates along the path of one occultation, named like the atmPrf of
+    that occultation (same file stamp).  The levels carry their own Lat/Lon
+    (the tangent point drifts with height); the time and the reference
+    position are the occultation's."""
+    attrs, desc, raw = _read_raw(path)
+    data = {k: _mask_fill(v[0]) for k, v in raw.items()}
+    units = {k: v[1] for k, v in raw.items()}
+    meta = _base_meta(path, product)
+    iso, epoch = _iso(attrs.get("year"), attrs.get("month"), attrs.get("day"),
+                      attrs.get("hour"), attrs.get("minute"), attrs.get("second"))
+    meta.update(time_utc=iso, epoch=epoch, lat=attrs.get("lat"), lon=attrs.get("lon"),
+                local_time=_local_time(attrs.get("lon"), epoch),
+                ref_sat=attrs.get("reference_sat_id"),
+                mission=_to_str(attrs.get("center", "")))
+    meta["extras"] = {
+        "model_file_1": _to_str(attrs.get("Model_File_1", "")),
+        "model_file_2": _to_str(attrs.get("Model_File_2", "")),
+        "history": _to_str(attrs.get("history", "")),
+    }
+    g = Granule(product, path, meta, attrs, desc, data, units,
+                vertical="MSL_alt", independent="MSL_alt")
+    _finish_altitude(meta, data, "MSL_alt")
+    return g
+
+
+def _read_echprf(path: str) -> Granule:
+    return _read_model(path, "echPrf")
+
+
+def _read_avnprf(path: str) -> Granule:
+    return _read_model(path, "avnPrf")
+
+
 READERS = {
     "atmPrf": _read_atmprf,
+    "echPrf": _read_echprf,
+    "avnPrf": _read_avnprf,
     "wetPf2": _read_wetpf2,
     "ionPrf": _read_ionprf,
     "scnLv2": _read_scnlv2,

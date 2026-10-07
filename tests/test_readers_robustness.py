@@ -115,3 +115,27 @@ def test_longitude_is_normalised_to_plus_minus_180(tmp_path):
         "MSL_alt": (np.array([1.0, 2.0]), {"units": "km"}),
     })
     assert readers.load(p).meta["lon"] == pytest.approx(-10.0)
+
+
+def test_model_profiles_pair_with_their_atmprf():
+    """echPrf (ECMWF) and avnPrf (NCEP) carry the occultation's own time and
+    position and the same file stamp as its atmPrf."""
+    import numpy as np
+    from cosmic2 import readers
+    from cosmic2.config import sampledata_dir
+    for stamp in ("E23", "E34"):
+        atm = readers.load(str(next(sampledata_dir().glob(f"atmPrf_*{stamp}_*"))))
+        for prod in ("echPrf", "avnPrf"):
+            g = readers.load(str(next(sampledata_dir().glob(f"{prod}_*{stamp}_*"))))
+            assert g.product == prod and not g.warnings
+            assert g.meta["stamp"] == atm.meta["stamp"]
+            assert g.meta["time_utc"][:19] == atm.meta["time_utc"][:19]
+            assert abs(g.meta["lat"] - atm.meta["lat"]) < 1e-6
+            assert g.vertical == "MSL_alt" and g.meta["n_levels"] > 40
+            ref = g.data["Ref"][np.isfinite(g.data["Ref"])]
+            assert 200 < ref.max() < 450 and ref.min() > 0            # N-units
+            # Smith-Weintraub holds in the model's own fields
+            T = g.data["Temp"] + 273.15
+            n = 77.6 * g.data["Pres"] / T + 3.73e5 * g.data["Vp"] / T ** 2
+            ok = np.isfinite(n) & np.isfinite(g.data["Ref"]) & (g.data["MSL_alt"] < 30)
+            assert np.median(np.abs(n[ok] / g.data["Ref"][ok] - 1)) < 0.01

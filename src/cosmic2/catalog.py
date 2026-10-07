@@ -160,24 +160,32 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         processing_chain="In-situ Ion Velocity Meter (IVM) planar ion trap measurements at ~550 km orbit: retarding potential analysis yields ion density and temperature, drift meter yields 3-component plasma velocity vectors."
     ),
     Product(
-        "avnPrf", "Profile interpolated to NWP grid", "neutral", "",
-        "Retrieved profile co-located with an operational analysis, for comparison.",
-        "The same profile, lined up against a weather-model forecast.",
-        "medium",
+        "avnPrf", "NCEP model profile at the occultation", "neutral", "avnPrf",
+        "NCEP global model temperature, pressure, water vapour pressure and "
+        "refractivity, converted from GRIB and interpolated along the path of one "
+        "occultation (the files' history attribute); about 50 levels. Named like "
+        "the atmPrf of that occultation, so the two pair exactly.",
+        "What the US weather model said the atmosphere was at the same place and time.",
+        "small",
+        ("Temp", "Pres", "Vp", "Ref", "MSL_alt"),
         reference="Schreiner, W. S., et al. (2020), COSMIC-2 radio occultation constellation: first results, Geophys. Res. Lett., 47, e2019GL086841",
         doi="10.1029/2019GL086841",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/avnPrf/",
-        processing_chain="CDAAC retrieval profile matched and interpolated onto operational NCEP GFS model vertical analysis levels."
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/",
+        processing_chain="NCEP model GRIB fields -> wgrib2 -> interpolated to the occultation's tangent-point path and time by CDAAC (makeAncPrfRT)."
     ),
     Product(
-        "echPrf", "ECMWF co-located profile", "neutral", "",
-        "ECMWF analysis interpolated to the occultation location.",
-        "What a weather model thought the atmosphere looked like at the same spot.",
-        "medium",
-        reference="CDAAC: ECMWF analysis interpolated to the occultation location",
+        "echPrf", "ECMWF model profile at the occultation", "neutral", "echPrf",
+        "ECMWF temperature, pressure, water vapour pressure, refractivity and "
+        "simulated bending angle colocated with one occultation along its path "
+        "(about 135 levels); the files name the ECMWF fields used. Named like the "
+        "atmPrf of that occultation, so the two pair exactly.",
+        "What the European weather model said the atmosphere was at the same place and time.",
+        "small",
+        ("Temp", "Pres", "Vp", "Ref", "Bend_ang", "MSL_alt"),
+        reference="UCAR CDAAC file formats: echPrf, profiles from ECMWF gridded fields colocated with occultations",
         doi="",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/postProc/level2/echPrf/",
-        processing_chain="ECMWF analysis interpolated to the occultation location and time."
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/",
+        processing_chain="ECMWF gridded fields (Model_File_1/2 attributes) interpolated by CDAAC to the occultation's tangent-point path and time."
     ),
     Product(
         "bfrPrf", "BUFR bulletin", "neutral", "",
