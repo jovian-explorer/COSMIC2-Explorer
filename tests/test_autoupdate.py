@@ -265,8 +265,15 @@ def test_start_up_hands_over_then_the_new_build_finishes(fake, monkeypatch):
     api.release("v0.0.1-build.2", _zip_bytes(au.launcher(root).name))
     au.check_and_stage(force=True)
     started = []
-    monkeypatch.setattr(au.subprocess, "Popen", lambda cmd, **kw: started.append(cmd))
+    monkeypatch.setattr(au.subprocess, "Popen", lambda cmd, **kw: started.append((cmd, kw)))
+    monkeypatch.setenv("_PYI_APPLICATION_HOME_DIR", r"C:\Temp\_MEI123")
+    monkeypatch.setenv("_PYI_PARENT_PROCESS_LEVEL", "1")
     assert au.install_staged_on_start(["--port", "8123", "it's"]) is True
+    env = started[0][1]["env"]
+    # the new one-file build must not take itself for a child of the old one
+    assert env["PYINSTALLER_RESET_ENVIRONMENT"] == "1"
+    assert not [k for k in env if k.startswith("_PYI_")]
+    assert env.get("COSMIC2_EXPLORER_HOME") == au.os.environ.get("COSMIC2_EXPLORER_HOME")
     script = au.UPDATES_DIR / ("install_update.ps1" if au.sys.platform == "win32" else "install_update.sh")
     text = script.read_text(encoding="utf-8-sig")
     assert str(au.staged_dir(root)) in text and str(au.previous_dir(root)) in text

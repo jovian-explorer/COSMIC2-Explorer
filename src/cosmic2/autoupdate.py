@@ -601,6 +601,18 @@ start_app
     return script, ["/bin/sh", str(script)]
 
 
+def independent_env() -> Dict[str, str]:
+    """The environment for the swap script and the build it starts.  A one-file
+    build passes its unpack folder to its own Python process in _PYI_* variables;
+    inherited by the new build, they made its launcher take itself for a child of
+    the old build (whose unpack folder is gone) and exit before starting, so the
+    new build never opened.  PYINSTALLER_RESET_ENVIRONMENT=1 (PyInstaller 6.9+)
+    makes it start as an independent program."""
+    env = {k: v for k, v in os.environ.items() if not (k.startswith("_PYI_") or k == "_MEIPASS2")}
+    env["PYINSTALLER_RESET_ENVIRONMENT"] = "1"
+    return env
+
+
 def install_staged_on_start(args: List[str]) -> bool:
     """At start-up of a published build, before anything else: when a newer build is
     staged and complete, start the swap script and return True (the caller exits at
@@ -618,7 +630,7 @@ def install_staged_on_start(args: List[str]) -> bool:
         return False
     _, cmd = helper_script(root, path, previous_dir(root), list(args))
     kw: Dict[str, Any] = {"stdin": subprocess.DEVNULL, "stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL,
-                          "close_fds": True, "cwd": str(UPDATES_DIR)}
+                          "close_fds": True, "cwd": str(UPDATES_DIR), "env": independent_env()}
     if sys.platform == "win32":
         # a new process group without a window (DETACHED_PROCESS would leave PowerShell
         # without the console it needs), out of the app's job object if allowed
