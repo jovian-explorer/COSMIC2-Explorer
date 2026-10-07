@@ -377,3 +377,112 @@ def diagnostic_map(rows: Sequence[dict], column: str = EP_COLUMN,
                           "median": float(np.median(vals[:, 2]))}
     out.update(mean=mean, count=count, zonal=zonal)
     return out
+
+
+# ---------------------------------------------------------------------------
+# atmPrf and wetPf2 of the same occultations
+# ---------------------------------------------------------------------------
+
+# What can be compared between an atmPrf and the wetPf2 retrieved from it:
+# (variable in atmPrf or None, variable in wetPf2, relative?, label, units).
+PAIR_QUANTITIES = {
+    "refractivity": ("Ref", "ref", True,
+                     "Refractivity, atmPrf (observed) minus wetPf2 (1D-Var analysis)", "%"),
+    "dry_temperature": ("Temp", "temp_dry", False,
+                        "Dry temperature, atmPrf minus wetPf2", "K"),
+    "dry_pressure": ("Pres", "pres_dry", True,
+                     "Dry pressure, atmPrf minus wetPf2", "%"),
+    "moisture_effect": (None, "Temp", False,
+                        "Temperature minus dry temperature (wetPf2)", "K"),
+}
+
+
+def pair_rows(selected: Sequence[dict], atm_rows: Sequence[dict],
+              wet_rows: Sequence[dict], good_only: bool = True) -> list[tuple[dict, dict]]:
+    """``(atmPrf row, wetPf2 row)`` for the occultations in ``selected``.
+
+    Each wetPf2 file names the atmPrf it was retrieved from (``source_atmPrf``),
+    so the pairing is exact, not a colocation.  A selected wetPf2 brings its
+    atmPrf and a selected atmPrf its wetPf2, when the other file is in the
+    index; each pair counts once."""
+    atm_by_name = {r.get("file_name"): r for r in atm_rows}
+    wet_by_src = {}
+    for w in wet_rows:
+        src = (w.get("extras") or {}).get("source_atmPrf")
+        if src:
+            wet_by_src[src] = w
+    pairs, seen = [], set()
+    for r in selected:
+        if r.get("product") == "wetPf2":
+            a, w = atm_by_name.get((r.get("extras") or {}).get("source_atmPrf")), r
+        elif r.get("product") == "atmPrf":
+            a, w = r, wet_by_src.get(r.get("file_name"))
+        else:
+            continue
+        if a is None or w is None or a.get("file_name") in seen:
+            continue
+        if good_only and not (a.get("good", True) and w.get("good", True)):
+            continue
+        seen.add(a.get("file_name"))
+        pairs.append((a, w))
+    return pairs
+
+
+def _pair_column(task: tuple):
+    """The difference of one pair on the grid, or None.  Module-level so it
+    runs on the worker processes."""
+    from . import readers
+    from .analysis import interp_field
+    a_row, w_row, quantity, grid = task
+    va, vw, relative, _, _ = PAIR_QUANTITIES[quantity]
+    try:
+        gw = readers.load(w_row["path"], "wetPf2")
+        wcol = interp_field(gw.data["MSL_alt"], gw.data[vw], grid, vw, max_gap=2.0)
+        if va is None:          # within the wetPf2: moist minus dry temperature
+            other = interp_field(gw.data["MSL_alt"], gw.data["temp_dry"], grid, "temp_dry", max_gap=2.0)
+            return w_row.get("lat"), wcol - other
+        ga = readers.load(a_row["path"], "atmPrf")
+        acol = interp_field(ga.data["MSL_alt"], ga.data[va], grid, va, max_gap=2.0)
+    except Exception:  # noqa: BLE001 - an unreadable file drops the pair
+        return None
+    with np.errstate(invalid="ignore", divide="ignore"):
+        diff = 100.0 * (acol - wcol) / wcol if relative else acol - wcol
+    return a_row.get("lat"), diff
+
+
+def product_differences(pairs: Sequence[tuple[dict, dict]], quantity: str = "refractivity",
+                        top_km: float = 30.0, step_km: float = 0.5, bottom_km: float = 0.0,
+                        min_count: int = 3, workers: int | None = None) -> dict:
+    """Differences between the atmPrf and the wetPf2 of the same occultations,
+    by height above mean sea level: mean, median, standard deviation, count,
+    standard error and 95 % confidence interval of the mean at each level.
+
+    atmPrf holds the observed (dry) retrieval and wetPf2 the 1D-Var moist
+    retrieval made from it, so the refractivity difference is the 1D-Var
+    analysis' departure from the observation, and the dry temperature and
+    pressure differences check that both files carry the same dry retrieval.
+    ``moisture_effect`` is wetPf2's temperature minus its dry temperature:
+    how far water vapour makes the dry temperature wrong."""
+    from .analysis import make_grid, mean_uncertainty
+    from .parallel import pmap
+    if quantity not in PAIR_QUANTITIES:
+        raise ValueError(f"quantity must be one of {', '.join(PAIR_QUANTITIES)}")
+    grid = make_grid(top_km, step_km, bottom_km)
+    res = [r for r in pmap(_pair_column, [(a, w, quantity, grid) for a, w in pairs],
+                           workers=workers) if r is not None]
+    _, _, relative, label, units = PAIR_QUANTITIES[quantity]
+    out = {"quantity": quantity, "label": label, "units": units, "relative": relative,
+           "grid": grid.tolist(), "n_pairs": len(res), "min_count": min_count}
+    if not res:
+        return {**out, **{k: [] for k in ("mean", "median", "std", "n", "sem", "ci95_lo", "ci95_hi")}}
+    m = np.vstack([d for _, d in res])
+    with np.errstate(invalid="ignore", divide="ignore"), warnings_off():
+        n = np.isfinite(m).sum(axis=0)
+        mean, median = np.nanmean(m, axis=0), np.nanmedian(m, axis=0)
+        std = np.nanstd(m, axis=0, ddof=1)
+    sem, lo, hi = mean_uncertainty(mean, std, n)
+    thin = n < min_count
+    for a in (mean, median, std, sem, lo, hi):
+        a[thin] = np.nan
+    out.update(mean=mean, median=median, std=std, n=n, sem=sem, ci95_lo=lo, ci95_hi=hi)
+    return out

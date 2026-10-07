@@ -162,3 +162,34 @@ def test_map_and_coastline_endpoints_on_bundled_samples():
     assert tp["gw"] is None and 5 < tp["overall"]["mean"] < 20
     coast = json.loads(urllib.request.urlopen(BASE + "/api/coastlines", timeout=60).read())
     assert len(coast["lon"]) == len(coast["lat"]) > 1000 and None in coast["lon"]
+
+
+def test_pair_rows_matches_by_source_file():
+    atm = [{"product": "atmPrf", "file_name": "atmPrf_A", "good": True},
+           {"product": "atmPrf", "file_name": "atmPrf_B", "good": True},
+           {"product": "atmPrf", "file_name": "atmPrf_C", "good": False}]
+    wet = [{"product": "wetPf2", "file_name": "wetPf2_A", "good": True, "extras": {"source_atmPrf": "atmPrf_A"}},
+           {"product": "wetPf2", "file_name": "wetPf2_C", "good": True, "extras": {"source_atmPrf": "atmPrf_C"}},
+           {"product": "wetPf2", "file_name": "wetPf2_X", "good": True, "extras": {"source_atmPrf": "atmPrf_X"}}]
+    # either product selects the pair, each pair once, bad atmPrf left out
+    got = climatology.pair_rows(wet + atm, atm, wet)
+    assert [(a["file_name"], w["file_name"]) for a, w in got] == [("atmPrf_A", "wetPf2_A")]
+    assert len(climatology.pair_rows(wet + atm, atm, wet, good_only=False)) == 2
+
+
+def test_compare_products_endpoint_on_bundled_samples():
+    """The bundled atmPrf and wetPf2 are the same two occultations: both files
+    carry the same dry retrieval, so their dry temperatures agree aloft, and
+    the moisture effect is large near the ground and nil in the stratosphere."""
+    post("/api/local/load-samples", {})
+    res = post("/api/compare/products", {"search": {"products": ["wetPf2"]},
+                                         "quantity": "dry_temperature", "min_count": 1})
+    assert res["n_pairs"] == 2 and res["units"] == "K"
+    g = res["grid"]
+    hi = [abs(res["mean"][g.index(z)]) for z in (10.0, 15.0) if res["mean"][g.index(z)] is not None]
+    assert hi and max(hi) < 0.5
+    res = post("/api/compare/products", {"search": {"products": ["atmPrf"]},
+                                         "quantity": "moisture_effect", "min_count": 1})
+    assert res["n_pairs"] == 2
+    m = [v for v in res["mean"] if v is not None]
+    assert max(m) > 5 and abs(res["mean"][g.index(20.0)]) < 0.2

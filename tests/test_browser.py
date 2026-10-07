@@ -57,6 +57,8 @@ def test_every_tab_and_main_action_without_script_errors(page):
     page.fill("#x-min", "1")
     _press(page, "#btn-section")
     _press(page, "#btn-map")
+    _press(page, "#btn-pairs")
+    assert page.inner_text("#pp-count") == "2 pairs"
     page.click("button[data-tab=export]")
     page.select_option("#e-kind", "grid_csv")
     _press(page, "#btn-export-data")

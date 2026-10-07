@@ -21,6 +21,8 @@ export function initStatsTab() {
   $('#btn-section').addEventListener('click', (e) =>
       withBusy(e.target, 'Averaging...', drawSection));
   initMapCard();
+  $('#btn-pairs').addEventListener('click', (e) =>
+      withBusy(e.target, 'Comparing...', drawPairs));
   $('#btn-radiosonde').addEventListener('click', (e) =>
       withBusy(e.target, 'Comparing...', drawRadiosonde));
 }
@@ -320,6 +322,63 @@ async function drawMap() {
 }
 
 // ------------------------------------------------------- radiosonde comparison
+
+const PAIR_NOTES = {
+  refractivity: 'The 1D-Var analysis departs from the observed refractivity where the ' +
+    'background and the observation disagree, mostly in the moist lower troposphere.',
+  moisture_effect: 'How much colder the dry temperature is than the real one: the ' +
+    'water vapour the dry retrieval leaves out. It follows T - 77.6 P_dry / N.',
+  dry_temperature: 'Both files carry the dry retrieval of the same occultation, so this ' +
+    'should be near zero; it shows the differences in their processing and grids.',
+  dry_pressure: 'Both files carry the dry retrieval of the same occultation, so this ' +
+    'should be near zero.',
+};
+
+async function drawPairs() {
+  const req = Object.assign({
+    quantity: $('#pp-quantity').value,
+    top_km: Number($('#pp-top').value) || 30,
+    step_km: Number($('#pp-step').value) || 0.5,
+  }, statsSelection($('#pp-selected-only').checked));
+  if (req.search) {
+    req.search.good_only = true;
+    req.search.limit = req.max_profiles = 5000;
+  }
+  const res = await api.productPairs(req);
+  $('#pp-count').textContent = `${res.n_pairs} pairs`;
+  if (!res.n_pairs) {
+    emptyPlot('pp-plot', 'No occultation of the selection has both its atmPrf and its ' +
+              'wetPf2 on this computer. Download both products for the same day.');
+    $('#pp-caption').textContent = '';
+    return;
+  }
+  const band = (a, b, fill, name) => [
+    {type: 'scatter', mode: 'lines', x: a, y: res.grid, line: {width: 0},
+     hoverinfo: 'skip', showlegend: false},
+    {type: 'scatter', mode: 'lines', x: b, y: res.grid, line: {width: 0},
+     fill: 'tonextx', fillcolor: fill, hoverinfo: 'skip', name},
+  ];
+  const lo = res.mean.map((m, i) => (m === null || res.std[i] === null ? null : m - res.std[i]));
+  const hi = res.mean.map((m, i) => (m === null || res.std[i] === null ? null : m + res.std[i]));
+  Plotly.react('pp-plot', [
+    ...band(lo, hi, 'rgba(2,132,199,0.14)', '± 1 std'),
+    ...band(res.ci95_lo, res.ci95_hi, 'rgba(2,132,199,0.40)', '95% CI of the mean'),
+    {type: 'scatter', mode: 'lines', x: res.mean, y: res.grid, name: 'mean',
+     line: {color: PALETTE[0], width: 2}, text: res.n.map((n) => `n=${n}`),
+     hovertemplate: '%{y} km: %{x:.3g} (%{text})<extra></extra>'},
+    {type: 'scatter', mode: 'lines', x: res.median, y: res.grid, name: 'median',
+     line: {color: PALETTE[1], width: 1.5, dash: 'dot'}},
+  ], axesLayout(`${res.label} [${res.units}]`, 'Altitude above mean sea level [km]', {
+    shapes: [{type: 'line', x0: 0, x1: 0, yref: 'paper', y0: 0, y1: 1,
+              line: {color: '#94a3b8', width: 1, dash: 'dot'}}],
+  }), PLOT_CONFIG);
+  $('#pp-caption').textContent =
+    `${res.n_pairs} occultations with both files (of ${res.selected} selected profiles); ` +
+    `levels with fewer than ${res.min_count} pairs are blank. ` +
+    (res.relative ? 'Differences in percent of the wetPf2 value. ' : '') +
+    `${PAIR_NOTES[res.quantity] || ''} Shading: ± 1 standard deviation and the 95% ` +
+    'confidence interval of the mean (Student\'s t, occultations taken as independent).';
+}
 
 async function drawRadiosonde() {
   const product = $('#rs-product').value;

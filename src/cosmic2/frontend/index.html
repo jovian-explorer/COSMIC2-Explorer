@@ -189,6 +189,7 @@
         <li><strong>Sampling and quality:</strong> counts by product, latitude and local time, CDAAC's bad flags, and penetration depth (lowest level reached, above sea level and above the ground).</li>
         <li><strong>Latitude-height sections:</strong> zonal means of temperature, refractivity, electron density or any other quantity, or each band's departure from the mean of all profiles.</li>
         <li><strong>Maps of a diagnostic:</strong> gravity-wave energy (any layer, polynomial or high-pass background), tropopause height, foF2 and more, in latitude-longitude cells with the zonal mean.</li>
+        <li><strong>atmPrf and wetPf2 of the same occultations:</strong> the difference between the observed (dry) retrieval and the 1D-Var moist retrieval made from it, occultation by occultation: refractivity, dry temperature and pressure, and how much colder the dry temperature is than the real one (the moisture effect), with spread and 95% confidence interval by height.</li>
         <li><strong>Radiosonde comparison:</strong> each profile against the nearest NOAA IGRA v2 radiosonde within a distance and time window, as mean and spread of the temperature, refractivity and humidity differences by height.</li>
       </ul>
       <div class="step-actions">
@@ -851,6 +852,33 @@
         <div id="zonal-plot" class="plot"></div>
       </div>
     </div>
+  </div>
+  <div class="card">
+    <div class="card-head">
+      <h2>atmPrf and wetPf2 of the same occultations</h2>
+      <span class="pill" id="pp-count"></span>
+    </div>
+    <div class="row">
+      <label>Compare
+        <select id="pp-quantity">
+          <option value="refractivity">refractivity: atmPrf (observed) minus wetPf2 (1D-Var) [%]</option>
+          <option value="moisture_effect">moisture effect: wetPf2 temperature minus dry temperature [K]</option>
+          <option value="dry_temperature">dry temperature: atmPrf minus wetPf2 [K]</option>
+          <option value="dry_pressure">dry pressure: atmPrf minus wetPf2 [%]</option>
+        </select>
+      </label>
+      <label>Top (km)<input type="number" id="pp-top" value="30" min="1" max="100" step="1"></label>
+      <label>Step (km)<input type="number" id="pp-step" value="0.5" min="0.05" max="5" step="any"></label>
+      <label class="check"><input type="checkbox" id="pp-selected-only">
+        Use only my selection</label>
+      <button class="primary" id="btn-pairs">Compare</button>
+    </div>
+    <p class="hint">Each wetPf2 file names the atmPrf it was retrieved from, so the two
+      are compared occultation by occultation (either product in the search brings the
+      other from this computer). atmPrf holds the observed, dry retrieval; wetPf2 the
+      1D-Var moist retrieval made from it.</p>
+    <div id="pp-plot" class="plot"></div>
+    <p class="hint" id="pp-caption"></p>
   </div>
   <div class="card">
     <div class="card-head">

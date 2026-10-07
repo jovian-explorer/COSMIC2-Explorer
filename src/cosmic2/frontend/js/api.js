@@ -84,6 +84,7 @@ export const api = {
   diagMap:       (req)       => call('/api/climatology/map', {method: 'POST', body: req}),
   coastlines:    ()          => call('/api/coastlines'),
   radiosonde:    (req)       => call('/api/validation/radiosonde', {method: 'POST', body: req}),
+  productPairs:  (req)       => call('/api/compare/products', {method: 'POST', body: req}),
 
   exportData:    (req)       => call('/api/export/data', {method: 'POST', body: req}),
   exportFigure:  (req)       => call('/api/export/figure', {method: 'POST', body: req}),

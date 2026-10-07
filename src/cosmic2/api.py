@@ -742,6 +742,39 @@ class SectionRequest(BaseModel):
     max_profiles: int = Field(default=5000, ge=1)
 
 
+class ProductPairRequest(BaseModel):
+    granule_ids: list[str] | None = None
+    search: SearchRequest | None = None
+    quantity: Literal["refractivity", "dry_temperature", "dry_pressure",
+                      "moisture_effect"] = "refractivity"
+    bottom_km: float = Field(default=0.0, ge=0)
+    top_km: float = Field(default=30.0, gt=0, le=100)
+    step_km: float = Field(default=0.5, gt=0)
+    min_count: int = Field(default=3, ge=1)
+    good_only: bool = True
+    max_profiles: int = Field(default=5000, ge=1)
+
+
+@app.post("/api/compare/products")
+def compare_products(req: ProductPairRequest) -> dict:
+    """atmPrf against the wetPf2 retrieved from it, for the occultations of
+    the selection (either product): the statistics of their difference by
+    height."""
+    rows = _resolve_selection(req.granule_ids, req.search, req.max_profiles)
+    if not rows:
+        raise HTTPException(400, "No local profiles match that selection")
+    if req.top_km <= req.bottom_km:
+        raise HTTPException(422, "top_km must be above bottom_km")
+    atm = store.query_granules(products=["atmPrf"], limit=10 ** 7)["granules"]
+    wet = store.query_granules(products=["wetPf2"], limit=10 ** 7)["granules"]
+    pairs = climatology.pair_rows(rows, atm, wet, good_only=req.good_only)
+    out = climatology.product_differences(
+        pairs, req.quantity, top_km=req.top_km, step_km=req.step_km,
+        bottom_km=req.bottom_km, min_count=req.min_count)
+    out["selected"] = len(rows)
+    return _clean(out)
+
+
 @app.post("/api/climatology/section")
 def climatology_section(req: SectionRequest) -> dict:
     """Zonal-mean latitude-height section (mean, spread, count, and the
