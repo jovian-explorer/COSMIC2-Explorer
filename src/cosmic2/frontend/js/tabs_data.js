@@ -78,7 +78,9 @@ async function scanDay(button) {
   card.classList.remove('hidden');
   $('#manifest-note').textContent = 'Asking the archive...';
   await withBusy(button, 'Scanning...', async () => {
-    const res = await api.archiveDay(date);
+    // COSMIC-2 by default; another mission's files when its stream is chosen
+    const {key} = currentStream();
+    const res = await api.archiveDay(date, state.meta.streams[key].mission ? key : undefined);
     manifest = res.files;
     renderManifest(date, res);
   });

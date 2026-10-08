@@ -98,6 +98,7 @@
 
 ### Downloads, index and settings
 
+- **Other radio occultation missions can be downloaded**: PAZ and KOMPSAT-5 near-real-time profiles, which CDAAC processes into the same atmPrf, wetPf2, echPrf and avnPrf files, through two new streams on the Get data tab (`paz-nrt`, `kompsat5-nrt`; archive `gnss-ro/paz/nrt/...` and `gnss-ro/kompsat5/nrt/...`). The stream code carries the mission, so their files have their own cache folder, dataset key and index stream: deleting a PAZ day removed exactly its 223 granules and left the COSMIC-2 granules of the same product and day in place (checked). "Show what is available" lists another mission only when its stream is chosen, so a COSMIC-2 day scan is unchanged. Whole days of both missions for 2026-06-20 and 2026-09-30 were downloaded and indexed through the API (PAZ 210-223, KOMPSAT-5 78-85 occultations a day; their files already parse, satellite codes PAZ1 and KOM5).
 - Granules received before a cancelled or failed download are indexed (the dataset is marked incomplete); they used to stay on disk, unindexed.
 - A missing archive directory (for example today's, before CDAAC publishes) is re-checked after 5 minutes instead of being cached for 6 hours.
 - The Explore tab's default date range now includes granules observed in the last seconds of the previous UTC day. Every CDAAC day file starts with a few of these (5 of 460 atmPrf on 2026-06-20), and every ivmL2m day file starts at about 23:59:50, so with a single day downloaded its ivmL2m files never appeared in a search.

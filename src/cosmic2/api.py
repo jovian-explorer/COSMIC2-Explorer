@@ -140,7 +140,8 @@ def meta() -> dict:
         "citation": citation(),
         "citation_source": CITATION_SOURCE,
         "streams": {k: {"label": v["label"], "blurb": v["blurb"],
-                        "levels": v["levels"]} for k, v in STREAMS.items()},
+                        "levels": v["levels"], "mission": v.get("mission")}
+                    for k, v in STREAMS.items()},
         "collections": [{"stream": s, "level": l} for s, l in COLLECTIONS],
         "products": {c: {"code": p.code, "label": p.label, "kind": p.kind,
                          "blurb": p.blurb, "plain": p.plain,

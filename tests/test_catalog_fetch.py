@@ -233,3 +233,25 @@ def test_spread_sampling_keeps_every_whole_day_ivm_file():
         for d in store.datasets():
             if d["stream"] == "rapid-test":
                 store.delete_dataset(d["key"])
+
+
+def test_other_missions_have_their_own_archive_paths_and_streams():
+    assert catalog.collection_url("nrt", "level2").endswith("/gnss-ro/cosmic2/nrt/level2")
+    assert catalog.day_url("paz-nrt", "level2", 2026, 171).endswith("/gnss-ro/paz/nrt/level2/2026/171")
+    assert catalog.day_url("kompsat5-nrt", "level2", 2026, 5).endswith("/gnss-ro/kompsat5/nrt/level2/2026/005")
+    assert catalog.mission_of("rapid") == "cosmic2" and catalog.mission_of("paz-nrt") == "paz"
+    # the stream code is also the cache folder: it must be a valid folder name everywhere
+    for s in catalog.STREAMS:
+        assert all(c.isalnum() or c in "-_" for c in s), s
+
+
+def test_day_scan_lists_other_missions_only_when_asked(monkeypatch):
+    import datetime as dt
+    arc = _archive()
+    asked = []
+    monkeypatch.setattr(arc, "files", lambda stream, level, y, d: asked.append(stream) or [])
+    arc.day_manifest(dt.date(2026, 6, 20), with_sizes=False)
+    assert asked and all(catalog.mission_of(s) == "cosmic2" for s in asked)
+    asked.clear()
+    arc.day_manifest(dt.date(2026, 6, 20), ["paz-nrt"], with_sizes=False)
+    assert asked == ["paz-nrt"]

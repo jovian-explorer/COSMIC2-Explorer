@@ -54,7 +54,37 @@ STREAMS: dict[str, dict] = {
                  "electron-density profiles (ionPrf).",
         "levels": ["spaceWeather/level2"],
     },
+    # Other radio occultation missions CDAAC processes into the same formats,
+    # for comparison with COSMIC-2.  Their stream codes carry the mission, so
+    # their files get their own cache folder, dataset key and index stream,
+    # and deleting one never touches COSMIC-2 granules of the same day.
+    "paz-nrt": {
+        "label": "PAZ near-real-time (another mission)",
+        "blurb": "Near-real-time profiles from the Spanish PAZ satellite (polar orbit, "
+                 "so it also covers the high latitudes COSMIC-2 does not), processed by "
+                 "CDAAC into the same atmPrf, wetPf2, echPrf and avnPrf files. Use it to "
+                 "compare missions on the Statistics tab.",
+        "levels": ["level2"],
+        "mission": "paz",
+    },
+    "kompsat5-nrt": {
+        "label": "KOMPSAT-5 near-real-time (another mission)",
+        "blurb": "Near-real-time profiles from the Korean KOMPSAT-5 satellite, processed "
+                 "by CDAAC into the same atmPrf, wetPf2, echPrf and avnPrf files (fewer a "
+                 "day than PAZ). Use it to compare missions on the Statistics tab.",
+        "levels": ["level2"],
+        "mission": "kompsat5",
+    },
 }
+
+# Satellite codes of the missions above, as in the file names (C2E1-C2E6 for COSMIC-2)
+MISSION_SATS = {"paz": ("PAZ1",), "kompsat5": ("KOM5",)}
+
+
+def mission_of(stream: str) -> str:
+    """The archive directory of a stream's mission ("cosmic2" unless the
+    stream code names another one)."""
+    return STREAMS.get(stream, {}).get("mission", "cosmic2")
 
 # (stream, level) pairs that are known to contain YYYY/DDD tarballs.
 COLLECTIONS: list[tuple[str, str]] = [
@@ -65,6 +95,8 @@ COLLECTIONS: list[tuple[str, str]] = [
     ("postProc", "level2"),
     ("postProc", "level1b"),
     ("provisional", "spaceWeather/level2"),
+    ("paz-nrt", "level2"),
+    ("kompsat5-nrt", "level2"),
 ]
 
 # --------------------------------------------------------------------------
@@ -275,6 +307,10 @@ def date_to_doy(d: dt.date) -> tuple[int, int]:
 
 
 def collection_url(stream: str, level: str) -> str:
+    mission = mission_of(stream)
+    if mission != "cosmic2":
+        # "paz-nrt" -> gnss-ro/paz/nrt/<level>
+        return f"{CDAAC_BASE}/{mission}/{stream.split('-', 1)[1]}/{level}"
     return f"{CDAAC_BASE}/cosmic2/{stream}/{level}"
 
 
@@ -387,7 +423,9 @@ class Archive:
         """
         year, doy = date_to_doy(date)
         wanted = set(streams) if streams else None
-        colls = [(s, l) for s, l in COLLECTIONS if not wanted or s in wanted]
+        # Other missions are listed only when asked for by their stream code.
+        colls = [(s, l) for s, l in COLLECTIONS
+                 if (s in wanted if wanted else mission_of(s) == "cosmic2")]
 
         def listing(coll):
             try:
