@@ -656,8 +656,10 @@ async function drawModels() {
     (res.quantity === 'bending_angle' ? ' ECMWF bending angles (echPrf) are placed at the ' +
       'impact height of their tangent points, n (Rc + z) - Rc, with the occultation\'s radius ' +
       'of curvature Rc; NCEP profiles carry no bending angle.' : '') +
-    (res.quantity === 'temperature' ? ' wetPf2 temperature comes from a 1D-Var retrieval ' +
-      'whose background is a model forecast, so in the troposphere it is not independent of the models.' : '');
+    (res.quantity === 'temperature' ? ' wetPf2 temperature comes from CDAAC\'s 1D-Var, whose first ' +
+      'guess is this same ECMWF profile (every good wetPf2 file names its echPrf in the attribute fgsPrf), ' +
+      'so RO minus ECMWF is the retrieval\'s departure from its own first guess at every height, not ' +
+      'an independent comparison.' : '');
 }
 
 async function drawRadiosonde() {
