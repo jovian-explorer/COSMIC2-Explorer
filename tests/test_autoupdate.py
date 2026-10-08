@@ -326,3 +326,22 @@ def test_linux_tar_archive_unpacks_with_permissions(tmp_path):
         t.addfile(link)
     with pytest.raises(ValueError, match="plain file"):
         au.extract(bad, tmp_path / "out2")
+
+
+def test_the_newest_release_is_staged_not_the_next_one(fake):
+    """Release policy: the repository keeps only the two newest releases. An
+    installed build several releases behind, whose own release is gone from
+    the list, must update straight to the newest one (never to the next one
+    after it), and a newer draft is ignored."""
+    root, api = fake                                   # installed: v0.0.1-build.1
+    api.release("v0.0.1-build.4", _zip_bytes(au.launcher(root).name))
+    api.release("v0.0.1-build.5", _zip_bytes(au.launcher(root).name))
+    api.releases.reverse()                             # GitHub lists newest first; order must not matter
+    api.release("v0.0.1-build.6", _zip_bytes(au.launcher(root).name))
+    api.releases[-1]["draft"] = True
+    assert not any(r["tag_name"] == "v0.0.1-build.1" for r in api.releases)
+    res = au.check_and_stage(force=True)
+    assert res == {"result": "staged", "tag": "v0.0.1-build.5"}
+    assert au.load_state()["staged"]["tag"] == "v0.0.1-build.5"
+    # the newest is already staged: a second check changes nothing
+    assert au.check_and_stage(force=True)["result"] == "already staged"
