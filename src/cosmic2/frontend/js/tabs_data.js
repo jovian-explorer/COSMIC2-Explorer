@@ -270,13 +270,28 @@ export async function refreshLocal() {
   }
 }
 
+const OTHER_MISSIONS = {PAZ1: 'PAZ', KOM5: 'KOMPSAT-5'};
+
+/** Satellite filter choices: once another mission's files are on disk,
+ *  COSMIC-2 as a whole too, so every statistic can leave the other mission
+ *  out (a value lists satellites separated by commas).  COSMIC-2 files name
+ *  their satellite C2E1-C2E6, its scintillation files (scnLv2) LEO and a
+ *  number. */
+export function satelliteChoices(sats) {
+  const c2 = sats.filter((s) => s.startsWith('C2E') || s.startsWith('LEO'));
+  const out = [{value: '', label: 'any'}];
+  if (c2.length && sats.some((s) => OTHER_MISSIONS[s])) {
+    out.push({value: c2.join(','), label: 'COSMIC-2, all satellites'});
+  }
+  return out.concat(sats.map((s) => ({value: s, label: OTHER_MISSIONS[s] ? `${OTHER_MISSIONS[s]} (${s})` : s})));
+}
+
 export async function refreshFacets() {
   try {
     const f = await api.facets();
     const products = f.products.length ? f.products : ['wetPf2'];
     fillSelect($('#f-product'), products, products[0]);
-    fillSelect($('#f-sat'), [{value: '', label: 'any'},
-                             ...f.sats.map((s) => ({value: s, label: s}))], '');
+    fillSelect($('#f-sat'), satelliteChoices(f.sats), '');
     if (f.date_min) $('#f-start').value = f.date_min;
     if (f.date_max) $('#f-end').value = f.date_max;
   } catch { /* empty index is fine */ }
@@ -344,7 +359,7 @@ function buildSearch(offset = 0) {
     lat_min: num('f-latmin'), lat_max: num('f-latmax'),
     lon_min: num('f-lonmin'), lon_max: num('f-lonmax'),
     local_time_min: num('f-ltmin'), local_time_max: num('f-ltmax'),
-    sats: sat ? [sat] : null,
+    sats: sat ? sat.split(',') : null,
     good_only: $('#f-good').checked,
     sort: 'time', desc: false,
     limit: state.pageSize, offset,

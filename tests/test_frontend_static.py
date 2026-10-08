@@ -168,3 +168,31 @@ def test_plotly_handlers_are_removed_before_being_added_again():
         src = _read(FRONTEND / "js" / name)
         for ev in set(re.findall(r"\.on\('(plotly_\w+)'", src)):
             assert f"removeAllListeners('{ev}')" in src, f"{name}: {ev}"
+
+
+def test_satellite_filter_offers_cosmic2_as_a_whole():
+    """With PAZ files on disk every statistic mixed PAZ into COSMIC-2 and the
+    filter could not leave it out: COSMIC-2 (its C2E and scintillation LEO
+    codes) is one choice once another mission is present."""
+    import json
+    import shutil
+    import subprocess
+    import pytest
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("Node.js not installed")
+    url = (FRONTEND / "js" / "tabs_data.js").resolve().as_uri()
+    code = (f"import {{satelliteChoices}} from '{url}';"
+            "console.log(JSON.stringify([satelliteChoices(['C2E1', 'C2E2', 'LEO002', 'PAZ1']),"
+            " satelliteChoices(['C2E1', 'C2E2'])]))")
+    out = subprocess.run([node, "--input-type=module", "-e", code],
+                         capture_output=True, text=True, timeout=60)
+    if out.returncode != 0 and "Cannot use import statement" in out.stderr:
+        pytest.skip("this Node cannot load ES modules from a .js file")
+    assert out.returncode == 0, out.stderr
+    mixed, alone = json.loads(out.stdout)
+    assert {"value": "C2E1,C2E2,LEO002", "label": "COSMIC-2, all satellites"} in mixed
+    assert {"value": "PAZ1", "label": "PAZ (PAZ1)"} in mixed
+    assert [o["value"] for o in alone] == ["", "C2E1", "C2E2"]
+    # a multi-satellite value reaches the search as a list
+    assert "sats: sat ? sat.split(',') : null" in _read(FRONTEND / "js" / "tabs_data.js")
