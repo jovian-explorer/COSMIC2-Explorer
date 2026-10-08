@@ -80,3 +80,24 @@ def test_mission_endpoint_without_the_other_mission():
         res = json.loads(urllib.request.urlopen(req, timeout=60).read())
         assert res["n_cosmic2"] == 2 and res["n_other"] == 0
         assert res["collocated"]["n_pairs"] == 0 and res["via_ecmwf"]["available"] is False
+
+
+def test_double_difference_uses_the_latitudes_both_missions_cover(monkeypatch):
+    """COSMIC-2 reaches about 45 degrees, PAZ the poles: the profiles through
+    ECMWF are limited to the common latitudes (RO minus ECMWF changes with
+    latitude), the collocated pairs are not affected."""
+    c2 = [_row("C2E1", lat, 0.0, 0.0, f"c{lat}") for lat in (-40.0, 0.0, 40.0)]
+    other = [_row("PAZ1", lat, 0.5, 0.2, f"o{lat}") for lat in (-80.0, -40.0, 10.0, 70.0)]
+    monkeypatch.setattr(missions, "_pair_diff", lambda task: np.zeros(61))
+    seen = []
+
+    def fake_model_differences(groups, q, **kw):
+        seen.append(sorted(next(iter(g.values()))["lat"] for g in groups))
+        return {"models": {"echPrf": {"n_profiles": len(groups), "mean": np.zeros(61),
+                                      "sem": np.zeros(61)}}}
+    monkeypatch.setattr(nwp, "model_differences", fake_model_differences)
+    res = missions.compare(c2 + other, c2 + other, other="paz", min_count=1, workers=1)
+    assert seen == [[-40.0, 0.0, 40.0], [-40.0, 10.0]]
+    via = res["via_ecmwf"]
+    assert via["lat_range"] == [-40.0, 40.0] and via["n_cosmic2"] == 3 and via["n_other"] == 2
+    assert res["n_other"] == 4 and res["collocated"]["n_pairs"] == 1   # the pair at 40S

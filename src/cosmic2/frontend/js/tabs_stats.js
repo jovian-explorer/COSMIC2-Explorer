@@ -2,7 +2,7 @@
 // current selection, read from the local index.
 
 import {api, state, selectedIds} from './api.js';
-import {$, el, clear, fmt, fixed, withBusy, layoutBase, PLOT_CONFIG, PALETTE,
+import {$, el, clear, fmt, fixed, latlon, withBusy, layoutBase, PLOT_CONFIG, PALETTE,
         emptyPlot, fillSelect, cleanPlotlyMath} from './ui.js';
 import {FIELD_CHOICES, VERTICAL_CHOICES, PRODUCT_AXES, labelled, hexToRgba} from './tabs_science.js';
 
@@ -450,8 +450,10 @@ async function drawMissions() {
     (c.n_pairs ? ` (median ${fmt(c.median_km, 0)} km and ${fmt(c.median_hours, 2)} h apart)` : '') +
     '; line the mean, light shading ± 1 standard deviation (which includes the atmosphere\'s own ' +
     'variability over that distance and time), dark shading the 95% confidence interval of the mean. ' +
-    `Through ECMWF: mean(COSMIC-2 - ECMWF) - mean(${name} - ECMWF) over all profiles of each mission, ` +
-    'with the ECMWF profile CDAAC colocates with each one; it needs no collocation but the missions ' +
+    `Through ECMWF: mean(COSMIC-2 - ECMWF) - mean(${name} - ECMWF) over the profiles of each mission ` +
+    (v.lat_range ? `between ${latlon(v.lat_range[0], 'lat')} and ${latlon(v.lat_range[1], 'lat')}, the latitudes both cover ` +
+      '(RO minus ECMWF changes with latitude, and COSMIC-2 reaches only about 45 degrees)' : '') +
+    ', with the ECMWF profile CDAAC colocates with each one; it needs no collocation but the missions ' +
     'sample different places and times. ' + (res.relative ? 'Differences in percent. ' : '') +
     'Collocation weights after Rieckh et al. (2021), https://doi.org/10.1175/JTECH-D-20-0209.1';
 }

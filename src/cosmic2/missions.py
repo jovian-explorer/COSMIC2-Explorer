@@ -19,9 +19,10 @@ independent estimates of how the missions differ:
 
 ``via_ecmwf``
     The double difference mean(COSMIC-2 - ECMWF) - mean(other - ECMWF) over
-    all profiles of each mission, with the ECMWF profile CDAAC colocates with
-    every occultation (echPrf).  It needs no collocation, so it uses every
-    profile, but the two missions sample different places and times.
+    the profiles of each mission within the latitudes both cover, with the
+    ECMWF profile CDAAC colocates with every occultation (echPrf).  It needs
+    no collocation, so it uses many more profiles, but the two missions
+    still sample different places and times within those latitudes.
 
 Missions are told apart by the satellite code in the file names (C2E1-C2E6,
 PAZ1, KOM5), so files imported by hand count too.
@@ -160,10 +161,21 @@ def compare(rows: Sequence[dict], index_rows: Sequence[dict], other: str = "paz"
     if diffs:
         col.update(_stats(np.vstack(diffs), min_count))
     out["collocated"] = col
-    # double difference through ECMWF (no collocation)
+    # double difference through ECMWF (no collocation), over the latitudes
+    # both missions cover: COSMIC-2 reaches about 45 degrees, PAZ and
+    # KOMPSAT-5 the poles, and RO minus ECMWF changes with latitude (on 14
+    # whole days of 2026, COSMIC-2 minus PAZ was +0.09 K at 10 km with every
+    # PAZ profile and +0.05 K over the common latitudes, as with 10-degree
+    # strata)
     via = {"available": False}
+    common = [[r for r in sel if r.get("lat") is not None] for sel in (ref_rows, oth_rows)]
+    if all(common):
+        lo = max(min(r["lat"] for r in sel) for sel in common)
+        hi = min(max(r["lat"] for r in sel) for sel in common)
+        via["lat_range"] = [lo, hi]
+        common = [[r for r in sel if lo <= r["lat"] <= hi] for sel in common]
     sides = []
-    for sel in (ref_rows, oth_rows):
+    for sel in common:
         groups = nwp.stamp_groups(sel, index_rows)
         sides.append(nwp.model_differences(groups, nwp_q, top_km=top_km, step_km=step_km,
                                            bottom_km=bottom_km, min_count=min_count,
@@ -173,7 +185,7 @@ def compare(rows: Sequence[dict], index_rows: Sequence[dict], other: str = "paz"
         with np.errstate(invalid="ignore"):
             dd = np.asarray(a["mean"], float) - np.asarray(b["mean"], float)
             se = np.sqrt(np.asarray(a["sem"], float) ** 2 + np.asarray(b["sem"], float) ** 2)
-        via = {"available": True, "n_cosmic2": a["n_profiles"], "n_other": b["n_profiles"],
-               "mean": dd, "ci95_lo": dd - 1.96 * se, "ci95_hi": dd + 1.96 * se}
+        via.update(available=True, n_cosmic2=a["n_profiles"], n_other=b["n_profiles"],
+                   mean=dd, ci95_lo=dd - 1.96 * se, ci95_hi=dd + 1.96 * se)
     out["via_ecmwf"] = via
     return out
