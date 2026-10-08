@@ -126,6 +126,30 @@ def test_fmt_keeps_integer_zeros():
     assert out.stdout.strip() == "100|2.5|12|0|1.3|-40", out.stderr
 
 
+def test_table_numbers_keep_trailing_zeros():
+    """The tropopause table showed 11.7 for 11.70: table columns use fixed(),
+    which keeps the decimals.  Runs ui.js under Node when it is installed."""
+    import shutil
+    import subprocess
+    import pytest
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("Node.js not installed")
+    url = (FRONTEND / "js" / "ui.js").resolve().as_uri()
+    code = (f"import {{fixed, fmt}} from '{url}';"
+            "console.log([fixed(11.7, 2), fixed(194, 1), fixed(100, 0), fixed(null, 2),"
+            " fixed(-0.5, 2), fmt(11.7, 2)].join('|'))")
+    out = subprocess.run([node, "--input-type=module", "-e", code],
+                         capture_output=True, text=True, timeout=60)
+    if out.returncode != 0 and "SyntaxError" in out.stderr:
+        pytest.skip("this Node cannot load ES modules from a .js file")
+    assert out.stdout.strip() == "11.70|194.0|100|-|-0.50|11.7", out.stderr
+    # every number cell of the tropopause table goes through fixed()
+    body = _read(FRONTEND / "js" / "tabs_stats.js")
+    mean_ci = body[body.index("function meanCI"):body.index("async function drawTropopause")]
+    assert "fixed(" in mean_ci and "fmt(" not in mean_ci
+
+
 def test_no_control_characters_in_frontend_text():
     """A LaTeX \frac written through an unescaped string became a form feed
     plus "rac" in the help page; KaTeX then shows an error."""

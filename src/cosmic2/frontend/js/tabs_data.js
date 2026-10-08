@@ -1,7 +1,7 @@
 // "Get data" and "Explore" tabs: archive browsing, downloads, map and results.
 
 import {api, state, selectRow, deselectRow, isSelected, selectedIds} from './api.js';
-import {$, $$, el, clear, fmt, bytes, clock, isoDay, timeOf, latlon,
+import {$, $$, el, clear, fmt, fixed, bytes, clock, isoDay, timeOf, latlon,
         toast, withBusy, fillSelect, layoutBase, PLOT_CONFIG,
         emptyPlot} from './ui.js';
 
@@ -387,11 +387,11 @@ function renderResults() {
       el('td', {}, `${(g.time_utc || '').slice(0, 10)} ${timeOf(g.time_utc)}`),
       el('td', {class: 'num'}, latlon(g.lat, 'lat')),
       el('td', {class: 'num'}, latlon(g.lon, 'lon')),
-      el('td', {class: 'num'}, fmt(g.local_time, 1)),
+      el('td', {class: 'num'}, fixed(g.local_time, 1)),
       el('td', {}, g.sat || '-'),
       el('td', {}, g.occ_prn || '-'),
       el('td', {class: 'num'}, String(g.n_levels ?? '-')),
-      el('td', {class: 'num'}, fmt(g.alt_max, 1)),
+      el('td', {class: 'num'}, fixed(g.alt_max, 1)),
       el('td', {}, el('span', {class: `pill ${g.good ? 'ok' : 'bad'}`},
                       g.good ? 'good' : 'failed')));
     row.addEventListener('dblclick', () => {

@@ -2,7 +2,7 @@
 // current selection, read from the local index.
 
 import {api, state, selectedIds} from './api.js';
-import {$, el, clear, fmt, withBusy, layoutBase, PLOT_CONFIG, PALETTE,
+import {$, el, clear, fmt, fixed, withBusy, layoutBase, PLOT_CONFIG, PALETTE,
         emptyPlot, fillSelect, cleanPlotlyMath} from './ui.js';
 import {FIELD_CHOICES, VERTICAL_CHOICES, PRODUCT_AXES, labelled, hexToRgba} from './tabs_science.js';
 
@@ -46,7 +46,7 @@ export function statsSelection(selectedOnly) {
   return {search};
 }
 
-function pct(v) { return v === null || v === undefined ? '-' : `${fmt(100 * v, 1)} %`; }
+function pct(v) { return v === null || v === undefined ? '-' : `${fixed(100 * v, 1)} %`; }
 
 /** Plotly layout with titled axes, in the app's theme. */
 export function axesLayout(xTitle, yTitle, extra = {}) {
@@ -93,8 +93,8 @@ async function drawStats() {
       el('td', {class: 'num'}, `${p.n_bad} (${pct(p.bad_fraction)})`),
       el('td', {}, codes || '-'),
       el('td', {class: 'num'}, fmt(p.levels_median, 0)),
-      el('td', {}, p.lat_range ? `${fmt(p.lat_range[0], 1)} to ${fmt(p.lat_range[1], 1)}` : '-'),
-      el('td', {class: 'num'}, pen ? `${fmt(pen.median_km, 2)} km` : '-'),
+      el('td', {}, p.lat_range ? `${fixed(p.lat_range[0], 1)} to ${fixed(p.lat_range[1], 1)}` : '-'),
+      el('td', {class: 'num'}, pen ? `${fixed(pen.median_km, 2)} km` : '-'),
       el('td', {class: 'num'}, pen ? pct(pen.fraction_below['1']) : '-'),
       groundCell(name, pen)));
   }
@@ -459,9 +459,9 @@ async function drawMissions() {
 /** "mean [lo, hi]" of one band statistic. */
 function meanCI(st, digits) {
   if (!st || st.mean === null || st.mean === undefined) return '-';
-  const m = fmt(st.mean, digits);
+  const m = fixed(st.mean, digits);
   return st.ci95_lo === null || st.ci95_lo === undefined ? m
-    : `${m} [${fmt(st.ci95_lo, digits)}, ${fmt(st.ci95_hi, digits)}]`;
+    : `${m} [${fixed(st.ci95_lo, digits)}, ${fixed(st.ci95_hi, digits)}]`;
 }
 
 async function drawTropopause() {
@@ -660,12 +660,12 @@ async function drawRadiosonde() {
     tb.append(el('tr', {},
       el('td', {}, (p.time_utc || '').slice(0, 19).replace('T', ' ')),
       el('td', {}, p.product),
-      el('td', {class: 'num'}, fmt(p.lat, 2)), el('td', {class: 'num'}, fmt(p.lon, 2)),
+      el('td', {class: 'num'}, fixed(p.lat, 2)), el('td', {class: 'num'}, fixed(p.lon, 2)),
       el('td', {}, `${p.station} ${p.station_name}`),
       el('td', {}, (p.launch_utc || '').slice(0, 16).replace('T', ' ')),
       el('td', {class: 'num'}, fmt(p.distance_km, 0)),
-      el('td', {class: 'num'}, fmt(p.dt_hours, 2)),
-      el('td', {class: 'num'}, fmt(p.sonde_top_km, 1))));
+      el('td', {class: 'num'}, fixed(p.dt_hours, 2)),
+      el('td', {class: 'num'}, fixed(p.sonde_top_km, 1))));
   }
   const notes = [`${res.n_pairs} of ${res.n_occultations} occultations (${res.products.join(', ')}) ` +
                  `have a radiosonde within ${res.max_km} km and ${res.max_hours} h ` +

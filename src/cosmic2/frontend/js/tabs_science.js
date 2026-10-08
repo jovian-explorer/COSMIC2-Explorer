@@ -1,7 +1,7 @@
 // "Profiles", "Compare" and "Export" tabs.
 
 import {api, state, selectedIds, deselectRow, axisTitle, vocabInfo} from './api.js';
-import {$, el, clear, fmt, bytes, dayOf, latlon, toast, withBusy, fillSelect,
+import {$, el, clear, fmt, fixed, bytes, dayOf, latlon, toast, withBusy, fillSelect,
         layoutBase, PLOT_CONFIG, PALETTE, emptyPlot, drawer, cleanPlotlyMath,
         renderMath} from './ui.js';
 
@@ -388,8 +388,8 @@ async function showDiagnostics(gid) {
   if (pairs.length) {
     const rows = pairs.map(([ours, theirs, label, unit]) => el('tr', {},
       el('td', {}, label),
-      el('td', {class: 'num'}, `${fmt(dig(d, ours), 3)} ${unit}`),
-      el('td', {class: 'num'}, `${fmt(av[theirs], 3)} ${unit}`)));
+      el('td', {class: 'num'}, `${fixed(dig(d, ours), 3)} ${unit}`),
+      el('td', {class: 'num'}, `${fixed(av[theirs], 3)} ${unit}`)));
     body.append(el('h3', {}, 'Cross-check against CDAAC'),
       el('table', {class: 'table'},
         el('thead', {}, el('tr', {}, el('th', {}, 'Quantity'),

@@ -24,7 +24,7 @@ export function clear(node) { while (node.firstChild) node.removeChild(node.firs
 
 // ---------------------------------------------------------------- formatting
 
-export function fmt(v, digits = 2) {
+export function fmt(v, digits = 2, trim = true) {
   if (v === null || v === undefined || Number.isNaN(v)) return '-';
   if (typeof v === 'boolean') return v ? 'yes' : 'no';
   if (typeof v !== 'number') return String(v);
@@ -34,8 +34,12 @@ export function fmt(v, digits = 2) {
   // Trim trailing zeros of the decimals only: with digits = 0 the old
   // pattern also ate the zeros of the integer (fmt(100, 0) gave "1").
   const s = v.toFixed(digits);
-  return s.includes('.') ? s.replace(/\.?0+$/, '') : s;
+  return trim && s.includes('.') ? s.replace(/\.?0+$/, '') : s;
 }
+
+/** fmt for table columns: keeps the trailing zeros, so the decimals of a
+ *  column line up (11.70, not 11.7). */
+export function fixed(v, digits = 2) { return fmt(v, digits, false); }
 
 export function bytes(n) {
   if (!n && n !== 0) return '-';
