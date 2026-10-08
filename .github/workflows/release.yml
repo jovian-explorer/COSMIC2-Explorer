@@ -114,3 +114,22 @@ jobs:
           # Until the public 1.0.0 release, every build is a pre-release (version 0.x);
           # the updater reads the release list, so it sees pre-releases too.
           prerelease: ${{ startsWith(github.ref_name, 'v0.') }}
+      - name: Keep the 2 newest releases
+        # Runs only after the publish step succeeded. Release policy: only the two
+        # newest published releases stay; drafts are neither counted nor touched.
+        # Tags stay (no --cleanup-tag), so an installed build several releases
+        # behind still updates straight to the newest one and its "What's new"
+        # can link the comparison from its own tag.
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release list --exclude-drafts --limit 1000 --json tagName,createdAt \
+              --jq '.[] | "\(.createdAt) \(.tagName)"' |
+            sort -r | tail -n +3 | cut -d' ' -f2 |
+            while read -r tag; do
+              [ -n "$tag" ] || continue
+              echo "Deleting release $tag (its tag stays)"
+              gh release delete "$tag" --yes || echo "::warning::could not delete release $tag"
+            done

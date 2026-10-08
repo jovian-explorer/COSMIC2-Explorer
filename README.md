@@ -128,7 +128,7 @@ python scripts/build_exe.py            # dist/COSMIC2-Explorer(.exe|.app)
 python scripts/build_exe.py --archive  # plus the release archive for this OS
 ```
 
-PyInstaller can only build for the OS it runs on. Pushing a tag `v<version>` or `v<version>-build.<n>` (`<version>` as in `pyproject.toml`) runs `.github/workflows/release.yml`, which builds Windows, macOS and Linux with `--archive --tag <tag>`, and attaches the three archives and `SHA256SUMS.txt` to a GitHub Release. Only builds stamped with a tag update themselves; releases are ordered by tag, so a later build of the same version is `v<version>-build.<n+1>`.
+PyInstaller can only build for the OS it runs on. Pushing a tag `v<version>` or `v<version>-build.<n>` (`<version>` as in `pyproject.toml`) runs `.github/workflows/release.yml`, which builds Windows, macOS and Linux with `--archive --tag <tag>`, and attaches the three archives and `SHA256SUMS.txt` to a GitHub Release. Only builds stamped with a tag update themselves; releases are ordered by tag, so a later build of the same version is `v<version>-build.<n+1>`. After a successful publish the workflow deletes every release except the two newest (drafts are left alone); the tags are kept, so an installed copy several releases behind still updates straight to the newest release and can link the full comparison from its own tag.
 
 ---
 

@@ -59,3 +59,19 @@ def test_archive_holds_one_install_folder(tmp_path, monkeypatch):
     assert names == sorted([f"COSMIC2-Explorer/{app.name}", "COSMIC2-Explorer/INSTALL_FOLDER.json"])
     assert marker["build"] == {"tag": "v0.0.1"}
     assert not (tmp_path / "INSTALL_FOLDER.json").exists()      # the loose copy is removed
+
+
+def test_release_workflow_keeps_the_two_newest_releases_and_all_tags():
+    """Release policy: after a successful publish, every release but the two
+    newest is deleted, without --cleanup-tag (the tags stay, for the updater's
+    compare links); drafts are excluded."""
+    text = (ROOT / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
+    # the commands, not the comments that explain them
+    wf = "\n".join(line for line in text.splitlines() if not line.lstrip().startswith("#"))
+    publish = wf.index("softprops/action-gh-release")
+    cleanup = wf.index("name: Keep the 2 newest releases")
+    assert cleanup > publish                                  # only after the publish step
+    step = wf[cleanup:]
+    assert "gh release list --exclude-drafts" in step and "tail -n +3" in step
+    assert "gh release delete" in step and "--cleanup-tag" not in wf
+    assert "GH_TOKEN: ${{ github.token }}" in step
