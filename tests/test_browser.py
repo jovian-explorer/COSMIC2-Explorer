@@ -64,6 +64,20 @@ def test_every_tab_and_main_action_without_script_errors(page):
     _press(page, "#btn-tropopause")
     assert page.inner_text("#tp-count") == "2 profiles"
     assert page.query_selector_all("#tp-table tbody tr")
+    # with every band filled, no column is shown that holds only dashes
+    # (CDAAC's values need atmPrf files in the selection)
+    page.fill("#tp-min", "1")
+    _press(page, "#btn-tropopause")
+    dash_only = page.evaluate("""() => {
+      const rows = [...document.querySelectorAll('#tp-table tbody tr')];
+      const n = rows[0].cells.length, out = [];
+      for (let k = 2; k < n; k++) {
+        const cells = rows.map((r) => r.cells[k]).filter((c) => c && c.offsetParent);
+        if (cells.length && cells.every((c) => c.innerText.trim() === '-')) out.push(k);
+      }
+      return out;
+    }""")
+    assert dash_only == [], dash_only
     _press(page, "#btn-nwp")
     assert page.inner_text("#nwp-count") == "2 occultations"
     page.select_option("#nwp-kind", "differences:bending_angle")

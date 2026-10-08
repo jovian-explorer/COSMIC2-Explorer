@@ -456,12 +456,20 @@ async function drawMissions() {
     'Collocation weights after Rieckh et al. (2021), https://doi.org/10.1175/JTECH-D-20-0209.1';
 }
 
-/** "mean [lo, hi]" of one band statistic. */
-function meanCI(st, digits) {
-  if (!st || st.mean === null || st.mean === undefined) return '-';
-  const m = fixed(st.mean, digits);
-  return st.ci95_lo === null || st.ci95_lo === undefined ? m
-    : `${m} [${fixed(st.ci95_lo, digits)}, ${fixed(st.ci95_hi, digits)}]`;
+/** Table cell of one band statistic: the mean, and under it its 95%
+ *  confidence interval (on one line the table did not fit 1366 px). */
+function meanCI(st, digits, cls = '') {
+  const cell = el('td', {class: `num ${cls}`.trim()});
+  if (!st || st.mean === null || st.mean === undefined) {
+    cell.append('-');
+  } else {
+    cell.append(fixed(st.mean, digits));
+    if (st.ci95_lo !== null && st.ci95_lo !== undefined) {
+      cell.append(el('br'), el('span', {class: 'ci'},
+        `[${fixed(st.ci95_lo, digits)}, ${fixed(st.ci95_hi, digits)}]`));
+    }
+  }
+  return cell;
 }
 
 async function drawTropopause() {
@@ -491,13 +499,14 @@ async function drawTropopause() {
     tb.append(el('tr', {},
       el('td', {}, `${lat(b.lat_lo)} to ${lat(b.lat_hi)}`),
       el('td', {class: 'num'}, String(b.n_profiles)),
-      el('td', {class: 'num'}, meanCI(b.wmo_height_km, 2)),
-      el('td', {class: 'num'}, meanCI(b.wmo_temp_K, 1)),
-      el('td', {class: 'num'}, meanCI(b.cp_height_km, 2)),
-      el('td', {class: 'num'}, meanCI(b.cp_temp_K, 1)),
-      el('td', {class: 'num'}, meanCI(a.wmo_height_km, 2)),
-      el('td', {class: 'num'}, meanCI(a.wmo_temp_K, 1))));
+      meanCI(b.wmo_height_km, 2), meanCI(b.wmo_temp_K, 1),
+      meanCI(b.cp_height_km, 2), meanCI(b.cp_temp_K, 1),
+      meanCI(a.wmo_height_km, 2, 'tp-cdaac'), meanCI(a.wmo_temp_K, 1, 'tp-cdaac')));
   }
+  // CDAAC's values are attributes of atmPrf files: without atmPrf in the
+  // selection their columns would hold only dashes
+  const archive = res.bands.some((b) => b.archive);
+  $('#tp-table').classList.toggle('no-cdaac', !archive);
   $('#tp-caption').textContent =
     `${res.n_profiles} good ${res.products.join(' and ')} profiles. Mean and, in brackets, the ` +
     '95% confidence interval of the mean (Student\'s t, profiles taken as independent); bands ' +
@@ -506,7 +515,9 @@ async function drawTropopause() {
     'next 2 km stays at or below 2 K/km (on atmPrf dry temperature, only levels colder than 235 K ' +
     'are considered). Cold point: the coldest level ' +
     'between 10 and 30 km, a tropopause only in the tropics; in the winter extratropics it lies in ' +
-    'the stratosphere. CDAAC\'s own values come from the atmPrf files (trhwmo, trtwmo). For ' +
+    'the stratosphere. ' + (archive ? 'CDAAC\'s own values come from the atmPrf files (trhwmo, trtwmo). '
+      : 'CDAAC\'s own values come with atmPrf files: choose atmPrf as the Explore product to show ' +
+        'them beside these. ') + 'For ' +
     'comparison, Rieckh et al. (2014) find tropical tropopauses mainly at 16-17 km with mean ' +
     'temperatures of 190 K in January and 195 K in July, and extratropical ones at 8-12 km and ' +
     '215-220 K, from RO data of 2001-2013: https://doi.org/10.5194/amt-7-3947-2014';

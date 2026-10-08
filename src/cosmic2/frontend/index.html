@@ -903,10 +903,14 @@
     </div>
     <div class="scroll-x">
       <table class="table" id="tp-table">
-        <thead><tr><th>Latitude</th><th>Profiles</th>
-          <th>WMO tropopause height (km)</th><th>WMO tropopause temperature (K)</th>
-          <th>Cold-point height (km)</th><th>Cold-point temperature (K)</th>
-          <th>CDAAC WMO height (km)</th><th>CDAAC WMO temperature (K)</th></tr></thead>
+        <thead>
+          <tr><th rowspan="2">Latitude</th><th rowspan="2" class="num">Profiles</th>
+            <th colspan="2">WMO tropopause</th><th colspan="2">Cold point</th>
+            <th colspan="2" class="tp-cdaac">CDAAC's WMO tropopause</th></tr>
+          <tr><th class="num">Height (km)</th><th class="num">Temperature (K)</th>
+            <th class="num">Height (km)</th><th class="num">Temperature (K)</th>
+            <th class="num tp-cdaac">Height (km)</th><th class="num tp-cdaac">Temperature (K)</th></tr>
+        </thead>
         <tbody></tbody>
       </table>
     </div>
