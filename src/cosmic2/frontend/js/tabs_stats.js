@@ -420,7 +420,11 @@ async function drawMissions() {
   if (c.n_pairs) {
     const lo = c.mean.map((m, k) => (m === null || c.std[k] === null ? null : m - c.std[k]));
     const hi = c.mean.map((m, k) => (m === null || c.std[k] === null ? null : m + c.std[k]));
-    traces.push(...bandTraces(lo, hi, y, hexToRgba(PALETTE[0], 0.12), null, 'col'));
+    // hidden until its legend entry is clicked: at +-1.5 K it set the axis
+    // range and squeezed the means, which differ by tenths of a kelvin
+    traces.push(...bandTraces(lo, hi, y, hexToRgba(PALETTE[0], 0.12),
+                              '± 1 standard deviation of the pairs', 'col-sd')
+      .map((t) => Object.assign(t, {visible: 'legendonly'})));
     traces.push(...bandTraces(c.ci95_lo, c.ci95_hi, y, hexToRgba(PALETTE[0], 0.40), null, 'col'));
     traces.push({type: 'scatter', mode: 'lines', x: c.mean, y, legendgroup: 'col',
                  name: `collocated (${c.n_pairs} pairs)`, line: {color: PALETTE[0], width: 2},
@@ -456,8 +460,9 @@ async function drawMissions() {
     `profile paired with the COSMIC-2 profile nearest in 0.75 |dt| / ${res.max_hours} h + 0.25 d / ` +
     `${res.max_km} km within ${res.max_km} km and ${res.max_hours} h, each used once` +
     (c.n_pairs ? ` (median ${fmt(c.median_km, 0)} km and ${fmt(c.median_hours, 2)} h apart)` : '') +
-    '; line the mean, light shading ± 1 standard deviation (which includes the atmosphere\'s own ' +
-    'variability over that distance and time), dark shading the 95% confidence interval of the mean. ' +
+    '; each line is a mean and its shading the 95% confidence interval of that mean. The ± 1 standard ' +
+    'deviation of the pair differences (which includes the atmosphere\'s own variability over that ' +
+    'distance and time) shows when its legend entry is clicked. ' +
     (cor.n_pairs ? 'Minus ECMWF\'s difference: each pair\'s difference less the difference between the ' +
       'ECMWF profiles of its two occultations (echPrf), which removes the part of the mismatch in place ' +
       'and time that the model resolves (Gilpin et al. 2018, https://doi.org/10.5194/amt-11-2567-2018). '
