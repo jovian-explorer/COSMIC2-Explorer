@@ -56,6 +56,7 @@ except ImportError:
 REPO = "jovian-explorer/COSMIC2-Explorer"
 GITHUB_API = "https://api.github.com"
 RELEASES_PAGE = f"https://github.com/{REPO}/releases"
+CHANGELOG_URL = f"https://github.com/{REPO}/blob/main/CHANGELOG.md"
 NAME = "COSMIC2-Explorer"
 MARKER = "INSTALL_FOLDER.json"
 UPDATES_DIR = DATA_ROOT / "updates"
@@ -130,7 +131,8 @@ def installed_notes(tag: Optional[str] = None) -> Optional[Dict[str, Any]]:
     inst = load_state().get("installed") or {}
     if tag and inst.get("tag") == tag:
         return {"tag": inst.get("tag"), "name": inst.get("name"), "notes": inst.get("notes") or "",
-                "url": inst.get("url"), "previous": inst.get("previous")}
+                "url": inst.get("url"), "previous": inst.get("previous"),
+                "behind": inst.get("behind")}
     return None
 
 
@@ -249,6 +251,45 @@ def fetch_releases() -> List[Dict[str, Any]]:
     if not isinstance(data, list):
         raise RuntimeError("unexpected answer from the releases API")
     return data
+
+
+def fetch_tags(max_pages: int = 5) -> List[str]:
+    """The repository's tag names.  Releases older than the newest two are
+    deleted (release workflow) but their tags stay, so the tags tell how many
+    releases an installed build missed."""
+    names: List[str] = []
+    for page in range(1, max_pages + 1):
+        r = _session().get(f"{api_base()}/repos/{REPO}/tags", params={"per_page": 100, "page": page},
+                           headers=_api_headers(), timeout=min(SETTINGS.request_timeout_s, 30))
+        r.raise_for_status()
+        data = r.json()
+        if not isinstance(data, list) or not data:
+            break
+        names += [t["name"] for t in data if isinstance(t, dict) and isinstance(t.get("name"), str)]
+        if len(data) < 100:
+            break
+    return names
+
+
+def behind_info(old_tag: Optional[str], new_tag: str, releases: List[Dict[str, Any]],
+                tags: Optional[List[str]] = None) -> Dict[str, Any]:
+    """How many releases the installed build ``old_tag`` was behind
+    ``new_tag`` (the releases after it, up to and including the new one), and
+    where to read everything that changed: GitHub's comparison of the two tags
+    when both exist, otherwise the CHANGELOG.  Counted from the tags when they
+    are known (deleted releases keep theirs), else from the release list."""
+    def between(t: str) -> bool:
+        return is_newer(t, old_tag) and not is_newer(t, new_tag)
+    if tags is not None:
+        n = len({t for t in tags if between(t)})
+        known = old_tag in tags and new_tag in tags
+    else:
+        n = len({r.get("tag_name") for r in releases or []
+                 if isinstance(r, dict) and not r.get("draft") and between(r.get("tag_name", ""))})
+        known = False
+    return {"behind": max(n, 1), "from": old_tag, "to": new_tag,
+            "compare_url": f"https://github.com/{REPO}/compare/{old_tag}...{new_tag}" if known else None,
+            "changelog_url": CHANGELOG_URL}
 
 
 def pick_asset(release: Dict[str, Any], tag: Optional[str] = None) -> Optional[Dict[str, Any]]:
@@ -411,7 +452,8 @@ def check_and_stage(force: bool = False, releases: Optional[List[Dict[str, Any]]
         return {"result": "disabled", "reason": "checked less than a week ago"}
     root = install_root()
     assert root is not None
-    rel = newest_release(releases if releases is not None else fetch_releases())
+    listed = releases if releases is not None else fetch_releases()
+    rel = newest_release(listed)
     st = load_state()
     if rel is None:
         st["last_check"] = time.time()
@@ -455,11 +497,16 @@ def check_and_stage(force: bool = False, releases: Optional[List[Dict[str, Any]]
         shutil.rmtree(work, ignore_errors=True)
     finally:
         part.unlink(missing_ok=True)
+    try:
+        tags: Optional[List[str]] = fetch_tags()
+    except Exception:  # noqa: BLE001 - only the "releases behind" line depends on it
+        tags = None
+    behind = behind_info(this_tag(), tag, listed, tags)
     st["last_check"] = time.time()
     st["staged"] = {"tag": tag, "name": rel.get("name") or tag, "notes": rel.get("body") or "",
                     "url": rel.get("html_url"), "path": str(target), "sha256": sha,
                     "size": asset.get("size"), "asset": asset["name"], "staged_at": time.time(),
-                    "from": this_tag()}
+                    "from": this_tag(), "behind": behind}
     save_state(st)
     return {"result": "staged", "tag": tag}
 
@@ -517,7 +564,8 @@ def finish_install() -> None:
     if not staged or tag is None or staged.get("tag") != tag:
         return
     st["installed"] = {k: staged.get(k) for k in ("tag", "name", "notes", "url")}
-    st["installed"].update(installed_at=time.time(), previous=staged.get("from"))
+    st["installed"].update(installed_at=time.time(), previous=staged.get("from"),
+                           behind=staged.get("behind"))
     st.pop("staged", None)
     save_state(st)
     root = install_root()

@@ -91,6 +91,7 @@ class _Api:
     def __init__(self):
         self.files = {}
         self.releases = []
+        self.tags = None                # None: the tags endpoint answers 404
         self.requests = []
         api = self
 
@@ -100,6 +101,8 @@ class _Api:
                 path = self.path.split("?")[0]
                 if path == f"/repos/{au.REPO}/releases":
                     body, ctype = json.dumps(api.releases).encode(), "application/json"
+                elif path == f"/repos/{au.REPO}/tags" and api.tags is not None:
+                    body, ctype = json.dumps([{"name": t} for t in api.tags]).encode(), "application/json"
                 elif path in api.files:
                     body, ctype = api.files[path], "application/octet-stream"
                 else:
@@ -345,3 +348,45 @@ def test_the_newest_release_is_staged_not_the_next_one(fake):
     assert au.load_state()["staged"]["tag"] == "v0.0.1-build.5"
     # the newest is already staged: a second check changes nothing
     assert au.check_and_stage(force=True)["result"] == "already staged"
+
+
+def test_skipped_releases_are_counted_from_the_tags(fake, monkeypatch):
+    """Only the two newest releases are kept, but every tag stays: an update
+    from build.1 straight to build.5 was 4 releases behind, and the panel links
+    GitHub's comparison of the two tags."""
+    root, api = fake
+    api.release("v0.0.1-build.4", _zip_bytes(au.launcher(root).name))
+    api.release("v0.0.1-build.5", _zip_bytes(au.launcher(root).name))
+    api.tags = ["v0.0.1-build.5", "v0.0.1-build.4", "v0.0.1-build.3", "v0.0.1-build.2",
+                "v0.0.1-build.1", "v0.0.1", "not-a-release"]
+    assert au.check_and_stage(force=True)["result"] == "staged"
+    b = au.load_state()["staged"]["behind"]
+    assert b["behind"] == 4 and (b["from"], b["to"]) == ("v0.0.1-build.1", "v0.0.1-build.5")
+    assert b["compare_url"] == ("https://github.com/jovian-explorer/COSMIC2-Explorer/compare/"
+                                "v0.0.1-build.1...v0.0.1-build.5")
+    # carried into "What's new" by the new build's first start
+    root.rename(au.previous_dir(root)); au.staged_dir(root).rename(root)
+    monkeypatch.setitem(au.BUILD, "tag", "v0.0.1-build.5")
+    au.finish_install()
+    assert au.installed_notes()["behind"]["behind"] == 4
+
+
+def test_releases_behind_falls_back_to_the_changelog():
+    rels = [{"tag_name": "v0.0.1-build.7"}, {"tag_name": "v0.0.1-build.6"}, {"tag_name": "v0.0.1-build.8", "draft": True}]
+    # the installed tag is gone: count from the tags, link the CHANGELOG
+    b = au.behind_info("v0.0.1-build.2", "v0.0.1-build.7", rels, ["v0.0.1-build.7", "v0.0.1-build.5", "v0.0.1-build.3"])
+    assert b["behind"] == 3 and b["compare_url"] is None and b["changelog_url"].endswith("/CHANGELOG.md")
+    # no tags known (endpoint failed): count the listed releases, link the CHANGELOG
+    b = au.behind_info("v0.0.1-build.2", "v0.0.1-build.7", rels, None)
+    assert b["behind"] == 2 and b["compare_url"] is None
+    # the next release: one behind (the panel shows no extra line then)
+    assert au.behind_info("v0.0.1-build.6", "v0.0.1-build.7", rels, ["v0.0.1-build.6", "v0.0.1-build.7"])["behind"] == 1
+
+
+def test_tags_endpoint_failure_does_not_block_the_update(fake):
+    root, api = fake
+    api.release("v0.0.1-build.3", _zip_bytes(au.launcher(root).name))
+    assert api.tags is None
+    assert au.check_and_stage(force=True)["result"] == "staged"
+    b = au.load_state()["staged"]["behind"]
+    assert b["behind"] == 1 and b["compare_url"] is None

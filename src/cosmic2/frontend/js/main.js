@@ -219,7 +219,18 @@ async function showSettingsChanges() {
   body.append(el('p', {}, `This is COSMIC-2 Explorer ${name(r)}${prev && prev !== name(r) ? ` (before: ${prev})` : ''}. ` +
     'Your settings are kept as they were; check the ones listed below.'));
   if (r.whats_new) {
-    body.append(el('h3', {}, `What's new in ${r.whats_new.name || r.whats_new.tag}`), notesNode(r.whats_new.notes));
+    body.append(el('h3', {}, `What's new in ${r.whats_new.name || r.whats_new.tag}`));
+    const b = r.whats_new.behind;
+    if (b && b.behind > 1) {
+      // The notes below list only the newest release's changes.
+      body.append(el('p', {class: 'behind', id: 'whats-new-behind'},
+        `You were ${b.behind} releases behind (${b.from} to ${b.to}). `,
+        b.compare_url
+          ? el('a', {href: b.compare_url, target: '_blank', rel: 'noopener'}, 'Every change since your version, on GitHub')
+          : el('a', {href: b.changelog_url, target: '_blank', rel: 'noopener'}, 'All changes, in CHANGELOG.md'),
+        '. The notes below are those of the newest release.'));
+    }
+    body.append(notesNode(r.whats_new.notes));
     if (r.whats_new.url) body.append(el('p', {}, el('a', {href: r.whats_new.url, target: '_blank', rel: 'noopener'}, 'Release page')));
   }
   const rows = [];
