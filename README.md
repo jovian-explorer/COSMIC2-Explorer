@@ -26,9 +26,10 @@ The retrievals themselves (bending angle, refractivity, temperature, humidity, e
    It also maps any per-profile diagnostic (gravity-wave energy, tropopause height, foF2, ...) in latitude-longitude cells with its zonal mean; the gravity-wave energy can be recomputed for any layer with a polynomial or high-pass background.
    A table gives the WMO tropopause and the cold point by latitude band with 95 % confidence intervals, beside CDAAC's own values.
 6. **Comparison with weather models and error estimates**: each occultation against the ECMWF (echPrf) and NCEP (avnPrf) profiles CDAAC colocates with it, as RO minus model by height, and the three-cornered hat (Rieckh et al. 2021) for the refractivity error of RO, ECMWF and NCEP with bootstrap 95 % intervals.
-7. **Validation against radiosondes**: pairs each atmPrf or wetPf2 profile with the nearest NOAA IGRA v2 radiosonde within a chosen distance and time (300 km and 3 h by default) and shows the mean and spread of the differences in temperature, refractivity and specific humidity by geopotential height, with the list of pairs and an optional CSV. Station files are downloaded from NOAA NCEI on first use (no account) and cached.
-8. **Parallel Processing**: Composites, diagnostics tables, regridded exports and indexing run on a user-chosen number of CPU worker processes.
-9. **Exports**: Matplotlib figures (PNG at 300 dpi by default, PDF, SVG, EPS), regridded netCDF-4 with CF-style attributes and UDUNITS units, CSV tables and JSON. Data files carry their provenance (input files, software version, data citation); figure files do not.
+7. **Comparison with other missions**: COSMIC-2 against PAZ or KOMPSAT-5 (downloaded through their own streams), from collocated pairs and from the double difference through ECMWF, by height with 95 % intervals.
+8. **Validation against radiosondes**: pairs each atmPrf or wetPf2 profile with the nearest NOAA IGRA v2 radiosonde within a chosen distance and time (300 km and 3 h by default) and shows the mean and spread of the differences in temperature, refractivity and specific humidity by geopotential height, with the list of pairs and an optional CSV. Station files are downloaded from NOAA NCEI on first use (no account) and cached.
+9. **Parallel Processing**: Composites, diagnostics tables, regridded exports and indexing run on a user-chosen number of CPU worker processes.
+10. **Exports**: Matplotlib figures (PNG at 300 dpi by default, PDF, SVG, EPS), regridded netCDF-4 with CF-style attributes and UDUNITS units, CSV tables and JSON. Data files carry their provenance (input files, software version, data citation); figure files do not.
 
 ---
 

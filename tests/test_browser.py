@@ -59,6 +59,8 @@ def test_every_tab_and_main_action_without_script_errors(page):
     _press(page, "#btn-map")
     _press(page, "#btn-pairs")
     assert page.inner_text("#pp-count") == "2 pairs"
+    _press(page, "#btn-missions")
+    assert "No good wetPf2 profiles of PAZ" in page.inner_text("#ms-plot")
     _press(page, "#btn-tropopause")
     assert page.inner_text("#tp-count") == "2 profiles"
     assert page.query_selector_all("#tp-table tbody tr")

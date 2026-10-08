@@ -87,6 +87,7 @@ export const api = {
   productPairs:  (req)       => call('/api/compare/products', {method: 'POST', body: req}),
   compareModels: (req)       => call('/api/compare/models', {method: 'POST', body: req}),
   tropopause:    (req)       => call('/api/climatology/tropopause', {method: 'POST', body: req}),
+  compareMissions: (req)     => call('/api/compare/missions', {method: 'POST', body: req}),
 
   exportData:    (req)       => call('/api/export/data', {method: 'POST', body: req}),
   exportFigure:  (req)       => call('/api/export/figure', {method: 'POST', body: req}),

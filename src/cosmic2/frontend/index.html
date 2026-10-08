@@ -192,6 +192,7 @@
         <li><strong>atmPrf and wetPf2 of the same occultations:</strong> the difference between the observed (dry) retrieval and the 1D-Var moist retrieval made from it, occultation by occultation: refractivity, dry temperature and pressure, and how much colder the dry temperature is than the real one (the moisture effect), with spread and 95% confidence interval by height.</li>
         <li><strong>Tropopause and cold point by latitude:</strong> the WMO lapse-rate tropopause and the cold point in each latitude band, with the 95% confidence interval of the mean, beside CDAAC's own tropopause values.</li>
         <li><strong>Weather models at the same occultations:</strong> RO minus the ECMWF and NCEP profiles CDAAC colocates with each occultation (refractivity, temperature), and the three-cornered hat, which estimates the refractivity error of each of the three from the spread of their differences, with bootstrap 95% intervals.</li>
+        <li><strong>COSMIC-2 and other missions:</strong> COSMIC-2 against PAZ or KOMPSAT-5 (download them through their streams on the Get data tab), from collocated pairs and from the double difference through ECMWF, with 95% intervals.</li>
         <li><strong>Radiosonde comparison:</strong> each profile against the nearest NOAA IGRA v2 radiosonde within a distance and time window, as mean and spread of the temperature, refractivity and humidity differences by height.</li>
       </ul>
       <div class="step-actions">
@@ -937,6 +938,37 @@
       the error of each of the three from the variances of their differences.</p>
     <div id="nwp-plot" class="plot"></div>
     <p class="hint" id="nwp-caption"></p>
+  </div>
+  <div class="card">
+    <div class="card-head">
+      <h2>COSMIC-2 and other missions (PAZ, KOMPSAT-5)</h2>
+      <span class="pill" id="ms-count"></span>
+    </div>
+    <div class="row">
+      <label>Other mission
+        <select id="ms-other">
+          <option value="paz">PAZ</option>
+          <option value="kompsat5">KOMPSAT-5</option>
+        </select>
+      </label>
+      <label>Compare
+        <select id="ms-quantity">
+          <option value="temperature">temperature (wetPf2) [K]</option>
+          <option value="refractivity_1dvar">refractivity (wetPf2, 1D-Var) [%]</option>
+          <option value="refractivity">refractivity (atmPrf, observed) [%]</option>
+        </select>
+      </label>
+      <label>Within (km)<input type="number" id="ms-km" value="300" min="10" max="2000" step="10"></label>
+      <label>Within (h)<input type="number" id="ms-h" value="3" min="0.5" max="24" step="0.5"></label>
+      <label>Top (km)<input type="number" id="ms-top" value="30" min="1" max="60" step="1"></label>
+      <button class="primary" id="btn-missions">Compare</button>
+    </div>
+    <p class="hint">Download the other mission for the same days on the Get data tab
+      (streams "PAZ near-real-time" and "KOMPSAT-5 near-real-time"), with its echPrf
+      and COSMIC-2's for the comparison through ECMWF. The dates and filters of the
+      Explore search apply.</p>
+    <div id="ms-plot" class="plot"></div>
+    <p class="hint" id="ms-caption"></p>
   </div>
   <div class="card">
     <div class="card-head">

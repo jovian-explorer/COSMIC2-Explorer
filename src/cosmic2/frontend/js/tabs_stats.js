@@ -21,6 +21,8 @@ export function initStatsTab() {
   $('#btn-section').addEventListener('click', (e) =>
       withBusy(e.target, 'Averaging...', drawSection));
   initMapCard();
+  $('#btn-missions').addEventListener('click', (e) =>
+      withBusy(e.target, 'Comparing...', drawMissions));
   $('#btn-tropopause').addEventListener('click', (e) =>
       withBusy(e.target, 'Computing...', drawTropopause));
   $('#btn-nwp').addEventListener('click', (e) =>
@@ -386,6 +388,72 @@ async function drawPairs() {
     (res.relative ? 'Differences in percent of the wetPf2 value. ' : '') +
     `${PAIR_NOTES[res.quantity] || ''} Shading: ± 1 standard deviation and the 95% ` +
     'confidence interval of the mean (Student\'s t, occultations taken as independent).';
+}
+
+async function drawMissions() {
+  const req = Object.assign({
+    other: $('#ms-other').value,
+    quantity: $('#ms-quantity').value,
+    max_km: Number($('#ms-km').value) || 300,
+    max_hours: Number($('#ms-h').value) || 3,
+    top_km: Number($('#ms-top').value) || 30,
+  }, statsSelection(false));
+  if (req.search) {
+    req.search.good_only = true;
+    req.search.limit = req.max_profiles = 50000;
+  }
+  const res = await api.compareMissions(req);
+  const c = res.collocated || {};
+  const v = res.via_ecmwf || {};
+  const name = res.other_name;
+  $('#ms-count').textContent = `${c.n_pairs || 0} pairs`;
+  const product = res.quantity === 'refractivity' ? 'atmPrf' : 'wetPf2';
+  if (!res.n_other || !res.n_cosmic2) {
+    const who = [!res.n_cosmic2 && 'COSMIC-2', !res.n_other && name].filter(Boolean).join(' or ');
+    emptyPlot('ms-plot', `No good ${product} profiles of ${who} in the selection. Download ${product} ` +
+      'of both missions for the same days on the Get data tab.');
+    $('#ms-caption').textContent = '';
+    return;
+  }
+  const y = res.grid;
+  const traces = [];
+  if (c.n_pairs) {
+    const lo = c.mean.map((m, k) => (m === null || c.std[k] === null ? null : m - c.std[k]));
+    const hi = c.mean.map((m, k) => (m === null || c.std[k] === null ? null : m + c.std[k]));
+    traces.push(...bandTraces(lo, hi, y, hexToRgba(PALETTE[0], 0.12), null, 'col'));
+    traces.push(...bandTraces(c.ci95_lo, c.ci95_hi, y, hexToRgba(PALETTE[0], 0.40), null, 'col'));
+    traces.push({type: 'scatter', mode: 'lines', x: c.mean, y, legendgroup: 'col',
+                 name: `collocated (${c.n_pairs} pairs)`, line: {color: PALETTE[0], width: 2},
+                 text: c.n.map((n) => `n=${n}`),
+                 hovertemplate: '%{y} km: %{x:.3g} (%{text})<extra></extra>'});
+  }
+  if (v.available) {
+    traces.push(...bandTraces(v.ci95_lo, v.ci95_hi, y, hexToRgba(PALETTE[1], 0.30), null, 'via'));
+    traces.push({type: 'scatter', mode: 'lines', x: v.mean, y, legendgroup: 'via',
+                 name: `through ECMWF (${v.n_cosmic2} and ${v.n_other} profiles)`,
+                 line: {color: PALETTE[1], width: 2, dash: 'dash'},
+                 hovertemplate: '%{y} km: %{x:.3g}<extra></extra>'});
+  }
+  if (!traces.length) {
+    emptyPlot('ms-plot', `No COSMIC-2 profile lies within ${res.max_km} km and ${res.max_hours} h of a ` +
+      `${name} profile, and the ECMWF profiles (echPrf) of one of the missions are missing.`);
+    $('#ms-caption').textContent = '';
+    return;
+  }
+  Plotly.react('ms-plot', traces, axesLayout(`${res.label}: COSMIC-2 minus ${name} [${res.units}]`,
+    'Altitude above mean sea level [km]', {shapes: [{type: 'line', x0: 0, x1: 0, yref: 'paper',
+      y0: 0, y1: 1, line: {color: '#94a3b8', width: 1, dash: 'dot'}}]}), PLOT_CONFIG);
+  $('#ms-caption').textContent =
+    `${res.n_cosmic2} COSMIC-2 and ${res.n_other} ${name} profiles. Collocated: each ${name} ` +
+    `profile paired with the COSMIC-2 profile nearest in 0.75 |dt| / ${res.max_hours} h + 0.25 d / ` +
+    `${res.max_km} km within ${res.max_km} km and ${res.max_hours} h, each used once` +
+    (c.n_pairs ? ` (median ${fmt(c.median_km, 0)} km and ${fmt(c.median_hours, 2)} h apart)` : '') +
+    '; line the mean, light shading ± 1 standard deviation (which includes the atmosphere\'s own ' +
+    'variability over that distance and time), dark shading the 95% confidence interval of the mean. ' +
+    `Through ECMWF: mean(COSMIC-2 - ECMWF) - mean(${name} - ECMWF) over all profiles of each mission, ` +
+    'with the ECMWF profile CDAAC colocates with each one; it needs no collocation but the missions ' +
+    'sample different places and times. ' + (res.relative ? 'Differences in percent. ' : '') +
+    'Collocation weights after Rieckh et al. (2021), https://doi.org/10.1175/JTECH-D-20-0209.1';
 }
 
 /** "mean [lo, hi]" of one band statistic. */

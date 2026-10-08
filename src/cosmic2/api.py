@@ -841,6 +841,43 @@ def climatology_tropopause(req: TropopauseRequest) -> dict:
                                                min_count=req.min_count))
 
 
+class MissionCompareRequest(BaseModel):
+    granule_ids: list[str] | None = None
+    search: SearchRequest | None = None
+    other: Literal["paz", "kompsat5"] = "paz"
+    quantity: Literal["temperature", "refractivity_1dvar", "refractivity"] = "temperature"
+    max_km: float = Field(default=300.0, gt=0, le=2000)
+    max_hours: float = Field(default=3.0, gt=0, le=24)
+    bottom_km: float = Field(default=0.0, ge=0)
+    top_km: float = Field(default=30.0, gt=0, le=60)
+    step_km: float = Field(default=0.5, ge=0.1, le=5)
+    min_count: int = Field(default=3, ge=1)
+    max_profiles: int = Field(default=50000, ge=1)
+
+
+@app.post("/api/compare/missions")
+def compare_missions(req: MissionCompareRequest) -> dict:
+    """COSMIC-2 against PAZ or KOMPSAT-5: collocated pairs and the double
+    difference through ECMWF, by height.  The selection's dates (and other
+    filters) apply; the quantity decides the product."""
+    from . import missions
+    prod = missions.QUANTITIES[req.quantity][0]
+    if req.search is not None:
+        req.search.products = [prod]
+        req.search.sats = None
+    # an empty selection is an answer here (the card says which profiles are missing)
+    rows = _resolve_selection(req.granule_ids, req.search, req.max_profiles) or []
+    index = store.query_granules(products=[prod, "echPrf"], limit=10 ** 7)["granules"]
+    if req.top_km <= req.bottom_km:
+        raise HTTPException(422, "top_km must be above bottom_km")
+    out = missions.compare(rows, index, other=req.other, quantity=req.quantity,
+                           max_km=req.max_km, max_hours=req.max_hours, top_km=req.top_km,
+                           step_km=req.step_km, bottom_km=req.bottom_km,
+                           min_count=req.min_count)
+    out["selected"] = len(rows)
+    return _clean(out)
+
+
 @app.post("/api/climatology/section")
 def climatology_section(req: SectionRequest) -> dict:
     """Zonal-mean latitude-height section (mean, spread, count, and the

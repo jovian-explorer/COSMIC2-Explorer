@@ -40,6 +40,8 @@ MODELS = {"echPrf": "ECMWF", "avnPrf": "NCEP"}
 QUANTITIES = {
     "refractivity": ("atmPrf", "Ref", "Ref", True, "Refractivity, RO (atmPrf) minus model", "%"),
     "temperature": ("wetPf2", "Temp", "Temp", False, "Temperature, RO (wetPf2) minus model", "K"),
+    "refractivity_1dvar": ("wetPf2", "ref", "Ref", True,
+                           "Refractivity, RO (wetPf2 1D-Var) minus model", "%"),
     "bending_angle": ("atmPrf", "Bend_ang", "Bend_ang", True,
                       "Bending angle, RO (atmPrf) minus ECMWF", "%"),
 }
