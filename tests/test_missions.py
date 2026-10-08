@@ -48,7 +48,7 @@ def test_compare_aggregates_pairs_and_the_double_difference(monkeypatch):
     c2 = [_row("C2E1", 0.0, float(i), 0.0, f"c{i}") for i in range(4)]
     other = [_row("PAZ1", 0.0, float(i) + 0.5, 0.2, f"o{i}") for i in range(4)]
     vals = iter([0.1, 0.3, -0.1, 0.5])
-    monkeypatch.setattr(missions, "_pair_diff", lambda task: np.full(grid_n, next(vals)))
+    monkeypatch.setattr(missions, "_pair_diff", lambda task: (np.full(grid_n, next(vals)), None))
 
     def fake_model_differences(groups, q, **kw):
         sats = {next(iter(g.values()))["sat"] for g in groups}
@@ -88,7 +88,7 @@ def test_double_difference_uses_the_latitudes_both_missions_cover(monkeypatch):
     latitude), the collocated pairs are not affected."""
     c2 = [_row("C2E1", lat, 0.0, 0.0, f"c{lat}") for lat in (-40.0, 0.0, 40.0)]
     other = [_row("PAZ1", lat, 0.5, 0.2, f"o{lat}") for lat in (-80.0, -40.0, 10.0, 70.0)]
-    monkeypatch.setattr(missions, "_pair_diff", lambda task: np.zeros(61))
+    monkeypatch.setattr(missions, "_pair_diff", lambda task: (np.zeros(61), None))
     seen = []
 
     def fake_model_differences(groups, q, **kw):
@@ -101,3 +101,45 @@ def test_double_difference_uses_the_latitudes_both_missions_cover(monkeypatch):
     via = res["via_ecmwf"]
     assert via["lat_range"] == [-40.0, 40.0] and via["n_cosmic2"] == 3 and via["n_other"] == 2
     assert res["n_other"] == 4 and res["collocated"]["n_pairs"] == 1   # the pair at 40S
+
+
+def test_pair_difference_corrected_with_ecmwf(monkeypatch):
+    """Each pair's difference minus ECMWF's difference between its two
+    occultations (Gilpin et al. 2018): exact on made-up profiles, in K and
+    in percent, and left out when an echPrf is missing."""
+    from cosmic2 import readers
+
+    z = np.linspace(0.0, 30.0, 61)
+    temp = {"a": 1.0, "o": 0.2, "ea": 0.5, "eo": -0.1}            # offsets in K
+    ref = {"a": 1.02, "o": 1.00, "ea": 1.01, "eo": 0.99}         # factors
+
+    class G:
+        def __init__(self, key):
+            n = 300.0 * np.exp(-z / 7.0) * ref[key]
+            self.data = {"MSL_alt": z, "Temp": -50.0 + temp[key] + 0 * z, "ref": n, "Ref": n}
+    monkeypatch.setattr(readers, "load", lambda path, product: G(path))
+    grid = np.arange(0.0, 30.01, 0.5)
+    raw, cor = missions._pair_diff(({"path": "a"}, {"path": "o"}, "temperature", grid,
+                                    ({"path": "ea"}, {"path": "eo"})))
+    assert raw[10] == pytest.approx(0.8) and cor[10] == pytest.approx((1.0 - 0.5) - (0.2 + 0.1))
+    raw, cor = missions._pair_diff(({"path": "a"}, {"path": "o"}, "refractivity_1dvar", grid,
+                                    ({"path": "ea"}, {"path": "eo"})))
+    assert raw[10] == pytest.approx(2.0)
+    assert cor[10] == pytest.approx(100 * (1.02 / 1.01 - 1) - 100 * (1.00 / 0.99 - 1))
+    raw, cor = missions._pair_diff(({"path": "a"}, {"path": "o"}, "temperature", grid,
+                                    ({"path": "ea"}, None)))
+    assert raw[10] == pytest.approx(0.8) and cor is None
+
+
+def test_compare_reports_the_corrected_pairs(monkeypatch):
+    c2 = [_row("C2E1", 0.0, float(i), 0.0, f"c{i}") for i in range(3)]
+    other = [_row("PAZ1", 0.0, float(i) + 0.5, 0.2, f"o{i}") for i in range(3)]
+    out = iter([(np.full(61, 0.4), np.full(61, 0.1)), (np.full(61, 0.2), None),
+                (np.full(61, 0.6), np.full(61, 0.3))])
+    monkeypatch.setattr(missions, "_pair_diff", lambda task: next(out))
+    monkeypatch.setattr(nwp, "model_differences",
+                        lambda groups, q, **kw: {"models": {"echPrf": {"n_profiles": 0}}})
+    col = missions.compare(c2 + other, c2 + other, other="paz", min_count=2,
+                           workers=1)["collocated"]
+    assert col["n_pairs"] == 3 and col["mean"][10] == pytest.approx(0.4)
+    assert col["corrected"]["n_pairs"] == 2 and col["corrected"]["mean"][10] == pytest.approx(0.2)

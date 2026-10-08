@@ -45,6 +45,7 @@ VERIFIED = {
     "10.3390/rs12244099": "Ho",
     "10.1175/JTECH-D-20-0209.1": "Rieckh",
     "10.5194/amt-7-3947-2014": "Rieckh",
+    "10.5194/amt-11-2567-2018": "Gilpin",
 }
 
 FRONTEND = Path(__file__).resolve().parents[1] / "src" / "cosmic2" / "frontend"

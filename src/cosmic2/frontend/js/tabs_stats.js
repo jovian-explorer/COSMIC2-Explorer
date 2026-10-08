@@ -427,6 +427,14 @@ async function drawMissions() {
                  text: c.n.map((n) => `n=${n}`),
                  hovertemplate: '%{y} km: %{x:.3g} (%{text})<extra></extra>'});
   }
+  const cor = c.corrected || {};
+  if (cor.n_pairs) {
+    traces.push(...bandTraces(cor.ci95_lo, cor.ci95_hi, y, hexToRgba(PALETTE[2], 0.35), null, 'cor'));
+    traces.push({type: 'scatter', mode: 'lines', x: cor.mean, y, legendgroup: 'cor',
+                 name: `collocated, minus ECMWF's difference (${cor.n_pairs} pairs)`,
+                 line: {color: PALETTE[2], width: 2}, text: cor.n.map((n) => `n=${n}`),
+                 hovertemplate: '%{y} km: %{x:.3g} (%{text})<extra></extra>'});
+  }
   if (v.available) {
     traces.push(...bandTraces(v.ci95_lo, v.ci95_hi, y, hexToRgba(PALETTE[1], 0.30), null, 'via'));
     traces.push({type: 'scatter', mode: 'lines', x: v.mean, y, legendgroup: 'via',
@@ -450,6 +458,10 @@ async function drawMissions() {
     (c.n_pairs ? ` (median ${fmt(c.median_km, 0)} km and ${fmt(c.median_hours, 2)} h apart)` : '') +
     '; line the mean, light shading ± 1 standard deviation (which includes the atmosphere\'s own ' +
     'variability over that distance and time), dark shading the 95% confidence interval of the mean. ' +
+    (cor.n_pairs ? 'Minus ECMWF\'s difference: each pair\'s difference less the difference between the ' +
+      'ECMWF profiles of its two occultations (echPrf), which removes the part of the mismatch in place ' +
+      'and time that the model resolves (Gilpin et al. 2018, https://doi.org/10.5194/amt-11-2567-2018). '
+      : '') +
     `Through ECMWF: mean(COSMIC-2 - ECMWF) - mean(${name} - ECMWF) over the profiles of each mission ` +
     (v.lat_range ? `between ${latlon(v.lat_range[0], 'lat')} and ${latlon(v.lat_range[1], 'lat')}, the latitudes both cover ` +
       '(RO minus ECMWF changes with latitude, and COSMIC-2 reaches only about 45 degrees)' : '') +
