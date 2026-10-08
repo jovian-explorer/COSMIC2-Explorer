@@ -143,3 +143,20 @@ def test_compare_reports_the_corrected_pairs(monkeypatch):
                            workers=1)["collocated"]
     assert col["n_pairs"] == 3 and col["mean"][10] == pytest.approx(0.4)
     assert col["corrected"]["n_pairs"] == 2 and col["corrected"]["mean"][10] == pytest.approx(0.2)
+
+
+def test_statistics_say_which_missions_they_mix():
+    """The weather-model and tropopause answers count profiles per mission,
+    so their captions can say when PAZ or KOMPSAT-5 are mixed in."""
+    from cosmic2 import api
+    rows = [{"sat": "C2E1"}, {"sat": "C2E5"}, {"sat": "PAZ1"}, {"sat": "KOM5"}, {"sat": "LEO002"}]
+    assert api._missions_of(rows) == {"COSMIC-2": 2, "PAZ": 1, "KOMPSAT-5": 1}
+    urllib.request.urlopen(urllib.request.Request(
+        BASE + "/api/local/load-samples", data=b"{}", headers={"Content-Type": "application/json"}),
+        timeout=60).read()
+    for path, body in (("/api/climatology/tropopause", {"search": {"products": ["atmPrf"]}}),
+                       ("/api/compare/models", {"search": {"products": ["atmPrf"]}})):
+        req = urllib.request.Request(BASE + path, data=json.dumps(body).encode(),
+                                     headers={"Content-Type": "application/json"})
+        res = json.loads(urllib.request.urlopen(req, timeout=60).read())
+        assert res["missions"] == {"COSMIC-2": 2}, path

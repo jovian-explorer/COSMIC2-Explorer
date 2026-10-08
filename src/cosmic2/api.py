@@ -818,8 +818,21 @@ def compare_models(req: ModelCompareRequest) -> dict:
                                     step_km=req.step_km, bottom_km=req.bottom_km,
                                     min_count=req.min_count or 3)
     have = {p: sum(1 for g in groups if p in g) for p in ("atmPrf", "wetPf2", "echPrf", "avnPrf")}
-    out.update(kind=req.kind, selected=len(rows), occultations=len(groups), products_found=have)
+    out.update(kind=req.kind, selected=len(rows), occultations=len(groups), products_found=have,
+               missions=_missions_of(rows))
     return _clean(out)
+
+
+def _missions_of(rows) -> dict[str, int]:
+    """Profiles per mission ("COSMIC-2", "PAZ", "KOMPSAT-5"), so a caption can
+    say when a statistic mixes missions."""
+    from .missions import MISSION_NAMES, mission_of_sat
+    out: dict[str, int] = {}
+    for r in rows:
+        name = MISSION_NAMES.get(mission_of_sat(r.get("sat")) or "")
+        if name:
+            out[name] = out.get(name, 0) + 1
+    return out
 
 
 class TropopauseRequest(BaseModel):
@@ -837,8 +850,10 @@ def climatology_tropopause(req: TropopauseRequest) -> dict:
     rows = _resolve_selection(req.granule_ids, req.search, req.max_profiles)
     if not rows:
         raise HTTPException(400, "No local profiles match that selection")
-    return _clean(climatology.tropopause_table(rows, lat_step=req.lat_step,
-                                               min_count=req.min_count))
+    out = climatology.tropopause_table(rows, lat_step=req.lat_step, min_count=req.min_count)
+    out["missions"] = _missions_of([r for r in rows if r.get("good", True)
+                                    and r.get("product") in ("atmPrf", "wetPf2")])
+    return _clean(out)
 
 
 class MissionCompareRequest(BaseModel):

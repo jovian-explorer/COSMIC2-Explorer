@@ -48,6 +48,14 @@ export function statsSelection(selectedOnly) {
 
 function pct(v) { return v === null || v === undefined ? '-' : `${fixed(100 * v, 1)} %`; }
 
+/** A caption sentence when a statistic mixes missions (PAZ or KOMPSAT-5
+ *  downloaded for the mission comparison count everywhere else too). */
+function missionNote(missions) {
+  const parts = Object.entries(missions || {}).map(([name, n]) => `${n} ${name}`);
+  return parts.length > 1 ? `Selected: ${parts.join(' and ')} profiles; the Explore satellite ` +
+    'filter can keep one mission. ' : '';
+}
+
 /** Plotly layout with titled axes, in the app's theme. */
 export function axesLayout(xTitle, yTitle, extra = {}) {
   const base = layoutBase();
@@ -534,7 +542,8 @@ async function drawTropopause() {
   const archive = res.bands.some((b) => b.archive);
   $('#tp-table').classList.toggle('no-cdaac', !archive);
   $('#tp-caption').textContent =
-    `${res.n_profiles} good ${res.products.join(' and ')} profiles. Mean and, in brackets, the ` +
+    `${res.n_profiles} good ${res.products.join(' and ')} profiles. ${missionNote(res.missions)}` +
+    'Mean and, in brackets, the ' +
     '95% confidence interval of the mean (Student\'s t, profiles taken as independent); bands ' +
     `with fewer than ${res.min_count} values are left blank. WMO tropopause: the lowest level above ` +
     '500 hPa where the lapse rate falls to 2 K/km or less and its mean to every level within the ' +
@@ -601,7 +610,8 @@ async function drawModels() {
       'Altitude above mean sea level [km]'), PLOT_CONFIG);
     $('#nwp-caption').textContent =
       `${res.n_triplets} occultations with RO (atmPrf), ECMWF (echPrf) and NCEP (avnPrf) ` +
-      'refractivity, in percent of the mean of the three. Each error variance is ' +
+      'refractivity. ' + missionNote(res.missions) + 'Values in percent of the mean of the three. ' +
+      'Each error variance is ' +
       '(var(X - Y) + var(X - Z) - var(Y - Z)) / 2 (the three-cornered hat); the line is its square ' +
       `root, the shading the 95% interval from ${res.n_boot} bootstrap resamples of the ` +
       'occultations. It assumes independent errors: both models assimilate COSMIC-2, which ' +
@@ -637,6 +647,7 @@ async function drawModels() {
     res.vertical_label || 'Altitude above mean sea level [km]', {shapes: [zline]}), PLOT_CONFIG);
   $('#nwp-caption').textContent =
     `${res.n_profiles} occultations of ${res.selected} selected profiles have model profiles. ` +
+    missionNote(res.missions) +
     (res.relative ? 'Differences in percent of the model value. ' : '') +
     'Line: mean; light shading ± 1 standard deviation; dark shading the 95% confidence ' +
     'interval of the mean (Student\'s t, occultations taken as independent). The model ' +
