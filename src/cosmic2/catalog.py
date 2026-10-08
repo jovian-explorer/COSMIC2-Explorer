@@ -210,7 +210,10 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         "ECMWF temperature, pressure, water vapour pressure, refractivity and "
         "simulated bending angle colocated with one occultation along its path "
         "(about 135 levels); the files name the ECMWF fields used. Named like the "
-        "atmPrf of that occultation, so the two pair exactly.",
+        "atmPrf of that occultation, so the two pair exactly. It is also the first "
+        "guess of that occultation's wetPf2 1D-Var (the wetPf2 attribute fgsPrf names "
+        "it), and it carries the model profile's ducting diagnostics (ductid, zsr, "
+        "dzsr, dndz, dzbot).",
         "What the European weather model said the atmosphere was at the same place and time.",
         "small",
         ("Temp", "Pres", "Vp", "Ref", "Bend_ang", "MSL_alt"),
