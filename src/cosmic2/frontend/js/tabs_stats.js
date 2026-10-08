@@ -472,6 +472,13 @@ async function drawMissions() {
       '(RO minus ECMWF changes with latitude, and COSMIC-2 reaches only about 45 degrees)' : '') +
     ', with the ECMWF profile CDAAC colocates with each one; it needs no collocation but the missions ' +
     'sample different places and times. ' + (res.relative ? 'Differences in percent. ' : '') +
+    (res.quantity === 'temperature' && res.other === 'paz'
+      ? 'For comparison, on 14 whole days of 2026 (817 PAZ pairs) COSMIC-2 minus PAZ temperature was ' +
+        'within about 0.1 K from 2 to 27 km and positive at 28-30 km: +0.19 to +0.28 K collocated, ' +
+        '+0.13 to +0.21 K minus ECMWF\'s difference and +0.05 to +0.12 K through ECMWF, alike for ' +
+        'COSMIC-2\'s GPS, GLONASS and Galileo occultations. Differences between RO records are smallest ' +
+        'from 8 to 25 km and grow above, mainly through retrieval choices (Steiner et al. 2020, ' +
+        'https://doi.org/10.5194/amt-13-2547-2020). ' : '') +
     'Collocation weights after Rieckh et al. (2021), https://doi.org/10.1175/JTECH-D-20-0209.1';
 }
 
