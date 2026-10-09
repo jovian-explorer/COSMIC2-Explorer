@@ -430,7 +430,13 @@ def compare(rows: Sequence[dict], max_km: float = 300.0, max_hours: float = 3.0,
             download: bool = True, max_stations: int = 200) -> dict:
     """Colocate occultations with IGRA soundings and summarise the
     differences (occultation minus sonde) by height.  See the module
-    docstring for the method."""
+    docstring for the method.
+
+    Station files are read (and fetched once) for at most ``max_stations``
+    stations, those with the most occultations within reach: a period-of-
+    record file of an earlier year is often tens of MB.  ``stations_available``
+    says how many were within reach.
+    """
     from .analysis import make_grid
     rows = [r for r in rows if r.get("lat") is not None and r.get("lon") is not None
             and r.get("time_utc")]
@@ -530,6 +536,9 @@ def compare(rows: Sequence[dict], max_km: float = 300.0, max_hours: float = 3.0,
     return {"n_occultations": len(rows), "n_pairs": len(pairs), "pairs": pairs,
             "stations_with_data": fetched, "stations_without_data": missing,
             "stations_considered": len(ordered),
+            # stations within reach of an occultation; only the max_stations
+            # with the most occultations nearby are read
+            "stations_available": len(need), "max_stations": max_stations,
             "max_km": max_km, "max_hours": max_hours,
             "bin_edges_km": edges.tolist(), "bin_centres_km": centres.tolist(),
             "stats": stats, "pbl": pbl_summary(pairs)}

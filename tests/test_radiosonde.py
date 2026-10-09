@@ -162,6 +162,33 @@ def test_boundary_layer_tops_of_an_atmprf_and_its_own_sonde_agree(monkeypatch):
     assert pbl["mean_diff_km"] == pytest.approx(0.0, abs=1e-6)
     assert pbl["within_0p5_km_pct"] == 100.0 and pbl["r"] is None
 
+
+def test_station_limit_is_reported(monkeypatch):
+    """Only the max_stations stations with the most occultations nearby are
+    read; the result says how many were within reach, so a capped comparison
+    is not mistaken for all there was (5000 atmPrf of May-June 2026: 487
+    stations within reach, 200 read, 297 pairs instead of 391)."""
+    row = {"id": "x", "path": "unused", "product": "atmPrf", "file_name": "x",
+           "time_utc": "2026-06-05T12:00:00Z", "lat": 10.0, "lon": 20.0, "good": True}
+    lst = [{"id": f"TEST000000{k}", "lat": 10.0 + 0.5 * k, "lon": 20.0, "elev_m": 0,
+            "name": "SYNTHETIC", "first_year": 2000, "last_year": 2100} for k in range(3)]
+    asked = []
+    monkeypatch.setattr(radiosonde, "station_list", lambda download=True: lst)
+    monkeypatch.setattr(radiosonde, "soundings_near",
+                        lambda sid, times, h, download=True: asked.append(sid) or [])
+    res = radiosonde.compare([row], max_km=300, max_hours=3, max_stations=2)
+    assert (res["stations_available"], res["stations_considered"], len(asked)) == (3, 2, 2)
+    asked.clear()
+    res = radiosonde.compare([row], max_km=300, max_hours=3, max_stations=5)
+    assert (res["stations_available"], res["stations_considered"], len(asked)) == (3, 3, 3)
+    for bad in (0, 2001):
+        body = json.dumps({"search": {}, "download": False, "max_stations": bad}).encode()
+        req = urllib.request.Request(BASE + "/api/validation/radiosonde", data=body,
+                                     headers={"Content-Type": "application/json"})
+        with pytest.raises(urllib.error.HTTPError) as err:
+            urllib.request.urlopen(req, timeout=60)
+        assert err.value.code == 422
+
 def test_endpoint_without_downloads_reports_the_missing_station_list():
     urllib.request.urlopen(urllib.request.Request(
         BASE + "/api/local/load-samples", data=b"{}",

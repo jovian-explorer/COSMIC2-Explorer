@@ -750,6 +750,7 @@ async function drawRadiosonde() {
   const req = Object.assign({
     max_km: Number($('#rs-km').value) || 300,
     max_hours: Number($('#rs-h').value) || 3,
+    max_stations: Math.min(2000, Math.max(1, Math.round(Number($('#rs-st').value) || 200))),
     bin_km: Number($('#rs-bin').value) || 1,
     export_csv: $('#rs-csv').checked,
   }, statsSelection($('#rs-selected-only').checked));
@@ -807,7 +808,12 @@ async function drawRadiosonde() {
   const notes = [`${res.n_pairs} of ${res.n_occultations} occultations (${res.products.join(', ')}) ` +
                  `have a radiosonde within ${res.max_km} km and ${res.max_hours} h ` +
                  `(${res.stations_with_data} of ${res.stations_considered} nearby stations had ` +
-                 `soundings then).`,
+                 `soundings then).` +
+                 (res.stations_available > res.stations_considered
+                   ? ` ${res.stations_available} stations were within reach; only the ` +
+                     `${res.stations_considered} with the most occultations nearby were read ` +
+                     '(raise Stations (max) to use more; each new station is downloaded once).'
+                   : ''),
                  'Shading: ± 1 standard deviation of the differences; each pair counts ' +
                  'once per height bin.'];
   if (res.products.includes('atmPrf')) {

@@ -966,6 +966,9 @@ class RadiosondeRequest(BaseModel):
     max_hours: float = Field(default=3.0, gt=0, le=24)
     top_km: float = Field(default=30.0, gt=1, le=40)
     bin_km: float = Field(default=1.0, gt=0.1, le=10)
+    # station files are read (and fetched once) for at most this many
+    # stations, those with the most occultations nearby
+    max_stations: int = Field(default=200, ge=1, le=2000)
     download: bool = True
     export_csv: bool = False
     max_profiles: int = Field(default=5000, ge=1)
@@ -984,7 +987,8 @@ def validation_radiosonde(req: RadiosondeRequest) -> dict:
         raise HTTPException(400, "No good atmPrf or wetPf2 profiles in that selection")
     try:
         res = radiosonde.compare(rows, req.max_km, req.max_hours, req.top_km,
-                                 bin_km=req.bin_km, download=req.download)
+                                 bin_km=req.bin_km, download=req.download,
+                                 max_stations=req.max_stations)
     except RuntimeError as exc:
         raise HTTPException(502, str(exc)) from exc
     res["products"] = sorted({r["product"] for r in rows})
