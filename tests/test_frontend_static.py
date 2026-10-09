@@ -196,3 +196,35 @@ def test_satellite_filter_offers_cosmic2_as_a_whole():
     assert [o["value"] for o in alone] == ["", "C2E1", "C2E2"]
     # a multi-satellite value reaches the search as a list
     assert "sats: sat ? sat.split(',') : null" in _read(FRONTEND / "js" / "tabs_data.js")
+
+
+def test_map_shows_the_poles_when_profiles_are_there():
+    """The latitude-longitude map was fixed at 60 S - 60 N, which suits
+    COSMIC-2 but hid every PAZ or KOMPSAT-5 cell nearer the poles (131 of
+    433 PAZ atmPrf profiles of two days lie poleward of 60 degrees)."""
+    import json
+    import shutil
+    import subprocess
+    import pytest
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("Node.js not installed")
+    url = (FRONTEND / "js" / "tabs_stats.js").resolve().as_uri()
+    code = (f"import {{mapLatitudeLimit}} from '{url}';"
+            "const e10 = Array.from({length: 19}, (_, i) => -90 + 10 * i);"
+            "const n10 = (lats) => e10.slice(0, -1).map((lo) => lats.some((x) => x >= lo && x < lo + 10) ? 3 : 0);"
+            "const e20 = [-90, -70, -50, -30, -10, 10, 30, 50, 70, 90];"
+            "console.log(JSON.stringify(["
+            " mapLatitudeLimit({lat_edges: e10, zonal: {n: n10([-44, 0, 45])}}),"
+            " mapLatitudeLimit({lat_edges: e10, zonal: {n: n10([-44, 0, 75])}}),"
+            " mapLatitudeLimit({lat_edges: e20, zonal: {n: [0, 2, 5, 5, 5, 5, 5, 0, 0]}}),"
+            " mapLatitudeLimit({lat_edges: e10, zonal: {n: n10([])}})]))")
+    out = subprocess.run([node, "--input-type=module", "-e", code],
+                         capture_output=True, text=True, timeout=60)
+    if out.returncode != 0 and "Cannot use import statement" in out.stderr:
+        pytest.skip("this Node cannot load ES modules from a .js file")
+    assert out.returncode == 0, out.stderr
+    # COSMIC-2 only; a PAZ profile at 75 N; a 20-degree band from 70 S to
+    # 50 S with profiles (its cells reach past 60 S); nothing at all
+    assert json.loads(out.stdout) == [60, 90, 90, 60]
+    assert "range: [-ylim, ylim]" in _read(FRONTEND / "js" / "tabs_stats.js")

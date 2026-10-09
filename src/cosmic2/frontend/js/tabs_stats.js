@@ -269,6 +269,16 @@ function initMapCard() {
       withBusy(e.target, 'Computing...', drawMap));
 }
 
+// COSMIC-2 stays within about 45 degrees, but PAZ and KOMPSAT-5 reach the
+// poles: the map opens out to them as soon as a band beyond 60 degrees has
+// profiles, rather than cutting those cells off.
+export function mapLatitudeLimit(res) {
+  const e = res.lat_edges || [];
+  const n = (res.zonal && res.zonal.n) || [];
+  return n.some((k, i) => k > 0 && Math.max(Math.abs(e[i]), Math.abs(e[i + 1])) > 60)
+    ? 90 : 60;
+}
+
 async function drawMap() {
   const column = $('#m-col').value;
   const req = Object.assign({
@@ -300,6 +310,7 @@ async function drawMap() {
     return;
   }
   const base = layoutBase();
+  const ylim = mapLatitudeLimit(res);
   Plotly.react('mapgrid-plot', [
     {type: 'heatmap', x: res.lon_centres, y: res.lat_centres, z: res.mean,
      colorscale: 'Viridis', hoverongaps: false, customdata: res.count,
@@ -311,7 +322,7 @@ async function drawMap() {
     xaxis: Object.assign(base.xaxis, {title: {text: 'Longitude [°E]'},
                                       range: [-180, 180], dtick: 60}),
     yaxis: Object.assign(base.yaxis, {title: {text: 'Latitude [°N]'},
-                                      range: [-60, 60], dtick: 15}),
+                                      range: [-ylim, ylim], dtick: ylim > 60 ? 30 : 15}),
   }), PLOT_CONFIG);
   const z = res.zonal;
   Plotly.react('zonal-plot', [
