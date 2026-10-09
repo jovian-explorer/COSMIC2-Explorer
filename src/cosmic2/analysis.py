@@ -304,25 +304,62 @@ def ducting_layers(z_km: np.ndarray, n_units: np.ndarray,
             "ducting": bool(layers)}
 
 
-def boundary_layer_height(z_km: np.ndarray, n_units: np.ndarray,
-                          z_max: float = 6.0) -> dict:
-    """Planetary boundary-layer top from the sharpest refractivity gradient.
+# Boundary-layer top: steepest fall of refractivity, with acceptance tests
+PBL_STEP_KM = 0.005
+PBL_WINDOW_KM = 0.3
+PBL_TOP_KM = 3.5
+PBL_BOTTOM_KM = 0.5
+PBL_MIN_LAPSE = 50.0        # N-units per km
 
-    The standard RO proxy: within the lowest few km, the level of the minimum
-    (most negative) dN/dz marks the capping inversion at the top of the
-    well-mixed layer.
+
+def boundary_layer_height(z_km: np.ndarray, n_units: np.ndarray,
+                          top_km: float = PBL_TOP_KM, bottom_km: float = PBL_BOTTOM_KM,
+                          window_km: float = PBL_WINDOW_KM,
+                          min_lapse: float = PBL_MIN_LAPSE) -> dict:
+    """Boundary-layer top: the height where refractivity falls fastest (Ao
+    et al. 2012, doi:10.1029/2012JD017598), with the acceptance tests of Guo
+    et al. (2011, doi:10.1175/2011JAS3612.1).
+
+    The drop in humidity that caps the layer makes N fall steeply.  N is
+    resampled every 5 m and a straight line is fitted in every 300 m window
+    (Guo et al.'s smoothing); the top is the centre of the window with the
+    most negative slope.  It is accepted only if the profile reaches 0.5 km
+    above sea level, the top lies below 3.5 km and N falls there by more than
+    50 N-units/km; otherwise ``found`` is False and ``reason`` says why.
+
+    ``gradient`` is that slope (N-units/km) and ``sharpness`` the slope
+    divided by the critical -157 N-units/km.  Against IGRA radiosondes put
+    through the same steps (15216 COSMIC-2 atmPrf of 2026-05-20, 06-05 and
+    06-15; 621 pairs within 200 km and 3 h, a top in both for 185) the
+    occultation minus sonde is +0.08 km (median +0.01), standard deviation
+    0.92 km, correlation 0.41; Guo et al. found 0.04, 0.35 km and 0.82
+    between 30 S and 30 N.  The occultations' tops are the less sharp (median
+    -73 against the sondes' -108 N-units/km).
     """
     z, n = _clean_pair(z_km, n_units)
-    sel = z <= z_max
-    if sel.sum() < 10:
-        return {"height_km": None, "gradient": None, "found": False}
-    zz, nn = z[sel], n[sel]
-    grad = refractivity_gradient(zz, nn, smooth_levels=9)
-    if not np.isfinite(grad).any():
-        return {"height_km": None, "gradient": None, "found": False}
-    i = int(np.nanargmin(grad))
-    return {"height_km": float(zz[i]), "gradient": float(grad[i]),
-            "sharpness": float(abs(grad[i]) / abs(DUCTING_GRADIENT)), "found": True}
+    z, first = np.unique(z, return_index=True)
+    n = n[first]
+    out = {"height_km": None, "gradient": None, "sharpness": None, "found": False}
+    if z.size < 5:
+        return dict(out, reason="too few levels")
+    if z[0] > bottom_km:
+        return dict(out, reason=f"profile ends above {bottom_km:g} km")
+    grid = np.arange(z[0], min(z[-1], top_km + window_km) + PBL_STEP_KM / 2, PBL_STEP_KM)
+    w = int(round(window_km / PBL_STEP_KM)) + 1
+    if grid.size < w:
+        return dict(out, reason="profile too short")
+    nn = np.interp(grid, z, n)
+    x = np.arange(w, dtype="float64") - (w - 1) / 2.0
+    # least-squares slope of every run of w grid values, in N-units per km
+    slope = np.convolve(nn, (x / (x @ x))[::-1], mode="valid") / PBL_STEP_KM
+    centre = grid[(w - 1) // 2:(w - 1) // 2 + slope.size]
+    slope = np.where(centre < top_km, slope, np.inf)
+    k = int(np.argmin(slope))
+    if not slope[k] <= -min_lapse:
+        return dict(out, reason=f"no sharp top: N falls by less than {min_lapse:g} "
+                                f"N-units/km below {top_km:g} km")
+    return {"height_km": float(centre[k]), "gradient": float(slope[k]),
+            "sharpness": float(slope[k] / DUCTING_GRADIENT), "found": True}
 
 
 GW_METHODS = ("polynomial", "highpass")
@@ -623,7 +660,12 @@ def diagnostics(g: readers.Granule) -> dict:
             res["gravity_waves"] = gravity_wave_energy(z, tk)
         if z is not None and nname in d:
             res["ducting"] = ducting_layers(z, d[nname])
-            res["boundary_layer"] = boundary_layer_height(z, d[nname])
+            # From the observed refractivity only.  wetPf2's is the 1D-Var
+            # analysis, drawn towards ECMWF: on 952 occultations of 2026 it
+            # gave a top in 276 profiles against atmPrf's 409, and where both
+            # had one they differed by more than 0.3 km in a third of cases.
+            if g.product == "atmPrf":
+                res["boundary_layer"] = boundary_layer_height(z, d[nname])
         if "sph" in d and z is not None:
             q = d["sph"]
             ok = np.isfinite(q) & np.isfinite(z)

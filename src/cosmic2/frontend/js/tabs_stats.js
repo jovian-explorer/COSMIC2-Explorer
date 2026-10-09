@@ -297,7 +297,8 @@ async function drawMap() {
     // Each diagnostic belongs to one family of products.
     const family = column.startsWith('ionosphere.') ? ['ionPrf']
                  : column.startsWith('scintillation.') ? ['scnLv2']
-                 : column.startsWith('insitu.') ? ['ivmL2m'] : ['atmPrf', 'wetPf2'];
+                 : column.startsWith('insitu.') ? ['ivmL2m']
+                 : column.startsWith('boundary_layer.') ? ['atmPrf'] : ['atmPrf', 'wetPf2'];
     const wanted = (req.search.products || []).filter((p) => family.includes(p));
     req.search.products = wanted.length ? wanted : [family[0]];
   }

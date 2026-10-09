@@ -319,3 +319,47 @@ def test_refractivity_is_interpolated_in_log_space():
     for name in ("Ref", "ref"):
         got = interp_field(z, n, grid, name)
         assert np.nanmax(np.abs(got / truth - 1)) < 1e-9
+
+
+def _pbl_profile(knots_z, knots_n, step=0.01):
+    z = np.arange(knots_z[0], knots_z[-1] + step / 2, step)
+    return z, np.interp(z, knots_z, knots_n)
+
+
+def test_boundary_layer_top_is_the_steepest_fall_of_refractivity():
+    """Ao et al. (2012): where N falls fastest, from 300 m straight-line fits
+    (Guo et al. 2011); accepted only for a profile reaching 0.5 km, a top
+    below 3.5 km and a fall steeper than 50 N-units/km."""
+    # mixed layer -20 N/km, capping layer 1.2-1.5 km at -100, free
+    # troposphere -35 above
+    knots_z, knots_n = [0.0, 1.2, 1.5, 6.0], [320.0, 296.0, 266.0, 108.5]
+    r = analysis.boundary_layer_height(*_pbl_profile(knots_z, knots_n))
+    assert r["found"] and r["height_km"] == pytest.approx(1.35, abs=0.006)
+    assert r["gradient"] == pytest.approx(-100.0, abs=0.5)
+    assert r["sharpness"] == pytest.approx(100.0 / 157.0, abs=0.01)
+    # a radiosonde reporting only five levels gives the same top
+    sparse = analysis.boundary_layer_height(np.array([0.0, 1.2, 1.5, 3.0, 6.0]),
+                                            np.array([320.0, 296.0, 266.0, 213.5, 108.5]))
+    assert sparse["found"] and sparse["height_km"] == pytest.approx(1.35, abs=0.006)
+    # a profile that stops above 0.5 km is not used
+    z, n = _pbl_profile(knots_z, knots_n)
+    r = analysis.boundary_layer_height(z[z >= 0.8], n[z >= 0.8])
+    assert not r["found"] and "0.5 km" in r["reason"]
+    # a weak top (-45 N/km) is not a boundary-layer top
+    r = analysis.boundary_layer_height(*_pbl_profile(knots_z, [320.0, 296.0, 282.5, 125.0]))
+    assert not r["found"] and r["height_km"] is None and "sharp" in r["reason"]
+    # nor is a sharp layer above 3.5 km
+    r = analysis.boundary_layer_height(*_pbl_profile([0.0, 3.7, 4.0, 6.0],
+                                                     [320.0, 190.5, 160.5, 90.5]))
+    assert not r["found"]
+
+
+def test_boundary_layer_top_only_from_observed_refractivity():
+    """wetPf2's refractivity is the 1D-Var analysis: no boundary-layer top."""
+    seen = set()
+    for p in sorted(sampledata_dir().glob("*_nc")):
+        if p.name.startswith(("atmPrf_", "wetPf2_")):
+            g = readers.load(str(p))
+            seen.add(g.product)
+            assert ("boundary_layer" in analysis.diagnostics(g)) == (g.product == "atmPrf")
+    assert seen == {"atmPrf", "wetPf2"}
