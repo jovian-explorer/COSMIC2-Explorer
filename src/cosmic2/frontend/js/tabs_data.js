@@ -275,8 +275,8 @@ const OTHER_MISSIONS = {PAZ1: 'PAZ', KOM5: 'KOMPSAT-5'};
 /** Satellite filter choices: once another mission's files are on disk,
  *  COSMIC-2 as a whole too, so every statistic can leave the other mission
  *  out (a value lists satellites separated by commas).  COSMIC-2 files name
- *  their satellite C2E1-C2E6, its scintillation files (scnLv2) LEO and a
- *  number. */
+ *  their satellite C2E1-C2E6; scintillation files indexed by an earlier
+ *  version are still listed as LEO001-LEO006 until the index is rebuilt. */
 export function satelliteChoices(sats) {
   const c2 = sats.filter((s) => s.startsWith('C2E') || s.startsWith('LEO'));
   const out = [{value: '', label: 'any'}];

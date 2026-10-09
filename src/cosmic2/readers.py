@@ -97,7 +97,10 @@ def parse_filename(path: str) -> dict:
         if not mm:
             continue
         g = mm.groupdict()
-        out["sat"] = g.get("sat") or (f"LEO{g['leo']}" if g.get("leo") else "")
+        # scnLv2 names the satellite by number: LEO 001-006 are COSMIC-2
+        # FM1-6, the C2E1-C2E6 of every other product (each matched to the
+        # ionPrf of the same occultation, tangent points 8 km apart)
+        out["sat"] = g.get("sat") or (f"C2E{int(g['leo'])}" if g.get("leo") else "")
         out["prn"] = g.get("prn", "")
         out["antenna"] = g.get("ant", "")
         out["nominal_year"] = int(g["year"])
@@ -583,7 +586,10 @@ def _read_scnlv2(path: str) -> Granule:
         ref_sat=_to_str(attrs.get("refsatId", "")),
     )
     if not meta["sat"]:
-        meta["sat"] = f"LEO{_to_str(attrs.get('leoId',''))}"
+        try:
+            meta["sat"] = f"C2E{int(float(scrub(attrs.get('leoId'))))}"
+        except (TypeError, ValueError):
+            meta["sat"] = ""
     s4 = attrs.get("s4max_L1")
     meta["good"] = bool(s4 is not None and np.isfinite(s4) and s4 >= 0)
     meta["bad_code"] = "0" if meta["good"] else "1"

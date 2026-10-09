@@ -52,7 +52,9 @@ QUANTITIES = {
 
 def mission_of_sat(sat: str | None) -> str | None:
     s = (sat or "").upper()
-    if s.startswith("C2E"):
+    # LEO001-LEO006: COSMIC-2 scintillation files indexed before they were
+    # named C2E1-C2E6
+    if s.startswith("C2E") or s.startswith("LEO"):
         return "cosmic2"
     for mission, sats in MISSION_SATS.items():
         if s in sats:

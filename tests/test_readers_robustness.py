@@ -191,3 +191,17 @@ def test_s4_descriptions_match_the_files_and_the_classes():
         encoding="utf-8")
     assert "below 0.2 quiet, ' +\n   '0.2-0.4 moderate, 0.4-0.7 strong and 0.7 or more severe" in js
     assert "0.4-0.7 strong and 0.7 or more severe" in vocab.VAR_INFO["s4_L1"]["plain"]
+
+
+def test_scintillation_files_name_their_satellite_like_the_others():
+    """scnLv2 named its satellite LEO002 where atmPrf, wetPf2 and ionPrf say
+    C2E2: LEO 001-006 are COSMIC-2 FM1-6 (on 2025-12-21 and 2026-06-19 every
+    scnLv2 of LEO n matched an ionPrf of C2E n, tangent points 8 km apart)."""
+    from cosmic2 import missions
+    got = {}
+    for p in sorted(sampledata_dir().glob("scnLv2_*")):
+        g = readers.load(str(p))
+        got[p.name[:22]] = (g.meta["sat"], readers.parse_filename(str(p))["sat"])
+        assert missions.mission_of_sat(g.meta["sat"]) == "cosmic2"
+    assert got == {"scnLv2_2026.200.002.01": ("C2E2", "C2E2"),
+                   "scnLv2_2026.200.006.01": ("C2E6", "C2E6")}

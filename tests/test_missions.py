@@ -149,8 +149,10 @@ def test_statistics_say_which_missions_they_mix():
     """The weather-model and tropopause answers count profiles per mission,
     so their captions can say when PAZ or KOMPSAT-5 are mixed in."""
     from cosmic2 import api
+    # LEO002: a COSMIC-2 scintillation file indexed before scnLv2 files were
+    # named C2E1-C2E6 (it is FM2)
     rows = [{"sat": "C2E1"}, {"sat": "C2E5"}, {"sat": "PAZ1"}, {"sat": "KOM5"}, {"sat": "LEO002"}]
-    assert api._missions_of(rows) == {"COSMIC-2": 2, "PAZ": 1, "KOMPSAT-5": 1}
+    assert api._missions_of(rows) == {"COSMIC-2": 3, "PAZ": 1, "KOMPSAT-5": 1}
     urllib.request.urlopen(urllib.request.Request(
         BASE + "/api/local/load-samples", data=b"{}", headers={"Content-Type": "application/json"}),
         timeout=60).read()
