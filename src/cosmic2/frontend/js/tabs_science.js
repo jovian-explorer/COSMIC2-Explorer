@@ -305,7 +305,8 @@ const DIAG_SPECS = [
   ['gravity_waves.ep_J_per_kg', 'Gravity-wave energy', 'J/kg',
    'Energy carried by buoyancy waves rippling through the stratosphere.'],
   ['ducting.min_gradient', 'Steepest refractivity gradient', 'N/km',
-   'Below -157 the atmosphere traps radio waves entirely.'],
+   'Below -157 the atmosphere traps radio waves, but a retrieved RO profile never shows that: under ' +
+   'a duct its refractivity is too low instead (see the ducting views of the weather-model card).'],
   ['ionosphere.NmF2_el_cm3', 'Peak electron density', 'el/cm\u00b3',
    'The densest plasma layer, which reflects shortwave radio.'],
   ['ionosphere.hmF2_km', 'Height of the peak', 'km', ''],

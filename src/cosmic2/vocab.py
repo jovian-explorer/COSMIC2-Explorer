@@ -515,14 +515,14 @@ VAR_INFO: dict[str, dict] = {
     ),
     "dNdz": dict(
         label="Refractivity gradient", units="N-units/km",
-        plain="How quickly the bending power changes with height. Values below -157 cause radio ducting.",
+        plain="How quickly the bending power changes with height. Below -157 radio waves are trapped (a duct), but a retrieved RO profile never shows that: under a duct it is too low instead.",
         role=FIELD,
         formula=r"\frac{dN}{dz}",
         reference="Bean, B. R., & Dutton, E. J. (1968), Radio Meteorology, Dover",
         doi="10.6028/NBS.MONO.92",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/",
         data_level="Derived Geophysical Diagnostic",
-        algorithm="Vertical gradient of refractivity (centred differences, then a 5-level running mean to suppress retrieval noise); values below -157 N-units/km indicate trapping (ducting)."
+        algorithm="Vertical gradient of refractivity (centred differences, then a 5-level running mean to suppress retrieval noise); values at or below -157 N-units/km trap radio waves (ducting), but refractivity retrieved by Abel inversion never reaches them: under a duct it is biased low and its gradient stays above the critical value (Sokolovskiy 2003; Xie et al. 2012). The weather-model card shows ducts as ECMWF diagnoses them."
     ),
     "N_anom_pct": dict(
         label="Refractivity anomaly", units="%",

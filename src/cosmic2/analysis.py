@@ -267,6 +267,15 @@ def ducting_layers(z_km: np.ndarray, n_units: np.ndarray,
     Below about -157 N-units/km a radio ray curves faster than the Earth and
     becomes trapped: a "duct".  These layers also mark sharp humidity
     inversions, which is why they are used as a marine boundary-layer proxy.
+
+    Refractivity retrieved by Abel inversion of an occultation never shows
+    them: under a duct the inversion has no unique solution, the retrieved
+    refractivity is too low below the duct and its gradient stays above the
+    critical value (Sokolovskiy 2003, doi:10.1029/2002RS002728; Xie et al.
+    2012, doi:10.5194/acp-12-903-2012).  On 952 COSMIC-2 and PAZ atmPrf of
+    2026 the steepest gradient below 5 km was never below -110 N-units/km and
+    this test found no layer, while ECMWF diagnosed a duct at 183 of the same
+    occultations (echPrf ``ductid``; see :func:`nwp.ducting_differences`).
     """
     z, n = _clean_pair(z_km, n_units)
     if z.size < 5:
