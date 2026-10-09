@@ -240,6 +240,74 @@ def _local_time(lon: float | None, epoch: float | None) -> float | None:
     return (utc_h + lon / 15.0) % 24.0
 
 
+WGS84_A_KM = 6378.137
+WGS84_F = 1.0 / 298.257223563
+EARTH_ROTATION_RAD_S = 7.2921150e-5
+
+
+def geodetic(x: float, y: float, z: float) -> tuple[float, float, float]:
+    """WGS-84 latitude and longitude (degrees) and height (km) of an
+    Earth-fixed position in km."""
+    e2 = WGS84_F * (2.0 - WGS84_F)
+    p = math.hypot(x, y)
+    lat = math.atan2(z, p * (1.0 - e2))
+    h = 0.0
+    for _ in range(6):
+        s = math.sin(lat)
+        n = WGS84_A_KM / math.sqrt(1.0 - e2 * s * s)
+        h = p / math.cos(lat) - n if abs(lat) < math.pi / 4 else z / s - n * (1.0 - e2)
+        lat = math.atan2(z, p * (1.0 - e2 * n / (n + h)))
+    return math.degrees(lat), math.degrees(math.atan2(y, x)), h
+
+
+def scn_earth_fixed(data: dict, i: int, xyz) -> tuple[float, float, float] | None:
+    """Turn a position of a scnLv2 file at sample ``i`` Earth-fixed.
+
+    The file's positions (``x/y/z_LEO``, ``x/y/z_GPS``, km) are inertial and
+    ``gast1`` is the Greenwich sidereal angle (rad) at the first sample, so
+    the Earth has turned gast1 + omega (time[i] - time[0]) by sample ``i``.
+    On 602 COSMIC-2 files (2025-12-21, 2026-06-19) the satellite positions
+    turned this way match the file's own ``lat``/``lon`` within 0.0002 and
+    0.006 degrees at every sample.
+    """
+    try:
+        t = np.asarray(data["time"], dtype="float64")
+        theta = float(np.ravel(data["gast1"])[0]) + EARTH_ROTATION_RAD_S * (t[i] - t[0])
+        x, y, z = (float(v) for v in xyz)
+    except (KeyError, IndexError, TypeError, ValueError):
+        return None
+    if not all(math.isfinite(v) for v in (theta, x, y, z)):
+        return None
+    c, s = math.cos(theta), math.sin(theta)
+    return c * x + s * y, -s * x + c * y, z
+
+
+def scn_tangent_point(data: dict, i: int) -> tuple[float, float, float] | None:
+    """Latitude, longitude (degrees) and height (km) of the tangent point of
+    sample ``i`` of a scnLv2 file: the point of the straight line from the
+    satellite to the GNSS transmitter that is closest to the Earth.
+
+    Its height is the file's ``occheight`` (within 1 m on the 602 files
+    above).  CDAAC's ``lat_s4max_L1``/``lon_s4max_L1``/``alt_s4max_L1`` are
+    the satellite's own position at the S4 maximum (about 570 km up), one to
+    two and a half thousand kilometres from the tangent point.
+    """
+    try:
+        leo = np.array([data[k][i] for k in ("x_LEO", "y_LEO", "z_LEO")], dtype="float64")
+        gnss = np.array([data[k][i] for k in ("x_GPS", "y_GPS", "z_GPS")], dtype="float64")
+    except (KeyError, IndexError, TypeError, ValueError):
+        return None
+    d = gnss - leo
+    dd = float(d @ d)
+    if not (np.isfinite(leo).all() and np.isfinite(gnss).all() and dd > 0):
+        return None
+    k = -float(leo @ d) / dd
+    if not 0.0 < k < 1.0:            # the line does not dip below the satellite
+        return None
+    fixed = scn_earth_fixed(data, i, leo + k * d)
+    return None if fixed is None else geodetic(*fixed)
+
+
 # ---------------------------------------------------------------------------
 # Granule
 # ---------------------------------------------------------------------------
@@ -482,9 +550,25 @@ def _read_scnlv2(path: str) -> Granule:
     meta = _base_meta(path, "scnLv2")
     iso, epoch = _iso(attrs.get("year"), attrs.get("month"), attrs.get("day"),
                       attrs.get("hour"), attrs.get("minute"), attrs.get("second"))
-    lat = scrub(attrs.get("lat_s4max_L1"))
-    lon = scrub(attrs.get("lon_s4max_L1"))
-    local_time = scrub(attrs.get("lct_s4max_L1"))
+    # The record is placed where the scintillation was seen: the tangent
+    # point of the ray at the S4 maximum (the first sample if S4 is all
+    # missing), as RO scintillation studies do.  Files without the ray
+    # geometry fall back to CDAAC's position attributes below.
+    s4_l1 = np.asarray(data.get("s4_L1", np.array([])), dtype="float64")
+    i_max = int(np.nanargmax(s4_l1)) if np.isfinite(s4_l1).any() else 0
+    tangent = scn_tangent_point(data, i_max)
+    tangent_height = None
+    if tangent is not None:
+        lat, lon, _h = tangent
+        t = np.asarray(data["time"], dtype="float64")
+        local_time = _local_time(lon, None if epoch is None else epoch + float(t[i_max]))
+        occ = data.get("occheight")
+        if occ is not None and i_max < np.size(occ) and np.isfinite(occ[i_max]):
+            tangent_height = float(occ[i_max])
+    else:
+        lat = scrub(attrs.get("lat_s4max_L1"))
+        lon = scrub(attrs.get("lon_s4max_L1"))
+        local_time = scrub(attrs.get("lct_s4max_L1"))
     if lat is None or lon is None:
         # No S4 maximum (the attributes hold the -999 sentinel): place the
         # record at the start of the ray, with the local time of that point
@@ -506,7 +590,11 @@ def _read_scnlv2(path: str) -> Granule:
     meta["extras"] = {
         "s4max_L1": s4,
         "s4max_L2": attrs.get("s4max_L2"),
-        "alt_s4max_L1_km": attrs.get("alt_s4max_L1"),
+        "tangent_height_s4max_L1_km": tangent_height,
+        # CDAAC's lat/lon/alt_s4max_L1: where the satellite was at the maximum
+        "satellite_lat_s4max_L1": attrs.get("lat_s4max_L1"),
+        "satellite_lon_s4max_L1": attrs.get("lon_s4max_L1"),
+        "satellite_alt_s4max_L1_km": attrs.get("alt_s4max_L1"),
         "sigmaphimax_L1_m": attrs.get("sigmaphimax_L1"),
         "duration_s": attrs.get("duration"),
         "elev_min_deg": attrs.get("elevmin"),

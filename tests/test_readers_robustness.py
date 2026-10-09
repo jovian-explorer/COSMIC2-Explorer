@@ -90,6 +90,36 @@ def test_scnlv2_without_s4_maximum_falls_back_to_ray_start(tmp_path):
     assert g.meta["local_time"] == pytest.approx(8.0)
 
 
+def test_scnlv2_is_placed_at_the_tangent_point_of_the_s4_maximum():
+    """CDAAC's lat/lon/alt_s4max_L1 are where the satellite was; the record is
+    placed at the ray's tangent point at the S4 maximum instead."""
+    from cosmic2.radiosonde import great_circle_km
+    for p in sorted(sampledata_dir().glob("scnLv2_*")):
+        g = readers.load(str(p))
+        d = g.data
+        for i in range(d["time"].size):
+            # the inertial positions turned Earth-fixed land on the file's
+            # own satellite latitude and longitude ...
+            x = readers.scn_earth_fixed(d, i, (d["x_LEO"][i], d["y_LEO"][i], d["z_LEO"][i]))
+            lat, lon, _ = readers.geodetic(*x)
+            assert lat == pytest.approx(d["lat"][i], abs=1e-3)
+            assert (lon - d["lon"][i] + 180.0) % 360.0 - 180.0 == pytest.approx(0.0, abs=0.01)
+            # ... and the closest point of the ray is at the file's tangent height
+            assert readers.scn_tangent_point(d, i)[2] == pytest.approx(d["occheight"][i], abs=0.01)
+        i = int(np.nanargmax(d["s4_L1"]))
+        lat, lon, _ = readers.scn_tangent_point(d, i)
+        m, ex = g.meta, g.meta["extras"]
+        assert (m["lat"], m["lon"]) == (pytest.approx(lat), pytest.approx(lon))
+        assert m["local_time"] == pytest.approx(
+            ((m["epoch"] + d["time"][i]) % 86400 / 3600 + lon / 15) % 24)
+        assert ex["tangent_height_s4max_L1_km"] == pytest.approx(d["occheight"][i])
+        # the archive's position is the satellite's: about 570 km up and
+        # nearly 2000 km from where its ray grazed the F region
+        assert ex["satellite_alt_s4max_L1_km"] > 500
+        assert great_circle_km(lat, lon, ex["satellite_lat_s4max_L1"],
+                               ex["satellite_lon_s4max_L1"]) > 1500
+
+
 def test_ivm_local_time_is_solar_not_magnetic():
     p = next(sampledata_dir().glob("ivmL2m_*"))
     g = readers.load(str(p))

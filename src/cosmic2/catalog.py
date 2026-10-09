@@ -168,7 +168,8 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
     Product(
         "scnLv2", "Scintillation (S4)", "scintillation", "scnLv2",
         "Amplitude (S4) and phase scintillation indices per 1 s bin along the ray, "
-        "with SNR, elevation and occultation height.",
+        "with SNR, elevation and occultation height. Each file is placed at the "
+        "tangent point of the ray at its S4 maximum.",
         "A measure of how much the signal flickers - a fingerprint of turbulent "
         "patches in the ionosphere.",
         "small",
