@@ -228,3 +228,27 @@ def test_map_shows_the_poles_when_profiles_are_there():
     # 50 S with profiles (its cells reach past 60 S); nothing at all
     assert json.loads(out.stdout) == [60, 90, 90, 60]
     assert "range: [-ylim, ylim]" in _read(FRONTEND / "js" / "tabs_stats.js")
+
+
+def test_fmt_writes_powers_of_ten_with_superscripts():
+    """Very large and small numbers read "4.12×10^-4" in tables and captions
+    (a peak electron density, the sampling card's agreement with CDAAC);
+    they go into plain text, so the exponent is now superscript."""
+    import json
+    import shutil
+    import subprocess
+    import pytest
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("Node.js not installed")
+    url = (FRONTEND / "js" / "ui.js").resolve().as_uri()
+    code = (f"import {{fmt, fixed}} from '{url}';"
+            "console.log(JSON.stringify([fmt(4.12e-4), fmt(1.234e6), fmt(-2.5e-5),"
+            " fixed(1e5, 0), fmt(0.5), fmt(99999, 0)]))")
+    out = subprocess.run([node, "--input-type=module", "-e", code],
+                         capture_output=True, text=True, timeout=60, encoding="utf-8")
+    if out.returncode != 0 and "SyntaxError" in out.stderr:
+        pytest.skip("this Node cannot load ES modules from a .js file")
+    assert out.returncode == 0, out.stderr
+    assert json.loads(out.stdout) == ["4.12×10⁻⁴", "1.23×10⁶", "-2.50×10⁻⁵",
+                                      "1.00×10⁵", "0.5", "99999"]

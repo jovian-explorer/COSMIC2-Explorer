@@ -24,12 +24,17 @@ export function clear(node) { while (node.firstChild) node.removeChild(node.firs
 
 // ---------------------------------------------------------------- formatting
 
+const SUPERSCRIPT = {'-': '\u207b', 0: '\u2070', 1: '\u00b9', 2: '\u00b2', 3: '\u00b3',
+                     4: '\u2074', 5: '\u2075', 6: '\u2076', 7: '\u2077', 8: '\u2078', 9: '\u2079'};
+
 export function fmt(v, digits = 2, trim = true) {
   if (v === null || v === undefined || Number.isNaN(v)) return '-';
   if (typeof v === 'boolean') return v ? 'yes' : 'no';
   if (typeof v !== 'number') return String(v);
   if (v !== 0 && (Math.abs(v) >= 1e5 || Math.abs(v) < 1e-3)) {
-    return v.toExponential(2).replace('e+', '\u00d710^').replace('e-', '\u00d710^-');
+    // 4.12x10 with a superscript -4, not "10^-4": the result goes into plain text
+    const [mant, exp] = v.toExponential(2).split('e');
+    return `${mant}\u00d710${[...String(Number(exp))].map((c) => SUPERSCRIPT[c]).join('')}`;
   }
   // Trim trailing zeros of the decimals only: with digits = 0 the old
   // pattern also ate the zeros of the integer (fmt(100, 0) gave "1").
