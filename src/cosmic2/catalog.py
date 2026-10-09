@@ -167,9 +167,11 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
     ),
     Product(
         "scnLv2", "Scintillation (S4)", "scintillation", "scnLv2",
-        "Amplitude (S4) and phase scintillation indices per 1 s bin along the ray, "
-        "with SNR, elevation and occultation height. Each file is placed at the "
-        "tangent point of the ray at its S4 maximum.",
+        "Amplitude (S4) and phase scintillation indices every second along the ray "
+        "(10 s sliding windows), with SNR, elevation and occultation height. Each file "
+        "is placed at the tangent point of the ray at its S4 maximum. Files exist only "
+        "for occultations in which the receiver's own S4 passed a set threshold, so "
+        "averages describe scintillating occultations, not all of them.",
         "A measure of how much the signal flickers - a fingerprint of turbulent "
         "patches in the ionosphere.",
         "small",
@@ -177,7 +179,7 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         reference="Carrano, C. S., et al. (2011), Multiple phase screen modeling of ionospheric scintillation along radio occultation raypaths, Radio Sci., 46, RS0D07",
         doi="10.1029/2010RS004591",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/scnLv2/",
-        processing_chain="50 Hz raw SNR and carrier phase detrended over 1-second sliding windows -> calculation of amplitude scintillation index S4 and phase scintillation sigma-phi along ray path."
+        processing_chain="When the on-board S4 passes a set threshold, the receiver sends 50 Hz (GPS) or 100 Hz (GLONASS) SNR and carrier phase -> amplitude scintillation index S4 and phase scintillation sigma-phi in 10 s sliding windows, given every second along the ray path (COSMIC-2 Space Weather Data Release 5, UCAR 2022)."
     ),
     Product(
         "ivmL2m", "Ion Velocity Meter (in-situ)", "insitu", "ivmL2m",

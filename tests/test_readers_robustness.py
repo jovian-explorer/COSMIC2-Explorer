@@ -169,3 +169,25 @@ def test_model_profiles_pair_with_their_atmprf():
             n = 77.6 * g.data["Pres"] / T + 3.73e5 * g.data["Vp"] / T ** 2
             ok = np.isfinite(n) & np.isfinite(g.data["Ref"]) & (g.data["MSL_alt"] < 30)
             assert np.median(np.abs(n[ok] / g.data["Ref"][ok] - 1)) < 0.01
+
+
+def test_s4_descriptions_match_the_files_and_the_classes():
+    """The S4 texts said 1-second windows and called 0.3 or 0.4 'strong
+    turbulence'; the files say 10 s windows given every second, and the
+    scintillation class calls 0.4-0.7 strong."""
+    from pathlib import Path
+    from cosmic2 import analysis, catalog, vocab
+    for p in sorted(sampledata_dir().glob("scnLv2_*")):
+        g = readers.load(str(p))
+        assert float(g.attrs["calculation_time_interval"]) == 10.0
+        assert np.allclose(np.diff(g.data["time"]), 1.0)
+    assert "10 s sliding windows" in vocab.VAR_INFO["s4_L1"]["algorithm"]
+    assert "10 s sliding windows" in catalog.PRODUCTS["scnLv2"].processing_chain
+    assert "1-second" not in catalog.PRODUCTS["scnLv2"].processing_chain
+    sev = [analysis.scintillation_summary(np.array([100.0]), np.array([s]))["severity"]
+           for s in (0.19, 0.2, 0.39, 0.4, 0.69, 0.7)]
+    assert sev == ["quiet", "moderate", "moderate", "strong", "strong", "severe"]
+    js = (Path(readers.__file__).parent / "frontend" / "js" / "tabs_science.js").read_text(
+        encoding="utf-8")
+    assert "below 0.2 quiet, ' +\n   '0.2-0.4 moderate, 0.4-0.7 strong and 0.7 or more severe" in js
+    assert "0.4-0.7 strong and 0.7 or more severe" in vocab.VAR_INFO["s4_L1"]["plain"]

@@ -318,7 +318,8 @@ const DIAG_SPECS = [
   ['ionosphere.vtec_profile_TECU', 'Vertical TEC of the profile', 'TECU',
    'The same column from the bottom of the profile to its top.'],
   ['scintillation.s4_max', 'Peak S4', '',
-   'How hard the signal flickered. Above 0.4 means strong turbulence.'],
+   'How hard the signal flickered: the scintillation class calls a peak below 0.2 quiet, ' +
+   '0.2-0.4 moderate, 0.4-0.7 strong and 0.7 or more severe.'],
   ['scintillation.severity', 'Scintillation class', '', ''],
   ['insitu.ion_dens_median_Ncc', 'Ion density at the spacecraft', 'N/cc', ''],
 ];

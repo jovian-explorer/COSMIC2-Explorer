@@ -359,13 +359,13 @@ VAR_INFO: dict[str, dict] = {
     # ---- scintillation -------------------------------------------------
     "s4_L1": dict(
         label="S4 index, L1", units="-",
-        plain="How much the signal strength flickered (0 = steady, >0.3 = strong turbulence).", role=FIELD,
+        plain="How much the signal strength flickered (0 = steady; the scintillation class calls a peak of 0.4-0.7 strong and 0.7 or more severe).", role=FIELD,
         formula=r"S_4 = \sqrt{\frac{\langle I^2 \rangle - \langle I \rangle^2}{\langle I \rangle^2}}",
         reference="Briggs, B. H., & Parkin, I. A. (1963), J. Atmos. Terr. Phys., 25(6), 339-365",
         doi="10.1016/0021-9169(63)90150-8",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/scnLv2/",
         data_level="Level 2 (Scintillation Diagnostic)",
-        algorithm="Normalized variance of received signal intensity I = (SNR)^2 over 1-second detrended intervals."
+        algorithm="Normalized standard deviation of the received intensity I = SNR^2 of the 50 Hz (GPS) or 100 Hz (GLONASS) data, in 10 s sliding windows given every second (the files' calculation_time_interval; COSMIC-2 Space Weather Data Release 5)."
     ),
     "s4_L2": dict(
         label="S4 index, L2", units="-",
@@ -375,7 +375,7 @@ VAR_INFO: dict[str, dict] = {
         doi="10.1109/PROC.1982.12313",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/scnLv2/",
         data_level="Level 2 (Scintillation Diagnostic)",
-        algorithm="Normalized variance of received intensity on the L2 frequency channel."
+        algorithm="Normalized standard deviation of the received intensity on the L2 frequency, in the same 10 s sliding windows."
     ),
     "sigma_phi_L1": dict(
         label="Phase scintillation sigma-phi, L1", units="m",
@@ -385,7 +385,7 @@ VAR_INFO: dict[str, dict] = {
         doi="10.1109/PROC.1982.12313",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/scnLv2/",
         data_level="Level 2 (Scintillation Diagnostic)",
-        algorithm="Standard deviation of detrended high-rate carrier phase on L1."
+        algorithm="Standard deviation of the detrended high-rate carrier phase on L1, in 10 s sliding windows given every second."
     ),
     "sigma_phi_L2": dict(
         label="Phase scintillation sigma-phi, L2", units="m",
@@ -395,7 +395,7 @@ VAR_INFO: dict[str, dict] = {
         doi="10.1109/PROC.1982.12313",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/scnLv2/",
         data_level="Level 2 (Scintillation Diagnostic)",
-        algorithm="Standard deviation of detrended high-rate carrier phase on L2."
+        algorithm="Standard deviation of the detrended high-rate carrier phase on L2, in 10 s sliding windows given every second."
     ),
     "L1_SNR": dict(
         label="L1 signal-to-noise ratio", units="0.1 V/V",
