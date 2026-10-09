@@ -782,7 +782,7 @@ def compare_products(req: ProductPairRequest) -> dict:
 class ModelCompareRequest(BaseModel):
     granule_ids: list[str] | None = None
     search: SearchRequest | None = None
-    kind: Literal["differences", "tch"] = "differences"
+    kind: Literal["differences", "tch", "ducting", "ducting_rel"] = "differences"
     quantity: Literal["refractivity", "temperature", "bending_angle"] = "refractivity"
     bottom_km: float = Field(default=0.0, ge=0)
     top_km: float = Field(default=30.0, gt=0, le=60)
@@ -813,6 +813,11 @@ def compare_models(req: ModelCompareRequest) -> dict:
         out = nwp.three_cornered_hat(groups, top_km=req.top_km, step_km=req.step_km,
                                      bottom_km=req.bottom_km, min_count=req.min_count or 30,
                                      n_boot=req.n_boot)
+    elif req.kind in ("ducting", "ducting_rel"):
+        out = nwp.ducting_differences(groups, top_km=req.top_km, step_km=req.step_km,
+                                      bottom_km=req.bottom_km,
+                                      around_duct=req.kind == "ducting_rel",
+                                      min_count=req.min_count or 3)
     else:
         out = nwp.model_differences(groups, req.quantity, top_km=req.top_km,
                                     step_km=req.step_km, bottom_km=req.bottom_km,

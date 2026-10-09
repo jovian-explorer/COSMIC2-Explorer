@@ -100,3 +100,47 @@ def test_bending_angle_against_ecmwf_on_bundled_samples():
     g = res["grid"]
     m = [res["models"]["echPrf"]["mean"][g.index(z)] for z in (12.0, 20.0, 30.0)]
     assert all(v is not None and abs(v) < 5 for v in m)
+
+
+def test_ducting_differences_split_by_the_model_duct(monkeypatch):
+    """Made-up occultations: where echPrf diagnoses a duct the RO refractivity
+    is 8 % low below its centre, elsewhere it equals ECMWF's.  The duct and
+    no-duct composites and the composite around the duct come out exactly."""
+    from cosmic2 import readers
+    z = np.linspace(0.0, 8.0, 801)
+    model = 320.0 * np.exp(-z / 7.5)
+    cases = {"d1": (1, 1.5), "d2": (3, 1.0), "n1": (0, -999.0), "n2": (0, -999.0)}
+
+    class G:
+        def __init__(self, path):
+            key, prod = path.split(":")
+            duct, zsr = cases[key]
+            ref = model * np.where((duct > 0) & (z < zsr), 0.92, 1.0) if prod == "atm" else model
+            self.data = {"MSL_alt": z, "Ref": ref, "ductid": np.array([duct], float),
+                         "zsr": np.array([zsr])}
+    monkeypatch.setattr(readers, "load", lambda path, product: G(path))
+    groups = [{"atmPrf": {"path": f"{k}:atm"}, "echPrf": {"path": f"{k}:ech"}} for k in cases]
+    out = nwp.ducting_differences(groups, top_km=6, step_km=0.1, min_count=1, workers=1)
+    assert out["n_profiles"] == 4 and out["n_duct"] == 2
+    assert out["duct_classes"] == {"0": 2, "1": 1, "2": 0, "3": 1}
+    g = np.array(out["grid"])
+    duct, none = out["models"]["duct"], out["models"]["no_duct"]
+    assert duct["mean"][np.argmin(abs(g - 0.5))] == pytest.approx(-8.0, abs=1e-6)
+    assert duct["mean"][np.argmin(abs(g - 1.2))] == pytest.approx(-4.0, abs=1e-6)   # one of two below
+    assert duct["mean"][np.argmin(abs(g - 3.0))] == pytest.approx(0.0, abs=1e-9)
+    assert np.nanmax(np.abs(none["mean"])) < 1e-9
+    around = nwp.ducting_differences(groups, top_km=6, step_km=0.1, around_duct=True,
+                                     min_count=1, workers=1)
+    r = np.array(around["grid"]); st = around["models"]["duct"]
+    assert list(around["models"]) == ["duct"] and st["n_profiles"] == 2
+    assert st["mean"][np.argmin(abs(r + 0.5))] == pytest.approx(-8.0, abs=1e-6)
+    assert st["mean"][np.argmin(abs(r - 0.5))] == pytest.approx(0.0, abs=1e-9)
+
+
+def test_ducting_endpoint_on_bundled_samples():
+    post("/api/local/load-samples", {})
+    for kind in ("ducting", "ducting_rel"):
+        res = post("/api/compare/models", {"kind": kind, "quantity": "refractivity", "top_km": 6,
+                                           "step_km": 0.1, "search": {"products": ["atmPrf"]}})
+        assert res["n_profiles"] == 2 and sum(res["duct_classes"].values()) == 2
+        assert res["models"] and res["around_duct"] == (kind == "ducting_rel")

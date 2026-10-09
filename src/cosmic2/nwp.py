@@ -235,3 +235,95 @@ def three_cornered_hat(groups: Sequence[dict[str, dict]], top_km: float = 30.0,
         std = np.where(var >= 0, np.sqrt(np.abs(var)), np.nan)
     out.update(n=n, variance=var, lo=lo, hi=hi, std_pct=std)
     return out
+
+
+# echPrf's ducting diagnosis of the ECMWF profile (variable ductid)
+DUCT_CLASSES = {0: "no duct", 1: "elevated duct", 2: "surface duct (two break points)",
+                3: "surface duct (one break point)"}
+
+
+def _duct_columns(task: tuple):
+    """``(ductid, RO minus ECMWF refractivity in % on the grid, the same on
+    heights relative to the duct or None)`` of one occultation.  Module-level
+    so it runs on the worker processes."""
+    from . import readers
+    from .analysis import interp_field
+    group, grid, rel = task
+    if "atmPrf" not in group or "echPrf" not in group:
+        return None
+    try:
+        a = readers.load(group["atmPrf"]["path"], "atmPrf").data
+        e = readers.load(group["echPrf"]["path"], "echPrf").data
+        duct = int(np.asarray(e["ductid"], float).ravel()[0])
+        zsr = float(np.asarray(e["zsr"], float).ravel()[0])
+    except Exception:  # noqa: BLE001 - an unreadable pair drops the occultation
+        return None
+    if duct not in DUCT_CLASSES:
+        return None
+
+    def diff(z):
+        ro = interp_field(a["MSL_alt"], a["Ref"], z, "Ref", max_gap=3.0)
+        m = interp_field(e["MSL_alt"], e["Ref"], z, "Ref", max_gap=3.0)
+        with np.errstate(invalid="ignore", divide="ignore"):
+            return 100.0 * (ro - m) / m
+    around = diff(zsr + rel) if duct > 0 and np.isfinite(zsr) and zsr > 0 else None
+    return duct, diff(grid), around
+
+
+def ducting_differences(groups: Sequence[dict[str, dict]], top_km: float = 6.0,
+                        step_km: float = 0.1, bottom_km: float = 0.0,
+                        around_duct: bool = False, half_width_km: float = 2.0,
+                        min_count: int = 3, workers: int | None = None) -> dict:
+    """RO (atmPrf) minus ECMWF refractivity, in percent of ECMWF, for the
+    occultations where ECMWF diagnoses a duct (echPrf ``ductid`` 1-3) and
+    where it does not; with ``around_duct`` by height relative to the centre
+    of ECMWF's super-refraction layer (echPrf ``zsr``), duct cases only.
+
+    In a duct the refractivity gradient is below about -157 N-units/km, rays
+    are trapped and the Abel inversion has no unique solution: the retrieved
+    refractivity is too low below the duct and its gradient never reaches
+    the critical value (Sokolovskiy 2003; Xie et al. 2012,
+    doi:10.5194/acp-12-903-2012; Feng et al. 2020, J. Atmos. Oceanic
+    Technol., 37, 1013-1025, doi:10.1175/JTECH-D-19-0206.1).  On 952 COSMIC-2
+    and PAZ occultations of 2026-06-20 and 09-30 ECMWF diagnosed a duct at
+    183: there RO minus ECMWF was -4.2 % at 1 km (-1.4 % without a duct) and
+    -8.4 % 0.2 km below the duct centre, back to +0.3 % 0.2 km above it."""
+    from .analysis import make_grid
+    from .parallel import pmap
+    grid = make_grid(top_km, step_km, bottom_km)
+    rel = make_grid(half_width_km, step_km, -half_width_km)
+    cols = [c for c in pmap(_duct_columns, [(g, grid, rel) for g in groups], workers=workers) if c]
+    classes = {str(k): sum(1 for c in cols if c[0] == k) for k in DUCT_CLASSES}
+    n_duct = sum(1 for c in cols if c[0] > 0)
+    out = {"quantity": "refractivity", "units": "%", "relative": True, "min_count": min_count,
+           "n_profiles": len(cols), "n_duct": n_duct, "duct_classes": classes,
+           "around_duct": around_duct, "models": {}}
+    if around_duct:
+        sets = {"duct": ("ECMWF, around its duct", [c[2] for c in cols if c[2] is not None])}
+        out.update(grid=rel.tolist(), label="Refractivity, RO (atmPrf) minus ECMWF",
+                   vertical_label="Height above the centre of ECMWF's duct [km]")
+    else:
+        sets = {"no_duct": ("ECMWF, no duct", [c[1] for c in cols if c[0] == 0]),
+                "duct": ("ECMWF, duct", [c[1] for c in cols if c[0] > 0])}
+        out.update(grid=grid.tolist(), label="Refractivity, RO (atmPrf) minus ECMWF",
+                   vertical_label="Altitude above mean sea level [km]")
+    for key, (name, diffs) in sets.items():
+        st = {"name": name, "n_profiles": len(diffs)}
+        if diffs:
+            st.update(_column_stats(np.vstack(diffs), min_count))
+        out["models"][key] = st
+    return out
+
+
+def _column_stats(m: np.ndarray, min_count: int) -> dict:
+    from .analysis import mean_uncertainty
+    from .climatology import warnings_off
+    with np.errstate(invalid="ignore", divide="ignore"), warnings_off():
+        n = np.isfinite(m).sum(axis=0)
+        mean, median = np.nanmean(m, axis=0), np.nanmedian(m, axis=0)
+        std = np.nanstd(m, axis=0, ddof=1)
+    sem, lo, hi = mean_uncertainty(mean, std, n)
+    for a in (mean, median, std, sem, lo, hi):
+        a[n < min_count] = np.nan
+    return {"mean": mean, "median": median, "std": std, "n": n, "sem": sem,
+            "ci95_lo": lo, "ci95_hi": hi}

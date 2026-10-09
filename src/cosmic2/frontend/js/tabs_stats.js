@@ -25,6 +25,12 @@ export function initStatsTab() {
       withBusy(e.target, 'Comparing...', drawMissions));
   $('#btn-tropopause').addEventListener('click', (e) =>
       withBusy(e.target, 'Computing...', drawTropopause));
+  // the duct biases sit in the lowest 2-3 km: a lower, finer grid for them
+  $('#nwp-kind').addEventListener('change', () => {
+    const duct = $('#nwp-kind').value.startsWith('ducting');
+    $('#nwp-top').value = duct ? 6 : 30;
+    $('#nwp-step').value = duct ? 0.1 : 0.5;
+  });
   $('#btn-nwp').addEventListener('click', (e) =>
       withBusy(e.target, 'Comparing...', drawModels));
   $('#btn-pairs').addEventListener('click', (e) =>
@@ -645,6 +651,24 @@ async function drawModels() {
   });
   Plotly.react('nwp-plot', traces, axesLayout(`${res.label} [${res.units}]`,
     res.vertical_label || 'Altitude above mean sea level [km]', {shapes: [zline]}), PLOT_CONFIG);
+  if (kind.startsWith('ducting')) {
+    const pctDuct = res.n_profiles ? Math.round(100 * res.n_duct / res.n_profiles) : 0;
+    $('#nwp-caption').textContent =
+      `${res.n_profiles} occultations with their atmPrf and echPrf; ECMWF diagnoses a duct (echPrf ` +
+      `ductid 1-3, elevated or at the surface) at ${res.n_duct} of them (${pctDuct}%). ` +
+      missionNote(res.missions) +
+      (res.around_duct ? 'Heights relative to the centre of ECMWF\'s super-refraction layer (echPrf ' +
+        'zsr), duct cases only. ' : '') +
+      'Differences in percent of the ECMWF value. Line: mean; light shading ± 1 standard deviation; ' +
+      'dark shading the 95% confidence interval of the mean. In a duct the refractivity gradient is ' +
+      'below about -157 N-units/km and rays are trapped: the Abel inversion then has no unique solution ' +
+      'and the retrieved refractivity is too low below the duct, by up to about 10% (Sokolovskiy 2003, ' +
+      'https://doi.org/10.1029/2002RS002728), mostly below about 2 km (Feng et al. 2020, ' +
+      'https://doi.org/10.1175/JTECH-D-19-0206.1). The retrieved profile cannot show the duct ' +
+      'itself: its steepest gradient stays above the critical value (Xie et al. 2012, ' +
+      'https://doi.org/10.5194/acp-12-903-2012), so ducting is judged from the model here.';
+    return;
+  }
   $('#nwp-caption').textContent =
     `${res.n_profiles} occultations of ${res.selected} selected profiles have model profiles. ` +
     missionNote(res.missions) +
