@@ -698,6 +698,53 @@ async function drawModels() {
       'an independent comparison.' : '');
 }
 
+// Boundary-layer tops of the atmPrf pairs, found the same way in both
+// profiles (help, section O).
+function drawPblPairs(res, product) {
+  const cap = $('#rs-pbl-caption');
+  const s = res.pbl;
+  if (product !== 'atmPrf') {
+    emptyPlot('rs-pbl-plot', 'Boundary-layer tops need atmPrf.');
+    cap.textContent = 'Boundary-layer tops are found in observed refractivity only: choose ' +
+                      "atmPrf (wetPf2's refractivity is the 1D-Var analysis).";
+    return;
+  }
+  const both = (res.pairs || []).filter((p) => p.ro_pbl_km != null && p.sonde_pbl_km != null);
+  if (!s || !both.length) {
+    emptyPlot('rs-pbl-plot', res.n_pairs ? 'No pair has a boundary-layer top in both profiles.'
+                                         : 'No colocated radiosonde.');
+    cap.textContent = s && s.n_pairs
+      ? `Of ${s.n_pairs} pairs, ${s.n_ro} occultations and ${s.n_sonde} sondes have a ` +
+        'boundary-layer top (help, section O), but no pair has one in both.' : '';
+    return;
+  }
+  const base = layoutBase();
+  const top = 3.6;
+  Plotly.react('rs-pbl-plot', [
+    {type: 'scatter', mode: 'lines', x: [0, top], y: [0, top], hoverinfo: 'skip',
+     line: {color: '#94a3b8', width: 1, dash: 'dot'}},
+    {type: 'scatter', mode: 'markers', x: both.map((p) => p.sonde_pbl_km),
+     y: both.map((p) => p.ro_pbl_km), marker: {color: PALETTE[0], size: 6, opacity: 0.75},
+     text: both.map((p) => `${p.station} ${(p.launch_utc || '').slice(0, 16).replace('T', ' ')}`),
+     hovertemplate: 'sonde %{x:.2f} km, occultation %{y:.2f} km<br>%{text}<extra></extra>'},
+  ], axesLayout('', '', {
+    xaxis: Object.assign(base.xaxis, {title: {text: 'Boundary-layer top, sonde [km]'},
+                                      range: [0, top]}),
+    yaxis: Object.assign(base.yaxis, {title: {text: 'Boundary-layer top, occultation [km]'},
+                                      range: [0, top]}),
+    showlegend: false,
+  }), PLOT_CONFIG);
+  const spread = s.std_diff_km === null ? '' : `, standard deviation ${fixed(s.std_diff_km, 2)} km`;
+  const corr = s.r === null ? '' : `, correlation ${fixed(s.r, 2)}`;
+  cap.textContent =
+    `Boundary-layer top (help, section O) in both profiles for ${s.n_both} of ${s.n_pairs} ` +
+    `pairs (occultation ${s.n_ro}, sonde ${s.n_sonde}). Occultation minus sonde: mean ` +
+    `${fixed(s.mean_diff_km, 2)} km, median ${fixed(s.median_diff_km, 2)} km${spread}${corr}; ` +
+    `${fmt(s.within_0p5_km_pct, 0)}% within 0.5 km. Dotted: one to one. For comparison ` +
+    '(mean, standard deviation, correlation): Guo et al. (2011), 0.04 km, 0.35 km, 0.82 ' +
+    'between 30 S and 30 N; 185 pairs of 2026 within 200 km and 3 h, +0.08 km, 0.92 km, 0.41.';
+}
+
 async function drawRadiosonde() {
   const product = $('#rs-product').value;
   const req = Object.assign({
@@ -751,8 +798,12 @@ async function drawRadiosonde() {
       el('td', {}, (p.launch_utc || '').slice(0, 16).replace('T', ' ')),
       el('td', {class: 'num'}, fmt(p.distance_km, 0)),
       el('td', {class: 'num'}, fixed(p.dt_hours, 2)),
-      el('td', {class: 'num'}, fixed(p.sonde_top_km, 1))));
+      el('td', {class: 'num'}, fixed(p.sonde_top_km, 1)),
+      el('td', {class: 'num'}, 'ro_pbl_km' in p
+        ? `${p.ro_pbl_km === null ? '-' : fixed(p.ro_pbl_km, 2)} / ` +
+          `${p.sonde_pbl_km === null ? '-' : fixed(p.sonde_pbl_km, 2)}` : '')));
   }
+  drawPblPairs(res, product);
   const notes = [`${res.n_pairs} of ${res.n_occultations} occultations (${res.products.join(', ')}) ` +
                  `have a radiosonde within ${res.max_km} km and ${res.max_hours} h ` +
                  `(${res.stations_with_data} of ${res.stations_considered} nearby stations had ` +

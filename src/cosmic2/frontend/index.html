@@ -193,7 +193,7 @@
         <li><strong>Tropopause and cold point by latitude:</strong> the WMO lapse-rate tropopause and the cold point in each latitude band, with the 95% confidence interval of the mean, beside CDAAC's own tropopause values when atmPrf is selected.</li>
         <li><strong>Weather models at the same occultations:</strong> RO minus the ECMWF and NCEP profiles CDAAC colocates with each occultation (refractivity, temperature, and bending angle against ECMWF by impact height), the refractivity bias below the ducts ECMWF diagnoses, and the three-cornered hat, which estimates the refractivity error of each of the three from the spread of their differences, with bootstrap 95% intervals.</li>
         <li><strong>COSMIC-2 and other missions:</strong> COSMIC-2 against PAZ or KOMPSAT-5 (download them through their streams on the Get data tab), from collocated pairs (also less ECMWF's own difference between the two occultations) and from the double difference through ECMWF over the latitudes both cover, with 95% intervals. With another mission on disk, choose "COSMIC-2, all satellites" in the Explore satellite filter to keep it out of the other statistics.</li>
-        <li><strong>Radiosonde comparison:</strong> each profile against the nearest NOAA IGRA v2 radiosonde within a distance and time window, as mean and spread of the temperature, refractivity and humidity differences by height.</li>
+        <li><strong>Radiosonde comparison:</strong> each profile against the nearest NOAA IGRA v2 radiosonde within a distance and time window, as mean and spread of the temperature, refractivity and humidity differences by height; with atmPrf, also the boundary-layer tops of both, occultation against sonde.</li>
       </ul>
       <div class="step-actions">
         <button class="primary" id="guide-btn-goto-stats">Open Statistics</button>
@@ -1007,11 +1007,15 @@
       <div id="rs-sph-plot" class="plot"></div>
     </div>
     <p class="hint" id="rs-caption"></p>
+    <div class="grid-2">
+      <div id="rs-pbl-plot" class="plot"></div>
+      <p class="hint" id="rs-pbl-caption"></p>
+    </div>
     <div class="scroll-x">
       <table class="table" id="rs-table">
         <thead><tr><th>Occultation (UTC)</th><th>Product</th><th>Lat</th><th>Lon</th>
           <th>Station</th><th>Launch (UTC)</th><th>Distance (km)</th><th>&Delta;t (h)</th>
-          <th>Sonde top (km)</th></tr></thead>
+          <th>Sonde top (km)</th><th>Boundary-layer top, RO / sonde (km)</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>

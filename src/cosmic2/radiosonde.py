@@ -402,6 +402,29 @@ def _differences(ro: dict, sonde: dict, grid: np.ndarray) -> dict:
     return out
 
 
+def pbl_summary(pairs: Sequence[dict]) -> dict:
+    """Occultation minus sonde boundary-layer top over the atmPrf pairs
+    where both profiles have one (see :func:`analysis.boundary_layer_height`)."""
+    at = [p for p in pairs if "ro_pbl_km" in p]
+    both = np.array([(p["ro_pbl_km"], p["sonde_pbl_km"]) for p in at
+                     if p["ro_pbl_km"] is not None and p["sonde_pbl_km"] is not None],
+                    dtype="float64").reshape(-1, 2)
+    out = {"n_pairs": len(at), "n_both": int(both.shape[0]),
+           "n_ro": sum(p["ro_pbl_km"] is not None for p in at),
+           "n_sonde": sum(p["sonde_pbl_km"] is not None for p in at),
+           "mean_diff_km": None, "median_diff_km": None, "std_diff_km": None,
+           "r": None, "within_0p5_km_pct": None}
+    if both.shape[0]:
+        d = both[:, 0] - both[:, 1]
+        out.update(mean_diff_km=float(d.mean()), median_diff_km=float(np.median(d)),
+                   within_0p5_km_pct=float(100.0 * np.mean(np.abs(d) <= 0.5)))
+        if d.size > 1:
+            out["std_diff_km"] = float(d.std(ddof=1))
+        if d.size > 2 and both[:, 0].std() > 0 and both[:, 1].std() > 0:
+            out["r"] = float(np.corrcoef(both[:, 0], both[:, 1])[0, 1])
+    return out
+
+
 def compare(rows: Sequence[dict], max_km: float = 300.0, max_hours: float = 3.0,
             top_km: float = 30.0, step_km: float = 0.2, bin_km: float = 1.0,
             download: bool = True, max_stations: int = 200) -> dict:
@@ -474,6 +497,13 @@ def compare(rows: Sequence[dict], max_km: float = 300.0, max_hours: float = 3.0,
                       "distance_km": round(d_km, 1), "dt_hours": round(dt_h, 2),
                       "sonde_top_km": float(np.nanmax(sonde["gph_km"]))
                       if np.isfinite(sonde["gph_km"]).any() else None})
+        if ro["product"] == "atmPrf" and ro.get("ref_N") is not None:
+            # boundary-layer tops of both, found the same way on the same
+            # (geopotential) heights; only from observed refractivity
+            from .analysis import boundary_layer_height
+            pairs[-1]["ro_pbl_km"] = boundary_layer_height(ro["gph_km"], ro["ref_N"])["height_km"]
+            pairs[-1]["sonde_pbl_km"] = boundary_layer_height(sonde["gph_km"],
+                                                              sonde["ref_N"])["height_km"]
     edges = np.arange(0.0, top_km + bin_km / 2, bin_km)
     centres = 0.5 * (edges[:-1] + edges[1:])
     stats = {}
@@ -502,4 +532,4 @@ def compare(rows: Sequence[dict], max_km: float = 300.0, max_hours: float = 3.0,
             "stations_considered": len(ordered),
             "max_km": max_km, "max_hours": max_hours,
             "bin_edges_km": edges.tolist(), "bin_centres_km": centres.tolist(),
-            "stats": stats}
+            "stats": stats, "pbl": pbl_summary(pairs)}

@@ -423,7 +423,7 @@ def export_radiosonde_csv(result: dict, granules: Sequence[dict],
         f.write("\n")
         keys = ["file_name", "product", "time_utc", "lat", "lon", "station",
                 "station_name", "launch_utc", "sonde_lat", "sonde_lon",
-                "distance_km", "dt_hours", "sonde_top_km"]
+                "distance_km", "dt_hours", "sonde_top_km", "ro_pbl_km", "sonde_pbl_km"]
         w.writerow(keys)
         for pr in result.get("pairs", []):
             w.writerow([pr.get(k, "") for k in keys])

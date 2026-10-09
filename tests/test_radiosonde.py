@@ -125,6 +125,43 @@ def test_compare_with_a_sonde_that_is_the_occultation(monkeypatch):
     assert res["n_pairs"] == 0
 
 
+
+def test_boundary_layer_tops_of_an_atmprf_and_its_own_sonde_agree(monkeypatch):
+    """A sonde carrying an atmPrf's own dry pressure and temperature (and no
+    vapour) has the occultation's refractivity, so both boundary-layer tops
+    coincide; the profile that stops above 0.5 km has none on either side."""
+    rows, sondes = [], {}
+    for p in sorted(sampledata_dir().glob("atmPrf_*")):
+        g = readers.load(str(p))
+        d = g.data
+        ok = np.isfinite(d["Pres"]) & np.isfinite(d["Temp"]) & np.isfinite(d["MSL_alt"])
+        sid = "TEST%07d" % len(rows)
+        sondes[sid] = {"station": sid, "lat": g.meta["lat"], "lon": g.meta["lon"],
+                       "time": dt.datetime.fromisoformat(g.meta["time_utc"].replace("Z", "+00:00")),
+                       "p_hpa": d["Pres"][ok], "temp_c": d["Temp"][ok],
+                       "gph_m": 1000.0 * radiosonde.geopotential_height_km(d["MSL_alt"][ok],
+                                                                         g.meta["lat"]),
+                       "rh_pct": np.zeros(ok.sum()), "dpd_c": np.full(ok.sum(), np.nan)}
+        rows.append({"id": sid, "path": str(p), "product": "atmPrf", "file_name": p.name,
+                     "time_utc": g.meta["time_utc"], "lat": g.meta["lat"],
+                     "lon": g.meta["lon"], "good": True})
+    lst = [{"id": sid, "lat": s["lat"], "lon": s["lon"], "elev_m": 0, "name": "SYNTHETIC",
+            "first_year": 2000, "last_year": 2100} for sid, s in sondes.items()]
+    monkeypatch.setattr(radiosonde, "station_list", lambda download=True: lst)
+    monkeypatch.setattr(radiosonde, "soundings_near",
+                        lambda sid, times, h, download=True: [sondes[sid]])
+    res = radiosonde.compare(rows, max_km=300, max_hours=3, top_km=20)
+    by_file = {p["file_name"]: p for p in res["pairs"]}
+    top = by_file["atmPrf_C2E1.2026.200.00.00.E23_0001.0001_nc"]
+    assert top["ro_pbl_km"] == pytest.approx(2.306, abs=0.005)
+    assert top["sonde_pbl_km"] == pytest.approx(top["ro_pbl_km"], abs=1e-6)
+    low = by_file["atmPrf_C2E1.2026.200.00.00.E34_0001.0001_nc"]
+    assert low["ro_pbl_km"] is None and low["sonde_pbl_km"] is None
+    pbl = res["pbl"]
+    assert (pbl["n_pairs"], pbl["n_both"], pbl["n_ro"], pbl["n_sonde"]) == (2, 1, 1, 1)
+    assert pbl["mean_diff_km"] == pytest.approx(0.0, abs=1e-6)
+    assert pbl["within_0p5_km_pct"] == 100.0 and pbl["r"] is None
+
 def test_endpoint_without_downloads_reports_the_missing_station_list():
     urllib.request.urlopen(urllib.request.Request(
         BASE + "/api/local/load-samples", data=b"{}",
@@ -148,10 +185,12 @@ def test_comparison_csv_export(tmp_path):
            "stats": {"temp_K": {"units": "K", "mean": [0.1, None], "std": [1.0, None],
                                 "median": [0.0, None], "n": [3, 0]}},
            "pairs": [{"file_name": "wetPf2_x", "product": "wetPf2", "station": "S",
-                      "distance_km": 12.5, "dt_hours": 0.5}]}
+                      "distance_km": 12.5, "dt_hours": 0.5, "ro_pbl_km": 1.25,
+                      "sonde_pbl_km": 1.1}]}
     out = exporters.export_radiosonde_csv(res, [{"file_name": "wetPf2_x",
                                                  "product": "wetPf2"}], basename="rs_test")
     text = open(out["path"], encoding="utf-8").read()
     assert "temp_K_mean_diff_K" in text and "0.1" in text and "wetPf2_x" in text
     assert "IGRA" in text
+    assert "ro_pbl_km,sonde_pbl_km" in text and ",1.25,1.1" in text
     os.remove(out["path"])
