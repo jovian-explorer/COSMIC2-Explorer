@@ -21,7 +21,7 @@ from pathlib import Path
 import pytest
 
 PROJECT = Path(__file__).resolve().parents[1]
-EXE = Path(os.environ.get("COSMIC2_EXE") or PROJECT / "dist" / "COSMIC2-Explorer.exe")
+EXE = Path(os.environ.get("COSMIC2_EXE") or PROJECT / "dist" / "COSMIC2-Explorer" / "COSMIC2-Explorer.exe")
 # The EXE inherits COSMIC2_EXPLORER_HOME (set by conftest), so it logs there.
 APPDATA = Path(os.environ.get("COSMIC2_EXPLORER_HOME")
                or Path(os.environ.get("LOCALAPPDATA", "")) / "COSMIC2Explorer")
@@ -108,8 +108,20 @@ def test_exe_exists() -> None:
     print("\n[1] EXE existence")
     check("EXE exists", EXE.is_file(), str(EXE))
     if EXE.is_file():
-        size_mb = EXE.stat().st_size / 1024 / 1024
-        check("EXE size > 50 MB", size_mb > 50, f"{size_mb:.1f} MB")
+        check("one-folder build (_internal beside the EXE)", (EXE.parent / "_internal").is_dir())
+
+
+def _mei_dirs() -> set[str]:
+    return {p.name for p in Path(tempfile.gettempdir()).glob("_MEI*")}
+
+
+def test_no_unpack_folder_left_in_temp() -> None:
+    """A one-file build left a 240 MB %TEMP%\\_MEI* folder behind on every hard kill."""
+    print("\n[1b] Nothing left in %TEMP% after a hard kill")
+    before = _mei_dirs()
+    _launch_from_cwd(str(EXE.parent), timeout_s=15)     # ends with taskkill /F
+    new = _mei_dirs() - before
+    check("no new _MEI folder in %TEMP%", not new, ", ".join(sorted(new)))
 
 
 def test_launch_from_exe_dir() -> None:
@@ -187,6 +199,7 @@ if __name__ == "__main__":
         sys.exit(0)
 
     test_exe_exists()
+    test_no_unpack_folder_left_in_temp()
     test_launch_from_exe_dir()
     test_launch_from_desktop()
     test_launch_from_home()

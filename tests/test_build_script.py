@@ -44,8 +44,12 @@ def test_stamp_writes_an_importable_build_file(tmp_path, monkeypatch):
 def test_archive_holds_one_install_folder(tmp_path, monkeypatch):
     b = _load()
     monkeypatch.setattr(b, "DIST", tmp_path)
-    app = tmp_path / ("COSMIC2-Explorer.exe" if sys.platform == "win32" else "COSMIC2-Explorer")
+    build = tmp_path / "COSMIC2-Explorer"                     # the one-folder build
+    app = build / ("COSMIC2-Explorer.exe" if sys.platform == "win32" else "COSMIC2-Explorer")
+    lib = build / "_internal" / "python3.dll"
+    lib.parent.mkdir(parents=True)
     app.write_bytes(b"not really an app")
+    lib.write_bytes(b"not really a library")
     dest = b.archive(app, {"tag": "v0.0.1"})
     assert dest.name.startswith(f"COSMIC2-Explorer-{b._version()}-{b._os_tag()}-{b._arch()}.")
     if dest.suffix == ".zip":
@@ -56,7 +60,8 @@ def test_archive_holds_one_install_folder(tmp_path, monkeypatch):
         with tarfile.open(dest) as t:
             names = sorted(t.getnames())
             marker = json.loads(t.extractfile("COSMIC2-Explorer/INSTALL_FOLDER.json").read())
-    assert names == sorted([f"COSMIC2-Explorer/{app.name}", "COSMIC2-Explorer/INSTALL_FOLDER.json"])
+    assert names == sorted([f"COSMIC2-Explorer/{app.name}", "COSMIC2-Explorer/_internal/python3.dll",
+                            "COSMIC2-Explorer/INSTALL_FOLDER.json"])
     assert marker["build"] == {"tag": "v0.0.1"}
     assert not (tmp_path / "INSTALL_FOLDER.json").exists()      # the loose copy is removed
 

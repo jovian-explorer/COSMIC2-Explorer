@@ -6,13 +6,14 @@
     python scripts/build_exe.py --archive --tag v0.0.2   # a release build
 
 Output (see packaging/cosmic2-explorer.spec):
-    Windows  dist/COSMIC2-Explorer.exe
-    Linux    dist/COSMIC2-Explorer
+    Windows  dist/COSMIC2-Explorer/COSMIC2-Explorer.exe  (+ _internal/)
+    Linux    dist/COSMIC2-Explorer/COSMIC2-Explorer      (+ _internal/)
     macOS    dist/COSMIC2-Explorer.app
 
 With --archive, dist/COSMIC2-Explorer-<version>-<os>-<arch>.zip (.tar.gz on
 Linux, so the executable bit survives) is written next to it.  The archive
-holds one folder, COSMIC2-Explorer/, with the app and INSTALL_FOLDER.json; the
+holds one folder, COSMIC2-Explorer/, with the app (on Windows and Linux the
+whole one-folder build) and INSTALL_FOLDER.json; the
 automatic update (cosmic2/autoupdate.py) replaces only a folder that holds
 that file, so an app copied elsewhere (the Desktop, Downloads) never has its
 surroundings moved.
@@ -91,7 +92,7 @@ def build() -> Path:
          str(ROOT / "packaging" / "cosmic2-explorer.spec")],
         check=True, cwd=ROOT,
     )
-    out = {"win32": DIST / f"{NAME}.exe", "darwin": DIST / f"{NAME}.app"}.get(sys.platform, DIST / NAME)
+    out = {"win32": DIST / NAME / f"{NAME}.exe", "darwin": DIST / f"{NAME}.app"}.get(sys.platform, DIST / NAME / NAME)
     if not out.exists():
         raise SystemExit(f"build finished but {out} is missing")
     return out
@@ -119,16 +120,21 @@ def archive(artifact: Path, build_info: dict | None = None) -> Path:
             dest.unlink(missing_ok=True)
             subprocess.run(["ditto", "-c", "-k", "--keepParent", str(staging), str(dest)], check=True)
             shutil.rmtree(staging.parent, ignore_errors=True)
-        elif sys.platform == "win32":
-            dest = Path(f"{stem}.zip")
-            with zipfile.ZipFile(dest, "w", zipfile.ZIP_DEFLATED) as z:
-                z.write(artifact, f"{NAME}/{artifact.name}")
-                z.write(marker, f"{NAME}/{MARKER}")
         else:
-            dest = Path(f"{stem}.tar.gz")
-            with tarfile.open(dest, "w:gz") as t:
-                t.add(artifact, f"{NAME}/{artifact.name}")
-                t.add(marker, f"{NAME}/{MARKER}")
+            # the one-folder build: the executable and everything beside it
+            files = sorted(p for p in artifact.parent.rglob("*") if p.is_file())
+            arcs = [(p, f"{NAME}/{p.relative_to(artifact.parent).as_posix()}") for p in files]
+            arcs.append((marker, f"{NAME}/{MARKER}"))
+            if sys.platform == "win32":
+                dest = Path(f"{stem}.zip")
+                with zipfile.ZipFile(dest, "w", zipfile.ZIP_DEFLATED) as z:
+                    for p, arc in arcs:
+                        z.write(p, arc)
+            else:
+                dest = Path(f"{stem}.tar.gz")
+                with tarfile.open(dest, "w:gz") as t:
+                    for p, arc in arcs:
+                        t.add(p, arc)
     finally:
         marker.unlink(missing_ok=True)
     return dest

@@ -125,7 +125,7 @@ Work that reads many granules (composites, profile plots, the diagnostics table,
 
 ```bash
 pip install -e ".[build]"
-python scripts/build_exe.py            # dist/COSMIC2-Explorer(.exe|.app)
+python scripts/build_exe.py            # dist/COSMIC2-Explorer/COSMIC2-Explorer(.exe), macOS dist/COSMIC2-Explorer.app
 python scripts/build_exe.py --archive  # plus the release archive for this OS
 ```
 
@@ -219,6 +219,6 @@ The test suite validates:
 * Statistics, latitude-height sections and diagnostic maps against hand-computed cases; gravity-wave energy against a wave of known energy; the radiosonde pipeline against a synthetic sonde built from a profile's own fields, and IGRA file parsing on real records
 * Every tab and main action in Chromium with no script errors (skipped unless Playwright and its Chromium are installed)
 * Strict zero em/en-dash compliance and local asset integrity
-* Windows double-click launch of a built EXE (skipped unless `dist/COSMIC2-Explorer.exe` or `COSMIC2_EXE` exists)
+* Windows double-click launch of a built EXE (skipped unless `dist/COSMIC2-Explorer/COSMIC2-Explorer.exe` or `COSMIC2_EXE` exists), including that a hard kill leaves no `_MEI*` folder in `%TEMP%`
 * Every DOI shown in the app is on a list checked against doi.org (re-resolved with `COSMIC2_NETWORK_TESTS=1`)
 * Live CDAAC download (opt-in: `COSMIC2_NETWORK_TESTS=1`)

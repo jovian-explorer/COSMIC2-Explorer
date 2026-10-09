@@ -2,9 +2,14 @@
 # COSMIC-2 Explorer: PyInstaller spec for Windows, macOS and Linux.
 # Build with:  python scripts/build_exe.py
 #
-#   Windows  dist/COSMIC2-Explorer.exe      single file, no console
-#   Linux    dist/COSMIC2-Explorer          single file
-#   macOS    dist/COSMIC2-Explorer.app      app bundle
+#   Windows  dist/COSMIC2-Explorer/COSMIC2-Explorer.exe   one folder, no console
+#   Linux    dist/COSMIC2-Explorer/COSMIC2-Explorer       one folder
+#   macOS    dist/COSMIC2-Explorer.app                    app bundle
+#
+# One folder, not one file: a one-file build unpacks itself (240 MB) into a new
+# %TEMP%\_MEI* folder at every start and leaves it there whenever the app is
+# killed (Task Manager, taskkill /F, a crash), which filled disks with hundreds
+# of them.  A one-folder build runs in place and writes nothing to %TEMP%.
 
 import sys
 from pathlib import Path
@@ -58,12 +63,14 @@ if sys.platform == "darwin":
     )
 else:
     exe = EXE(
-        pyz, a.scripts, a.binaries, a.datas, [],
+        pyz, a.scripts, [],
+        exclude_binaries=True,
         name=NAME,
         icon=str(ASSETS / "cosmic2.ico") if sys.platform == "win32" else None,
         # No console window; disable_windowed_traceback=False keeps PyInstaller's
         # crash dialog so an unhandled exception is never silent.
         console=False,
         disable_windowed_traceback=False,
-        upx=True,
+        upx=False,
     )
+    coll = COLLECT(exe, a.binaries, a.datas, name=NAME, upx=False)

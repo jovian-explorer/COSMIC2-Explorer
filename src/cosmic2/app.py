@@ -48,7 +48,7 @@ from .config import (APP_NAME, APP_TITLE, APP_VERSION, LOG_DIR,
                      DATA_ROOT, ensure_dirs, frontend_dir)
 from .server import free_port
 
-STARTUP_TIMEOUT_S = 120   # cold-start of a 198 MB onefile EXE can take 60-90s
+STARTUP_TIMEOUT_S = 120   # a cold start (first run, antivirus scan of the build) can take 60-90s
 # How long to wait for the pywebview window to appear after start() returns.
 _WEBVIEW_SHOWN_TIMEOUT_S = 60
 
@@ -275,7 +275,7 @@ def main(argv: list[str] | None = None) -> int:
 
 def run() -> None:
     """Console-script entry point (``cosmic2-explorer``)."""
-    multiprocessing.freeze_support()  # required for a PyInstaller onefile build
+    multiprocessing.freeze_support()  # required for a PyInstaller build
     raise SystemExit(main())
 
 
