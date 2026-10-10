@@ -16,6 +16,7 @@
 
 ### Documentation and references
 
+- The postProc stream was described as the final reprocessing to use for climate work, published weeks to months after observation. On CDAAC, COSMIC-2's postProc holds only in-situ IVM files (ivmL2m, 2019-08-01 to 2022-05-31, and ivmL2b/ivmLv2 in 2019-2020) and podTc2 of 2020: no atmPrf, wetPf2 or ionPrf. The stream text, the guide and the README now say so.
 - Every citation with a DOI (35) was checked against its registry record (Crossref, DataCite): one was wrong. Bean and Dutton's *Radio Meteorology* was cited as the 1968 Dover edition, but its DOI (10.6028/NBS.MONO.92) is the 1966 National Bureau of Standards Monograph 92; the reference now matches the record.
 - **"CDAAC Archive" links open.** The product and variable cards linked folders such as `.../cosmic2/nrt/level2/atmPrf/`, which do not exist (404): CDAAC keeps each day's tarballs in `<stream>/<level>/YYYY/DDD/`. The links now open the stream's level folder, and podTc2 and leoOrb point at level1b, where they are (podTc2 was listed under level2). An opt-in network test opens every link.
 - The L1 and L2 bending-angle texts and the ionospheric-combination help gave GPS frequencies only (1575.42 and 1227.60 MHz). COSMIC-2 also tracks Galileo on E1 and E5a (1176.45 MHz; atmPrf `freq2 = L5Q`) and GLONASS on its own channels near 1602 and 1246 MHz; the texts now say so.

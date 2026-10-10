@@ -44,8 +44,10 @@ STREAMS: dict[str, dict] = {
     },
     "postProc": {
         "label": "Post-processed",
-        "blurb": "Final reprocessing with the best available orbits and a frozen "
-                 "software version. Use this for climate-quality work.",
+        "blurb": "Reprocessing with final orbits and a frozen software version. For "
+                 "COSMIC-2, CDAAC holds only the in-situ IVM files here (ivmL2m, "
+                 "2019-08-01 to 2022-05-31) and podTc2 of 2020: there is no "
+                 "post-processed atmPrf, wetPf2 or ionPrf.",
         "levels": ["level2", "level1b"],
     },
     "provisional": {

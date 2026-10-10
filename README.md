@@ -189,7 +189,7 @@ Supported products:
 | `echPrf` | ECMWF model temperature, pressure, water vapour, refractivity and simulated bending angle along the path of each occultation (same file stamp as its atmPrf) |
 | `avnPrf` | NCEP model temperature, pressure, water vapour and refractivity along the path of each occultation (same file stamp as its atmPrf) |
 
-Streams: `nrt` (near-real-time, about 30-120 minutes after observation), `rapid` (reprocessed within days; scnLv2 and ivmL2m), `postProc` (final, weeks to months later), `provisional` (space weather; ionPrf). Two more streams fetch other radio occultation missions that CDAAC processes into the same files, for comparison with COSMIC-2: `paz-nrt` (PAZ, a polar orbit; 210-223 profiles a day on the 2026 sample days) and `kompsat5-nrt` (KOMPSAT-5; 78-85 a day). They are kept in their own cache folders and datasets, and "Show what is available" lists them only when one of them is the chosen stream.
+Streams: `nrt` (near-real-time, about 30-120 minutes after observation), `rapid` (reprocessed within days; scnLv2 and ivmL2m), `postProc` (final orbits; for COSMIC-2 only ivmL2m of 2019-08-01 to 2022-05-31 and podTc2 of 2020, no atmPrf, wetPf2 or ionPrf), `provisional` (space weather; ionPrf). Two more streams fetch other radio occultation missions that CDAAC processes into the same files, for comparison with COSMIC-2: `paz-nrt` (PAZ, a polar orbit; 210-223 profiles a day on the 2026 sample days) and `kompsat5-nrt` (KOMPSAT-5; 78-85 a day). They are kept in their own cache folders and datasets, and "Show what is available" lists them only when one of them is the chosen stream.
 
 ---
 
