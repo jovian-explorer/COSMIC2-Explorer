@@ -121,6 +121,7 @@
 
 ### Exports and figures
 
+- The regridded (wide) CSV named its field without the product, so an atmPrf `Temp` export said "Temperature" for what is the dry temperature. It now names the field as each product stores it, and lists both when products differ ("Dry temperature [°C] in atmPrf; Temperature [°C] in wetPf2"), as the netCDF export already did.
 - The profile CSV header has a `# Units:` line giving every column's units (from the files, or the app's vocabulary for derived fields). Unit strings `C` and `mb` now read `°C` and `hPa` in labels, so atmPrf and wetPf2 temperature and pressure share one unit.
 - **Profile CSV with several products keeps every value under its own name.** The columns were those of the first profile, so in an export of atmPrf and wetPf2 together the wetPf2 rows put their values under the atmPrf names (geopotential height under `Ref`, temperature under `Azim`). The columns are now every variable met, each profile's values in its own columns and blank where it has none.
 - CSV cells and composite JSON are written at full double precision (they were rounded to 6 decimal places, leaving small fields such as N^2 with one or two significant digits).

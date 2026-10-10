@@ -117,3 +117,13 @@ def test_profiles_csv_header_gives_the_units():
     res = exporters.export_profiles_csv([atm, _wet_meta()], ["Temp", "Pres"])
     line = next(l for l in open(res["path"], encoding="utf-8") if l.startswith("# Units:"))
     assert line.strip() == "# Units: MSL_alt km; Temp °C; Pres hPa"
+
+
+def test_grid_csv_names_atmprf_temp_as_dry_temperature():
+    atm = readers.quick_meta(str(next(sampledata_dir().glob("atmPrf_*E23*"))))
+    res = exporters.export_grid_csv([atm, _wet_meta()], "Temp", top_km=20.0, step_km=1.0)
+    line = next(l for l in open(res["path"], encoding="utf-8") if l.startswith("# Field:"))
+    assert "Dry temperature [°C] in atmPrf; Temperature [°C] in wetPf2" in line
+    res = exporters.export_grid_csv([atm], "Temp", top_km=20.0, step_km=1.0)
+    line = next(l for l in open(res["path"], encoding="utf-8") if l.startswith("# Field:"))
+    assert line.startswith("# Field: Dry temperature [°C];")

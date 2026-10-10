@@ -269,14 +269,18 @@ def export_grid_csv(granules: Sequence[dict], field: str, vertical: str = "MSL_a
     if extra_prov: prov_extras.update(extra_prov)
     prov = provenance(granules, prov_extras)
     tasks = [(gmeta, vertical, grid, [field]) for gmeta in granules]
-    cols: list[tuple[str, np.ndarray]] = [
-        (meta["file_name"], gridded[field])
+    cols: list[tuple[str, np.ndarray, str]] = [
+        (meta["file_name"], gridded[field], meta.get("product") or "")
         for res in pmap(_regrid_granule, tasks) if res is not None
         for meta, gridded in [res] if field in gridded]
+    # Named as stored in each product: atmPrf "Temp" is the dry temperature
+    labels = sorted({(vocab.axis_title(field, None, p), p) for _, _, p in cols})
+    label = (labels[0][0] if len({lab for lab, _ in labels}) == 1 else "; ".join(
+        f"{lab} in {p}" for lab, p in labels)) if labels else vocab.axis_title(field)
     with path.open("w", newline="", encoding="utf-8") as fh:
         for line in _header_lines(prov):
             fh.write(f"# {line}\n")
-        fh.write(f"# Field: {vocab.axis_title(field)}; "
+        fh.write(f"# Field: {label}; "
                  f"interpolated onto a uniform {step_km} km grid.\n")
         w = csv.writer(fh)
         w.writerow([f"{vertical}_km"] + [c[0] for c in cols])
