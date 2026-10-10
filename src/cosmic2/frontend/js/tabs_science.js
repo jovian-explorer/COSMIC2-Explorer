@@ -314,9 +314,9 @@ const DIAG_SPECS = [
    'Radio below this bounces off the ionosphere; above it escapes to space.'],
   ['ionosphere.topside_scale_height_km', 'Topside scale height', 'km', ''],
   ['ionosphere.vtec_below_peak_TECU', 'Vertical TEC below the peak', 'TECU',
-   'All the free electrons in a 1 m\u00b2 column up to the F2 peak.'],
+   'All the free electrons in a 1 m\u00b2 column from 80 km up to the F2 peak.'],
   ['ionosphere.vtec_profile_TECU', 'Vertical TEC of the profile', 'TECU',
-   'The same column from the bottom of the profile to its top.'],
+   'The same column from 80 km (below it the profile is inversion residue) to the top of the profile.'],
   ['scintillation.s4_max', 'Peak S4', '',
    'How hard the signal flickered: the scintillation class calls a peak below 0.2 quiet, ' +
    '0.2-0.4 moderate, 0.4-0.7 strong and 0.7 or more severe.'],

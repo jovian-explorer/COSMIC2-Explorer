@@ -509,10 +509,11 @@ def ionosphere_peak(z_km: np.ndarray, ne_cm3: np.ndarray,
         # through 150 km.
         if 0 < j < nee.size - 1:
             e_layer = {"NmE_el_cm3": float(nee[j]), "hmE_km": float(ze[j])}
-    # Vertical TEC from the bottom of the profile up to hmF2.  Every level is
-    # used, not only those above z_min (which would drop the E and lower F
-    # region from the column).
-    below = z <= hm
+    # Vertical TEC from TEC_BOTTOM_KM up to hmF2 and to the top.  Every level
+    # above that is used, not only those above z_min (which would drop the E
+    # and lower F region from the column).
+    col = z >= TEC_BOTTOM_KM
+    below = col & (z <= hm)
     return {"NmF2_el_cm3": nm, "hmF2_km": hm,
             "foF2_MHz": float(PLASMA_FREQ_COEFF * math.sqrt(nm)) if nm > 0 else None,
             "topside_scale_height_km": scale_h,
@@ -520,9 +521,17 @@ def ionosphere_peak(z_km: np.ndarray, ne_cm3: np.ndarray,
             "vtec_below_peak_TECU": _column_tec(z[below], ne[below]),
             # Whole profile, bottom to top: the quantity CDAAC reports as
             # "tec0" (integrated TEC between bottom and top).
-            "vtec_profile_TECU": _column_tec(z, ne),
+            "vtec_profile_TECU": _column_tec(z[col], ne[col]),
             "peak_at_profile_edge": at_edge,
             "found": not at_edge}
+
+
+# Bottom of the TEC columns.  Below about 80 km ionPrf densities are
+# Abel-inversion residue (often 1e4-1e5 el/cm3 at 30-60 km, where the real
+# D region holds under 1e3), and CDAAC's tec0 starts there too: from 80 km
+# the profile integral is within 0.5 % of tec0 on 689 of the 690 ionPrf of
+# 2026-09-18, from the lowest level on only 435 (up to 13 % above it).
+TEC_BOTTOM_KM = 80.0
 
 
 def _column_tec(z_km: np.ndarray, ne_cm3: np.ndarray) -> float | None:

@@ -369,3 +369,14 @@ def test_plasma_frequency_coefficient_from_the_constants():
     from scipy.constants import e, epsilon_0, m_e, pi
     exact = (e * e / (epsilon_0 * m_e)) ** 0.5 / (2 * pi) * 1e-3   # MHz per sqrt(cm-3)
     assert analysis.PLASMA_FREQ_COEFF == pytest.approx(exact, rel=1e-6)
+
+
+def test_tec_columns_start_at_80_km_like_cdaac_tec0():
+    # Abel residue below 80 km (1e4-1e5 el/cm3 at 30-60 km on real ionPrf)
+    # is left out, as in CDAAC's tec0
+    z = np.arange(30.0, 600.0, 2.0)
+    ne = np.where(z < 80.0, 5e4, _chapman(z))
+    res = analysis.ionosphere_peak(z, ne)
+    top = z >= 80.0
+    expected = np.trapezoid(ne[top] * 1e6, z[top] * 1e3) / 1e16
+    assert res["vtec_profile_TECU"] == pytest.approx(expected, rel=1e-9)
