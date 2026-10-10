@@ -63,7 +63,7 @@ class TestVocab:
     def test_axis_title_with_units(self):
         t = vocab.axis_title("Temp", "C")
         assert "Temperature" in t
-        assert "[C]" in t
+        assert "[°C]" in t
 
     def test_unit_normalisation_celsius_degree(self):
         t = vocab.axis_title("Temp", "Celsius_degree")

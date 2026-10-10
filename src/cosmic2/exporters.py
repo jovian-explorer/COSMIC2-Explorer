@@ -95,6 +95,7 @@ def export_profiles_csv(granules: Sequence[dict], variables: Sequence[str] | Non
     # and a wetPf2 after an atmPrf put its values under the atmPrf names.)
     # Rows go to a scratch file until all columns are known.
     columns: list[str] = []
+    units: dict[str, set[str]] = {}
     body = path.with_name(path.name + ".part")
     with body.open("w", newline="", encoding="utf-8") as fb:
         writer = csv.writer(fb)
@@ -117,6 +118,10 @@ def export_profiles_csv(granules: Sequence[dict], variables: Sequence[str] | Non
             cols = [zname] + names
             columns += [c for c in cols if c not in columns]
             idx = [columns.index(c) for c in cols]
+            for c in cols:
+                u = vocab.normalise_units(g.units.get(c) or vocab.info(c, g.product)["units"])
+                if u and u != "-":
+                    units.setdefault(c, set()).add(u)
             base = [g.meta["file_name"], g.meta["product"], g.meta["time_utc"],
                     g.meta["lat"], g.meta["lon"], g.meta["local_time"]]
             arrs = [src[c] for c in cols]
@@ -133,6 +138,9 @@ def export_profiles_csv(granules: Sequence[dict], variables: Sequence[str] | Non
         if comment_header:
             for line in _header_lines(prov):
                 fh.write(f"# {line}\n")
+            if units:
+                fh.write("# Units: " + "; ".join(
+                    f"{c} {' or '.join(sorted(units[c]))}" for c in columns if c in units) + "\n")
         if columns:
             writer = csv.writer(fh)
             writer.writerow(["granule", "product", "time_utc", "lat", "lon",

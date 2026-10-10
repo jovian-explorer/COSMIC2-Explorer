@@ -107,3 +107,13 @@ def test_profiles_csv_keeps_each_product_under_its_own_columns():
     assert wet[-1]["gph"] and not atm[0]["gph"]
     assert float(wet[-1]["MSL_alt"]) == 60.0
     assert not list(Path(res["path"]).parent.glob("*.part"))
+
+
+def test_profiles_csv_header_gives_the_units():
+    res = exporters.export_profiles_csv([_wet_meta()], ["Temp", "sph", "lapse_rate"])
+    line = next(l for l in open(res["path"], encoding="utf-8") if l.startswith("# Units:"))
+    assert line.strip() == "# Units: MSL_alt km; Temp °C; sph g/kg; lapse_rate K/km"
+    atm = readers.quick_meta(str(next(sampledata_dir().glob("atmPrf_*E23*"))))
+    res = exporters.export_profiles_csv([atm, _wet_meta()], ["Temp", "Pres"])
+    line = next(l for l in open(res["path"], encoding="utf-8") if l.startswith("# Units:"))
+    assert line.strip() == "# Units: MSL_alt km; Temp °C; Pres hPa"

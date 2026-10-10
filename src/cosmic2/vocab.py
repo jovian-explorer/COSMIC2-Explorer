@@ -646,6 +646,8 @@ def info(name: str, product: str | None = None) -> dict:
 # Normalise verbose or non-standard unit strings that CDAAC files sometimes
 # carry, so that axis labels are always human-readable.
 _UNIT_MAP: dict[str, str] = {
+    "C": "°C",
+    "mb": "hPa",
     "Celsius_degree": "°C",
     "celsius_degree": "°C",
     "celsius": "°C",
