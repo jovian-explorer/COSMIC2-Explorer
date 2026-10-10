@@ -468,6 +468,9 @@
         <label>Date (UTC)
           <input type="date" id="get-date">
         </label>
+        <label title="Optional: Fetch then queues the same product for every day through this one (at most 31)">Through (optional)
+          <input type="date" id="get-date-end">
+        </label>
         <button class="ghost" id="btn-latest">Use most recent available</button>
       </div>
       <div class="row">
@@ -478,7 +481,8 @@
       <p class="hint" id="stream-blurb"></p>
       <button class="primary" id="btn-scan">Show what is available</button>
       <p class="hint">Listings come straight from
-        <code>data.cosmic.ucar.edu</code> - no account needed.</p>
+        <code>data.cosmic.ucar.edu</code> - no account needed. With a
+        <em>Through</em> date, Fetch queues the product for every day of the range (at most 31).</p>
     </div>
 
     <div class="card">

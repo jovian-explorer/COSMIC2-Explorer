@@ -161,3 +161,42 @@ def test_composite_of_ivm_says_what_the_selection_holds():
     res = post("/api/composite", {"search": {"products": ["wetPf2"], "limit": 10},
                                   "field": "Temp", "top_km": 30, "step_km": 1})
     assert res["n_profiles"] > 0 and set(res["products"]) == {"wetPf2"}
+
+
+def test_download_range_queues_one_job_per_day(monkeypatch):
+    """With date_end, one download of the same product is queued for every
+    day through that date (across a month end), at most 31; a single day
+    answers as before, with its job."""
+    from fastapi import HTTPException
+    from cosmic2 import api, fetch
+    calls = []
+
+    class Job:
+        def __init__(self, day):
+            self.day = day
+
+        def snapshot(self):
+            return {"id": self.day}
+
+    class Manager:
+        def submit_download(self, **kw):
+            calls.append(kw)
+            return Job(kw["date"])
+
+    monkeypatch.setattr(fetch, "manager", lambda: Manager())
+    res = api.start_download(api.DownloadRequest(product="ionPrf", date="2026-02-27",
+                                                 date_end="2026-03-02", max_profiles=0))
+    assert [c["date"] for c in calls] == ["2026-02-27", "2026-02-28", "2026-03-01", "2026-03-02"]
+    assert all(c["product"] == "ionPrf" and c["max_profiles"] == 0 for c in calls)
+    assert res["n_days"] == 4 and [j["id"] for j in res["jobs"]] == [c["date"] for c in calls]
+    calls.clear()
+    assert api.start_download(api.DownloadRequest(date="2026-06-01")) == {"id": "2026-06-01"}
+    assert len(calls) == 1
+    calls.clear()
+    for bad in ({"date": "2026-06-02", "date_end": "2026-06-01"},
+                {"date": "2026-01-01", "date_end": "2026-02-01"},
+                {"date": "2026-6-1"}):
+        with pytest.raises(HTTPException) as err:
+            api.start_download(api.DownloadRequest(**bad))
+        assert err.value.status_code == 400
+    assert not calls

@@ -344,11 +344,17 @@ def archive_clear_cache() -> dict:
 # downloads / jobs
 # ---------------------------------------------------------------------------
 
+MAX_DOWNLOAD_DAYS = 31
+
+
 class DownloadRequest(BaseModel):
     stream: str = "nrt"
     level: str = "level2"
     product: str = "wetPf2"
     date: str
+    # last day (inclusive): the same product is fetched for every day from
+    # date to date_end, one download each
+    date_end: str | None = None
     max_profiles: int | None = Field(default=None,
                                      description="0 or null means the whole day")
     sampling: Literal["first", "spread"] = "spread"
@@ -357,15 +363,27 @@ class DownloadRequest(BaseModel):
 
 @app.post("/api/download")
 def start_download(req: DownloadRequest) -> dict:
+    """One day (the job), or with ``date_end`` one download per day (the
+    jobs, at most MAX_DOWNLOAD_DAYS)."""
     try:
-        dt.date.fromisoformat(req.date)
+        first = dt.date.fromisoformat(req.date)
+        last = dt.date.fromisoformat(req.date_end) if req.date_end else first
     except ValueError as exc:
         raise HTTPException(400, "date must be YYYY-MM-DD") from exc
-    job = fetch.manager().submit_download(
-        stream=req.stream, level=req.level, product=req.product, date=req.date,
+    if last < first:
+        raise HTTPException(400, "date_end is before date")
+    n_days = (last - first).days + 1
+    if n_days > MAX_DOWNLOAD_DAYS:
+        raise HTTPException(400, f"at most {MAX_DOWNLOAD_DAYS} days in one request")
+    jobs = [fetch.manager().submit_download(
+        stream=req.stream, level=req.level, product=req.product,
+        date=(first + dt.timedelta(days=i)).isoformat(),
         max_profiles=req.max_profiles, sampling=req.sampling,
-        good_only=req.good_only)
-    return _clean(job.snapshot())
+        good_only=req.good_only) for i in range(n_days)]
+    if not req.date_end:
+        return _clean(jobs[0].snapshot())
+    return _clean({"n_days": n_days, "date": first.isoformat(), "date_end": last.isoformat(),
+                   "jobs": [j.snapshot() for j in jobs]})
 
 
 @app.get("/api/jobs")

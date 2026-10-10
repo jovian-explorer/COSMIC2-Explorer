@@ -121,20 +121,35 @@ function productCard(f) {
       btn));
 }
 
+/** Days from `start` through `end` (ISO dates), 1 without an end date; 0
+ *  when the end comes first. */
+export function daysThrough(start, end) {
+  if (!end || end === start) return 1;
+  const n = Math.round((Date.parse(end) - Date.parse(start)) / 86400000) + 1;
+  return n >= 1 ? n : 0;
+}
+
 async function startDownload(f, button) {
   const raw = parseInt($('#get-count').value, 10);
+  const end = $('#get-date-end').value;
+  const days = daysThrough(f.date, end);
+  if (!days) { toast('The "Through" date is before the day.', 'bad'); return; }
+  if (days > 31) { toast('At most 31 days at a time.', 'bad'); return; }
   const req = {
     stream: f.stream, level: f.level, product: f.product,
     date: f.date, max_profiles: raw === 0 ? 0 : raw,
     sampling: $('#get-sampling').value,
     good_only: $('#get-goodonly').checked,
   };
-  if (raw === 0 && (f.size_bytes || 0) > 400 * 1024 ** 2 &&
-      !confirm(`A whole day of ${f.label} is ${bytes(f.size_bytes)}. ` +
-               `Download all of it?`)) return;
+  if (days > 1) req.date_end = end;
+  if (raw === 0 && (f.size_bytes || 0) * days > 400 * 1024 ** 2 &&
+      !confirm(`A whole day of ${f.label} is ${bytes(f.size_bytes)}` +
+               (days > 1 ? `; ${days} days are about ${bytes(f.size_bytes * days)}` : '') +
+               '. Download all of it?')) return;
   await withBusy(button, 'Queued', async () => {
     await api.download(req);
-    toast(`Fetching ${f.label} for ${f.date}.`);
+    toast(days > 1 ? `Fetching ${f.label} for ${days} days, ${f.date} to ${end}.`
+                   : `Fetching ${f.label} for ${f.date}.`);
     pollJobs();
   });
 }

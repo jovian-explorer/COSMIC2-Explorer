@@ -261,3 +261,30 @@ def test_scintillation_panel_shows_where_the_peak_was():
     js = _read(FRONTEND / "js" / "tabs_science.js")
     assert "['scintillation.s4_max_height_km', 'Tangent height of peak S4', 'km'," in js
     assert "m.product === 'scnLv2' ? ' (tangent point of the S4 maximum)'" in js
+
+
+def test_get_tab_fetches_a_range_of_days():
+    """A "Through" date makes Fetch queue the product for every day of the
+    range: daysThrough counts them (across a month end; 0 when the end comes
+    first) and the request carries date_end."""
+    import json
+    import shutil
+    import subprocess
+    import pytest
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("Node.js not installed")
+    url = (FRONTEND / "js" / "tabs_data.js").resolve().as_uri()
+    code = (f"import {{daysThrough}} from '{url}';"
+            "console.log(JSON.stringify([daysThrough('2026-06-01', ''),"
+            " daysThrough('2026-06-01', '2026-06-01'), daysThrough('2026-02-27', '2026-03-02'),"
+            " daysThrough('2026-06-03', '2026-06-01')]))")
+    out = subprocess.run([node, "--input-type=module", "-e", code],
+                         capture_output=True, text=True, timeout=60)
+    if out.returncode != 0 and "Cannot use import statement" in out.stderr:
+        pytest.skip("this Node cannot load ES modules from a .js file")
+    assert out.returncode == 0, out.stderr
+    assert json.loads(out.stdout) == [1, 1, 4, 0]
+    js = _read(FRONTEND / "js" / "tabs_data.js")
+    assert "if (days > 1) req.date_end = end;" in js
+    assert 'id="get-date-end"' in _read(FRONTEND / "index.html")
