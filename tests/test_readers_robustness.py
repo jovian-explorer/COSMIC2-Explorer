@@ -268,3 +268,11 @@ def test_cdaac_times_are_gps_time_and_read_as_utc():
                         % 86400 / 240)
     diff = (gmst - s.data["gast1"][0] + math.pi) % (2 * math.pi) - math.pi
     assert abs(diff) / 7.2921159e-5 < 1.5          # seconds of time
+
+
+def test_ivm_nonpositive_ion_density_is_missing():
+    g = readers.load(str(next(sampledata_dir().glob("ivmL2m_*"))))
+    n = g.data["ion_dens"]
+    assert not (n <= 0).any()
+    assert g.meta["extras"]["n_nonpositive_ion_dens"] == 604
+    assert np.isfinite(g.data["orig_ion_density"][np.isnan(n)]).sum() >= 604

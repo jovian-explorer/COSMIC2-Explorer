@@ -252,7 +252,7 @@ VAR_INFO: dict[str, dict] = {
     ),
     "ion_dens": dict(
         label="Ion density (in-situ)", units="N/cc",
-        plain="Plasma density measured right at the spacecraft.", role=FIELD,
+        plain="Plasma density measured right at the spacecraft, scaled to agree with GPS TEC. UCAR validates it above 8000 per cm3; non-positive values, which the scaling produces at low densities, are treated as missing.", role=FIELD,
         formula=r"N_i = \frac{I_{sat}}{q_e A v_{sc}}",
         reference="Heelis, R. A., et al. (2017), Ion velocity measurements for the Ionospheric Connections Explorer, Space Sci. Rev., 212, 615-629 (the COSMIC-2 IVM is the same University of Texas at Dallas design)",
         doi="10.1007/s11214-017-0383-3",

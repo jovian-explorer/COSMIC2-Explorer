@@ -693,11 +693,21 @@ def _read_ivml2m(path: str) -> Granule:
         if ok.any():
             i = int(np.flatnonzero(ok)[np.argmin(uts[ok])])
             meta["local_time"] = _local_time(float(lon[i]), float(uts[i]))
+    # ion_dens is orig_ion_density rescaled against TGRS TEC (Space Weather
+    # Data Release 4, UCAR 2021), which also takes about 7900 /cc off: where
+    # the raw density was below that it goes negative (604 of 84520 samples
+    # of the bundled day).  A density cannot be negative, so those samples
+    # are missing.  The release validates densities above 8e3 /cc.
     dens = data.get("ion_dens")
+    n_neg = 0
+    if dens is not None:
+        n_neg = int((dens <= 0).sum())
+        dens[dens <= 0] = np.nan
     meta["good"] = bool(dens is not None and np.isfinite(dens).sum() > 100)
     meta["bad_code"] = "0" if meta["good"] else "1"
     meta["extras"] = {
         "n_samples": int(dens.size) if dens is not None else 0,
+        "n_nonpositive_ion_dens": n_neg,
         "median_ion_dens_Ncc": float(np.nanmedian(dens)) if dens is not None
         and np.isfinite(dens).any() else None,
         "median_alt_km": float(np.nanmedian(data["alt"])) if "alt" in data
@@ -751,7 +761,7 @@ def _read_avnprf(path: str) -> Granule:
 # Raised whenever a reader change alters what is indexed (position, local
 # time, quality, extras); an index written by an older version is then
 # re-read once at start-up (see store.index_outdated).
-INDEX_VERSION = 2
+INDEX_VERSION = 3
 
 READERS = {
     "atmPrf": _read_atmprf,
