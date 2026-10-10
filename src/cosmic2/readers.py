@@ -243,6 +243,23 @@ def _local_time(lon: float | None, epoch: float | None) -> float | None:
     return (utc_h + lon / 15.0) % 24.0
 
 
+def _direction(sat: str, flag, setting_value) -> str | None:
+    """'setting', 'rising' or None (the file does not say).
+
+    atmPrf and wetPf2 say it in ``irs`` (-1 setting, 1 rising), ionPrf in
+    ``setting`` (1 setting, 0 rising; on 2026-09-18 all 690 ionPrf agree
+    with their bottom and top times).  PAZ has one occultation antenna,
+    looking aft, and records setting occultations only (Padulles et al.
+    2020, doi:10.5194/amt-13-1299-2020), yet its files carry irs = 1
+    (171 of the 187 PAZ wetPf2 of 2026-09-27, the rest none).
+    """
+    if (sat or "").upper().startswith("PAZ"):
+        return "setting"
+    if flag is None:
+        return None
+    return "setting" if flag == setting_value else "rising"
+
+
 WGS84_A_KM = 6378.137
 WGS84_F = 1.0 / 298.257223563
 EARTH_ROTATION_RAD_S = 7.2921150e-5
@@ -440,7 +457,7 @@ def _read_atmprf(path: str) -> Granule:
         lat=attrs.get("lat"), lon=attrs.get("lon"),
         local_time=attrs.get("timloc") if attrs.get("timloc") is not None
         else _local_time(attrs.get("lon"), epoch),
-        setting="setting" if attrs.get("irs", 0) == -1 else "rising",
+        setting=_direction(meta["sat"], attrs.get("irs"), -1),
         bad_code=str(attrs.get("bad", "0")),
         ref_sat=attrs.get("reference_sat_id"),
         mission=_to_str(attrs.get("center", "")),
@@ -483,7 +500,7 @@ def _read_wetpf2(path: str) -> Granule:
         time_utc=iso, epoch=epoch,
         lat=attrs.get("lat"), lon=attrs.get("lon"),
         local_time=_local_time(attrs.get("lon"), epoch),
-        setting="setting" if attrs.get("irs", 0) == -1 else "rising",
+        setting=_direction(meta["sat"], attrs.get("irs"), -1),
         bad_code=str(attrs.get("bad", "0")),
         mission=_to_str(attrs.get("inverter", "")),
     )
@@ -519,7 +536,7 @@ def _read_ionprf(path: str) -> Granule:
         time_utc=iso, epoch=epoch,
         lat=attrs.get("edmaxlat"), lon=attrs.get("edmaxlon"),
         local_time=attrs.get("edmaxlct"),
-        setting="setting" if attrs.get("setting", 0) == -1 else "rising",
+        setting=_direction(meta["sat"], attrs.get("setting"), 1),
         ref_sat=attrs.get("reference_sat_id"),
         mission=_to_str(attrs.get("mission", "")),
     )

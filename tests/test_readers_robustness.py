@@ -205,3 +205,19 @@ def test_scintillation_files_name_their_satellite_like_the_others():
         assert missions.mission_of_sat(g.meta["sat"]) == "cosmic2"
     assert got == {"scnLv2_2026.200.002.01": ("C2E2", "C2E2"),
                    "scnLv2_2026.200.006.01": ("C2E6", "C2E6")}
+
+
+def test_occultation_direction_from_irs_and_setting(tmp_path):
+    # ionPrf says it in "setting" (1 setting, 0 rising), atmPrf/wetPf2 in irs
+    ion = readers.load(str(next(sampledata_dir().glob("ionPrf_*"))))
+    assert ion.attrs["setting"] == 1 and ion.meta["setting"] == "setting"
+    assert readers._direction("C2E2", 0, 1) == "rising"
+    assert readers._direction("C2E1", 1, -1) == "rising"
+    assert readers._direction("C2E1", None, -1) is None
+    # PAZ files say irs = 1, but PAZ records setting occultations only
+    rising = dict(_atm_attrs(), irs=1)
+    v = {"MSL_alt": (np.array([1.0, 2.0]), {})}
+    assert readers.load(_write(tmp_path / "atmPrf_C2E1.2026.200.01.02.G01_0001.0001_nc",
+                               rising, v)).meta["setting"] == "rising"
+    assert readers.load(_write(tmp_path / "atmPrf_PAZ1.2026.200.01.02.G01_0001.0001_nc",
+                               rising, v)).meta["setting"] == "setting"
