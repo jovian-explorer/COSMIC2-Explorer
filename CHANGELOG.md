@@ -16,6 +16,7 @@
 
 ### Documentation and references
 
+- Every citation with a DOI (35) was checked against its registry record (Crossref, DataCite): one was wrong. Bean and Dutton's *Radio Meteorology* was cited as the 1968 Dover edition, but its DOI (10.6028/NBS.MONO.92) is the 1966 National Bureau of Standards Monograph 92; the reference now matches the record.
 - **"CDAAC Archive" links open.** The product and variable cards linked folders such as `.../cosmic2/nrt/level2/atmPrf/`, which do not exist (404): CDAAC keeps each day's tarballs in `<stream>/<level>/YYYY/DDD/`. The links now open the stream's level folder, and podTc2 and leoOrb point at level1b, where they are (podTc2 was listed under level2). An opt-in network test opens every link.
 - The L1 and L2 bending-angle texts and the ionospheric-combination help gave GPS frequencies only (1575.42 and 1227.60 MHz). COSMIC-2 also tracks Galileo on E1 and E5a (1176.45 MHz; atmPrf `freq2 = L5Q`) and GLONASS on its own channels near 1602 and 1246 MHz; the texts now say so.
 - README: the notes on the science say where scintillation files are placed and that they exist only for scintillating occultations; the list of what the tests check names the boundary-layer and scintillation-geometry tests.
