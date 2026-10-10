@@ -83,3 +83,24 @@ def test_doi_resolves_to_its_author(doi):
         headers={"Accept": "text/x-bibliography; style=apa"})
     text = urllib.request.urlopen(req, timeout=60).read().decode("utf-8")
     assert VERIFIED[doi] in text
+
+
+def _archive_urls() -> set[str]:
+    urls = {v["archive_url"] for v in vocab.VAR_INFO.values() if v.get("archive_url")}
+    return urls | {p.archive_url for p in catalog.PRODUCTS.values() if p.archive_url}
+
+
+def test_archive_links_are_directories_that_exist():
+    # CDAAC keeps day tarballs in <stream>/<level>/YYYY/DDD: there is no
+    # per-product folder (.../nrt/level2/atmPrf/ is a 404)
+    for u in _archive_urls():
+        assert re.fullmatch(r"https://data\.cosmic\.ucar\.edu/gnss-ro/cosmic2/"
+                            r"(\w+/(\w+/)?level(1b|2)/)?", u), u
+
+
+@pytest.mark.network
+@pytest.mark.skipif(os.environ.get("COSMIC2_NETWORK_TESTS") != "1",
+                    reason="set COSMIC2_NETWORK_TESTS=1 to open the archive")
+def test_archive_links_open():
+    for u in sorted(_archive_urls()):
+        assert urllib.request.urlopen(u, timeout=60).status == 200, u

@@ -60,7 +60,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"r_{tan} = \sqrt{x_{tp}^2 + y_{tp}^2 + z_{tp}^2} - R_E",
         reference="Kursinski, E. R., et al. (1997), J. Geophys. Res., 102(D19), 23429-23465",
         doi="10.1029/97JD01569",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/scnLv2/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/",
         data_level="Level 2 Tangent Point Coordinate",
         algorithm="Geocentric distance of the ray-path tangent point minus local Earth radius."
     ),
@@ -70,7 +70,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"h_{sc} = \|\mathbf{r}_{sc}\| - R_E",
         reference="Weiss, J.-P., et al. (2022), COSMIC-2 mission summary at three years in orbit, Atmosphere, 13, 1409",
         doi="10.3390/atmos13091409",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/ivmL2m/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/",
         data_level="Level 1b Orbit State",
         algorithm="Spacecraft orbital altitude above WGS-84 ellipsoid from TriG precise orbit determination."
     ),
@@ -80,7 +80,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"P(z) = P(z_{top}) + \int_z^{z_{top}} \rho(z') g(z') dz'",
         reference="Healy, S. B., & Eyre, J. R. (2000), Q. J. R. Meteorol. Soc., 126, 1661-1683",
         doi="10.1002/qj.49712656606",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/wetPf2/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/",
         data_level="Level 2 (1D-Var Optimal Estimation)",
         algorithm="Hydrostatic equilibrium integrated downward coupled with 1D-Var variational assimilation."
     ),
@@ -90,7 +90,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"P_{dry}(z) = \frac{k_B}{\bar{m}_{dry}} \int_z^\infty \rho_{dry}(z') g(z') dz'",
         reference="Kursinski, E. R., et al. (1997), J. Geophys. Res., 102(D19), 23429-23465",
         doi="10.1029/97JD01569",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/atmPrf/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/",
         data_level="Level 2 (Native Abel Inversion)",
         algorithm="Hydrostatic downward integration assuming zero atmospheric moisture contribution."
     ),
@@ -102,7 +102,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"T = T_b + \mathbf{K} (y - H(x_b))",
         reference="Rodgers, C. D. (2000), Inverse Methods for Atmospheric Sounding, World Scientific",
         doi="10.1142/3171",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/wetPf2/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/",
         data_level="Level 2 (1D-Var Retrieval)",
         algorithm="CDAAC 1D-Var retrieval: optimal estimation combining the observed refractivity profile with a numerical weather prediction background."
     ),
@@ -113,7 +113,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"T_{dry}(z) = \frac{\bar{m}_{dry}}{k_B N(z)} \int_z^\infty g(z') N(z') dz'",
         reference="Kursinski, E. R., et al. (1997), J. Geophys. Res., 102(D19), 23429-23465",
         doi="10.1029/97JD01569",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/atmPrf/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/",
         data_level="Level 2 (Abel Inversion)",
         algorithm="Downward quadrature integration of refractivity under hydrostatic balance ignoring water vapor."
     ),
@@ -123,7 +123,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"e = \frac{q \cdot P}{\epsilon + (1 - \epsilon) q}",
         reference="Healy, S. B., & Eyre, J. R. (2000), Q. J. R. Meteorol. Soc., 126, 1661-1683",
         doi="10.1002/qj.49712656606",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/wetPf2/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/",
         data_level="Level 2 (1D-Var Retrieval)",
         algorithm="Water vapor partial pressure extracted via 1D-Var optimal estimation."
     ),
@@ -133,7 +133,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"q = \frac{\epsilon e}{P - (1 - \epsilon) e}",
         reference="Healy, S. B., & Eyre, J. R. (2000), Q. J. R. Meteorol. Soc., 126, 1661-1683",
         doi="10.1002/qj.49712656606",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/wetPf2/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/",
         data_level="Level 2 (1D-Var Retrieval)",
         algorithm="Specific humidity: mass of water vapour per unit mass of moist air (CDAAC 1D-Var output)."
     ),
@@ -143,7 +143,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"RH = 100 \times \frac{e}{e_s(T)}",
         reference="Bolton, D. (1980), Mon. Weather Rev., 108, 1046-1053",
         doi="10.1175/1520-0493(1980)108<1046:TCOEPT>2.0.CO;2",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/wetPf2/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/",
         data_level="Level 2 (1D-Var Retrieval)",
         algorithm="Supplied by CDAAC in wetPf2 (1D-Var output), not recomputed here. Recomputing 100 e / e_s(T) over water with Bolton (1980) or Goff-Gratch reproduces it to about 0.4 %RH (median over 11000 levels of 60 profiles)."
     ),
@@ -153,7 +153,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"N = (n - 1) \times 10^6 \approx 77.6 \frac{P}{T} + 3.73 \times 10^5 \frac{e}{T^2}",
         reference="Smith, E. K., & Weintraub, S. (1953), Proc. IRE, 41(8), 1035-1037",
         doi="10.1109/JRPROC.1953.274297",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/wetPf2/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/",
         data_level="Level 2 (1D-Var Grid)",
         algorithm="Radio refractivity interpolated or re-evaluated from 1D-Var analysis fields."
     ),
@@ -163,7 +163,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"N(r) = 10^6 \left( \exp\left[\frac{1}{\pi} \int_a^\infty \frac{\alpha(x)}{\sqrt{x^2 - a^2}} dx\right] - 1 \right)",
         reference="Fjeldbo, G., Kliore, A. J., & Eshleman, V. R. (1971), Astron. J., 76, 123-140",
         doi="10.1086/111096",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/atmPrf/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/",
         data_level="Level 2 (Abel Inversion)",
         algorithm="Inverted from bending angle profile alpha(a) via the standard Abel integral transform."
     ),
@@ -173,7 +173,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"N_{L1} = (n_{L1} - 1) \times 10^6",
         reference="Kursinski, E. R., et al. (1997), J. Geophys. Res., 102(D19), 23429-23465",
         doi="10.1029/97JD01569",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/atmPrf/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/",
         data_level="Level 2 Single-Frequency Diagnostic",
         algorithm="Abel inversion applied directly to L1 bending angles before dual-frequency ionospheric combination."
     ),
@@ -184,7 +184,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"\alpha(a) = \frac{f_1^2 \alpha_1(a) - f_2^2 \alpha_2(a)}{f_1^2 - f_2^2}",
         reference="Vorob'ev, V. V., & Krasil'nikova, T. G. (1994), Izvestiya Atmos. Ocean. Phys., 29, 602-609",
         doi="",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/atmPrf/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/",
         data_level="Level 2 (Calibrated Neutral Bending)",
         algorithm="Dual-frequency linear combination of L1 and L2 bending angles to eliminate first-order ionospheric dispersion."
     ),
@@ -194,7 +194,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"\alpha_1(a) = -\int_{-\infty}^\infty \frac{1}{n} \frac{\partial n}{\partial r} \frac{a}{r} ds",
         reference="Kursinski, E. R., et al. (1997), J. Geophys. Res., 102(D19), 23429-23465",
         doi="10.1029/97JD01569",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/atmPrf/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/",
         data_level="Level 1b / Level 2 Frequency-Specific Bending",
         algorithm="Doppler frequency shift converted to ray bending angle using geometric optical equations."
     ),
@@ -204,7 +204,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"\alpha_2(a) = -\int_{-\infty}^\infty \frac{1}{n} \frac{\partial n}{\partial r} \frac{a}{r} ds",
         reference="Kursinski, E. R., et al. (1997), J. Geophys. Res., 102(D19), 23429-23465",
         doi="10.1029/97JD01569",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/atmPrf/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/",
         data_level="Level 1b / Level 2 Frequency-Specific Bending",
         algorithm="Doppler frequency shift converted to ray bending angle on the second carrier (GPS L2C, Galileo E5a or GLONASS L2)."
     ),
@@ -214,7 +214,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"\sigma_\alpha(a)",
         reference="Schreiner, W. S., et al. (2020), COSMIC-2 radio occultation constellation: first results, Geophys. Res. Lett., 47, e2019GL086841",
         doi="10.1029/2019GL086841",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/atmPrf/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/",
         data_level="Level 2 Quality Metric",
         algorithm="Estimated observational noise from Doppler tracking residuals."
     ),
@@ -224,7 +224,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"C_{bend} \in [0, 100]",
         reference="Schreiner, W. S., et al. (2020), COSMIC-2 radio occultation constellation: first results, Geophys. Res. Lett., 47, e2019GL086841",
         doi="10.1029/2019GL086841",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/atmPrf/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/",
         data_level="Level 2 Quality Metric",
         algorithm="Statistical confidence score evaluated by CDAAC quality control pipeline."
     ),
@@ -236,7 +236,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"N_e(r) = -\frac{f^2}{40.3 \pi} \int_r^{r_{leo}} \frac{d\alpha_{iono}/da}{\sqrt{a^2 - r^2}} da",
         reference="Schreiner, W. S., et al. (1999), Radio Sci., 34(4), 949-966",
         doi="10.1029/1999RS900034",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/provisional/spaceWeather/level2/ionPrf/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/provisional/spaceWeather/level2/",
         data_level="Level 2 (Ionospheric Abel Inversion)",
         algorithm="Abel transform applied to ionospheric excess phase or bending angle under spherical symmetry."
     ),
@@ -246,7 +246,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"TEC = \frac{1}{40.3} \frac{f_1^2 f_2^2}{f_1^2 - f_2^2} (L_1 - L_2)",
         reference="Syndergaard, S. (2000), Radio Sci., 35(3), 865-883",
         doi="10.1029/1999RS002199",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/provisional/spaceWeather/level2/ionPrf/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/provisional/spaceWeather/level2/",
         data_level="Level 2 (Calibrated Path Integral)",
         algorithm="Differential code/phase TEC calibrated using precise satellite clock and orbit ephemerides."
     ),
@@ -256,7 +256,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"N_i = \frac{I_{sat}}{q_e A v_{sc}}",
         reference="Heelis, R. A., et al. (2017), Ion velocity measurements for the Ionospheric Connections Explorer, Space Sci. Rev., 212, 615-629 (the COSMIC-2 IVM is the same University of Texas at Dallas design)",
         doi="10.1007/s11214-017-0383-3",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/ivmL2m/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/",
         data_level="Level 2 (In-Situ IVM)",
         algorithm="In-situ planar ion trap saturation current normalized by spacecraft orbital speed and sensor aperture."
     ),
@@ -266,7 +266,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"T_i = \frac{m_i}{2 k_B} v_{thermal}^2",
         reference="Heelis, R. A., et al. (2017), Ion velocity measurements for the Ionospheric Connections Explorer, Space Sci. Rev., 212, 615-629 (the COSMIC-2 IVM is the same University of Texas at Dallas design)",
         doi="10.1007/s11214-017-0383-3",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/ivmL2m/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/",
         data_level="Level 2 (In-Situ IVM)",
         algorithm="Ion velocity distribution Maxwellian temperature fit from Retarding Potential Analyzer (RPA)."
     ),
@@ -276,7 +276,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"\Phi_{sc}",
         reference="Heelis, R. A., et al. (2017), Ion velocity measurements for the Ionospheric Connections Explorer, Space Sci. Rev., 212, 615-629 (the COSMIC-2 IVM is the same University of Texas at Dallas design)",
         doi="10.1007/s11214-017-0383-3",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/ivmL2m/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/",
         data_level="Level 2 (In-Situ IVM Diagnostic)",
         algorithm="Floating potential of spacecraft body determined from IVM sensor characteristics."
     ),
@@ -286,7 +286,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"v_{i,zon} = \frac{\mathbf{E} \times \mathbf{B}}{B^2} \cdot \hat{\mathbf{e}}_{\phi}",
         reference="Heelis, R. A., et al. (2017), Ion velocity measurements for the Ionospheric Connections Explorer, Space Sci. Rev., 212, 615-629 (the COSMIC-2 IVM is the same University of Texas at Dallas design)",
         doi="10.1007/s11214-017-0383-3",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/ivmL2m/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/",
         data_level="Level 2 (In-Situ IVM Drift)",
         algorithm="Cross-track plasma drift component in the local geomagnetic zonal direction."
     ),
@@ -296,7 +296,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"v_{i,mer} = \frac{\mathbf{E} \times \mathbf{B}}{B^2} \cdot \hat{\mathbf{e}}_{\theta}",
         reference="Heelis, R. A., et al. (2017), Ion velocity measurements for the Ionospheric Connections Explorer, Space Sci. Rev., 212, 615-629 (the COSMIC-2 IVM is the same University of Texas at Dallas design)",
         doi="10.1007/s11214-017-0383-3",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/ivmL2m/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/",
         data_level="Level 2 (In-Situ IVM Drift)",
         algorithm="Cross-track plasma drift component in the local geomagnetic meridional direction."
     ),
@@ -306,7 +306,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"v_{i,\parallel} = \mathbf{v}_i \cdot \frac{\mathbf{B}}{\|B\|}",
         reference="Heelis, R. A., et al. (2017), Ion velocity measurements for the Ionospheric Connections Explorer, Space Sci. Rev., 212, 615-629 (the COSMIC-2 IVM is the same University of Texas at Dallas design)",
         doi="10.1007/s11214-017-0383-3",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/ivmL2m/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/",
         data_level="Level 2 (In-Situ IVM Drift)",
         algorithm="Component of plasma velocity vector parallel to Earth's ambient magnetic field."
     ),
@@ -314,21 +314,21 @@ VAR_INFO: dict[str, dict] = {
         label="Ion drift, east", units="m/s", plain="Geographic eastward plasma speed.",
         role=FIELD, formula=r"v_{i,east}",
         reference="Heelis, R. A., et al. (2017), Ion velocity measurements for the Ionospheric Connections Explorer, Space Sci. Rev., 212, 615-629 (the COSMIC-2 IVM is the same University of Texas at Dallas design)",
-        doi="10.1007/s11214-017-0383-3", archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/ivmL2m/",
+        doi="10.1007/s11214-017-0383-3", archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/",
         data_level="Level 2 (In-Situ IVM Drift)", algorithm="Geographic east component of ion drift."
     ),
     "iv_ns": dict(
         label="Ion drift, north", units="m/s", plain="Geographic northward plasma speed.",
         role=FIELD, formula=r"v_{i,north}",
         reference="Heelis, R. A., et al. (2017), Ion velocity measurements for the Ionospheric Connections Explorer, Space Sci. Rev., 212, 615-629 (the COSMIC-2 IVM is the same University of Texas at Dallas design)",
-        doi="10.1007/s11214-017-0383-3", archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/ivmL2m/",
+        doi="10.1007/s11214-017-0383-3", archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/",
         data_level="Level 2 (In-Situ IVM Drift)", algorithm="Geographic north component of ion drift."
     ),
     "iv_ud": dict(
         label="Ion drift, up", units="m/s", plain="Vertical upward plasma speed.",
         role=FIELD, formula=r"v_{i,up}",
         reference="Heelis, R. A., et al. (2017), Ion velocity measurements for the Ionospheric Connections Explorer, Space Sci. Rev., 212, 615-629 (the COSMIC-2 IVM is the same University of Texas at Dallas design)",
-        doi="10.1007/s11214-017-0383-3", archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/ivmL2m/",
+        doi="10.1007/s11214-017-0383-3", archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/",
         data_level="Level 2 (In-Situ IVM Drift)", algorithm="Radial upward component of ion drift."
     ),
     "mlt": dict(
@@ -363,7 +363,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"S_4 = \sqrt{\frac{\langle I^2 \rangle - \langle I \rangle^2}{\langle I \rangle^2}}",
         reference="Briggs, B. H., & Parkin, I. A. (1963), J. Atmos. Terr. Phys., 25(6), 339-365",
         doi="10.1016/0021-9169(63)90150-8",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/scnLv2/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/",
         data_level="Level 2 (Scintillation Diagnostic)",
         algorithm="Normalized standard deviation of the received intensity I = SNR^2 of the 50 Hz (GPS) or 100 Hz (GLONASS) data, in 10 s sliding windows given every second (the files' calculation_time_interval; COSMIC-2 Space Weather Data Release 5)."
     ),
@@ -373,7 +373,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"S_{4,L2} = \sqrt{\frac{\langle I_2^2 \rangle - \langle I_2 \rangle^2}{\langle I_2 \rangle^2}}",
         reference="Yeh, K. C., & Liu, C. H. (1982), Radio wave scintillations in the ionosphere, Proc. IEEE, 70(4), 324-360",
         doi="10.1109/PROC.1982.12313",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/scnLv2/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/",
         data_level="Level 2 (Scintillation Diagnostic)",
         algorithm="Normalized standard deviation of the received intensity on the L2 frequency, in the same 10 s sliding windows."
     ),
@@ -383,7 +383,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"\sigma_{\phi,L1} = \sqrt{\langle (\phi_1 - \bar{\phi}_1)^2 \rangle}",
         reference="Yeh, K. C., & Liu, C. H. (1982), Radio wave scintillations in the ionosphere, Proc. IEEE, 70(4), 324-360",
         doi="10.1109/PROC.1982.12313",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/scnLv2/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/",
         data_level="Level 2 (Scintillation Diagnostic)",
         algorithm="Standard deviation of the detrended high-rate carrier phase on L1, in 10 s sliding windows given every second."
     ),
@@ -393,7 +393,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"\sigma_{\phi,L2} = \sqrt{\langle (\phi_2 - \bar{\phi}_2)^2 \rangle}",
         reference="Yeh, K. C., & Liu, C. H. (1982), Radio wave scintillations in the ionosphere, Proc. IEEE, 70(4), 324-360",
         doi="10.1109/PROC.1982.12313",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/scnLv2/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/",
         data_level="Level 2 (Scintillation Diagnostic)",
         algorithm="Standard deviation of the detrended high-rate carrier phase on L2, in 10 s sliding windows given every second."
     ),
@@ -403,7 +403,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"\mathrm{SNR}_1",
         reference="Schreiner, W. S., et al. (2020), COSMIC-2 radio occultation constellation: first results, Geophys. Res. Lett., 47, e2019GL086841",
         doi="10.1029/2019GL086841",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/scnLv2/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/",
         data_level="Level 1b Signal Diagnostic",
         algorithm="Carrier signal amplitude divided by noise floor estimate."
     ),
@@ -413,7 +413,7 @@ VAR_INFO: dict[str, dict] = {
         formula=r"\mathrm{SNR}_2",
         reference="Schreiner, W. S., et al. (2020), COSMIC-2 radio occultation constellation: first results, Geophys. Res. Lett., 47, e2019GL086841",
         doi="10.1029/2019GL086841",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/scnLv2/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/",
         data_level="Level 1b Signal Diagnostic",
         algorithm="Carrier signal amplitude on L2 divided by noise floor estimate."
     ),

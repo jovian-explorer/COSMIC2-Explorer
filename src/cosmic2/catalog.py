@@ -135,7 +135,7 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         ("Bend_ang", "Ref", "Temp", "Pres", "MSL_alt", "Impact_height"),
         reference="Schreiner, W. S., et al. (2020), COSMIC-2 radio occultation constellation: first results, Geophys. Res. Lett., 47, e2019GL086841",
         doi="10.1029/2019GL086841",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/atmPrf/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/",
         processing_chain="L1b excess phase -> Doppler frequency shift -> geometric optical impact parameter -> dual-frequency ionospheric combination -> Abel integral inversion -> hydrostatic downward integration for dry temperature and pressure."
     ),
     Product(
@@ -149,7 +149,7 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         ("Temp", "Pres", "Vp", "sph", "rh", "ref", "gph", "MSL_alt"),
         reference="Healy, S. B., & Eyre, J. R. (2000), Q. J. R. Meteorol. Soc., 126, 1661-1683",
         doi="10.1002/qj.49712656606",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/wetPf2/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/",
         processing_chain="Level 2 refractivity combined with a numerical weather prediction background via 1D-Var optimal estimation to separate temperature and water vapour (50 m levels to 20 km, 100 m above)."
     ),
     Product(
@@ -162,7 +162,7 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         ("ELEC_dens", "TEC_cal", "MSL_alt"),
         reference="Syndergaard, S. (2000), Radio Sci., 35(3), 865-883",
         doi="10.1029/1999RS002199",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/provisional/spaceWeather/level2/ionPrf/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/provisional/spaceWeather/level2/",
         processing_chain="Calibrated dual-frequency excess phase L1-L2 -> ionospheric bending angle -> Abel transform inversion under local spherical symmetry assumption to yield the electron density profile up to the satellite's orbit."
     ),
     Product(
@@ -178,7 +178,7 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         ("s4_L1", "sigma_phi_L1", "occheight", "elevation"),
         reference="Carrano, C. S., et al. (2011), Multiple phase screen modeling of ionospheric scintillation along radio occultation raypaths, Radio Sci., 46, RS0D07",
         doi="10.1029/2010RS004591",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/scnLv2/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/",
         processing_chain="When the on-board S4 passes a set threshold, the receiver sends 50 Hz (GPS) or 100 Hz (GLONASS) SNR and carrier phase -> amplitude scintillation index S4 and phase scintillation sigma-phi in 10 s sliding windows, given every second along the ray path (COSMIC-2 Space Weather Data Release 5, UCAR 2022)."
     ),
     Product(
@@ -191,7 +191,7 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         ("ion_dens", "ion_temp", "iv_zon", "iv_mer", "alt", "lat", "lon"),
         reference="Heelis, R. A., et al. (2017), Ion velocity measurements for the Ionospheric Connections Explorer, Space Sci. Rev., 212, 615-629 (the COSMIC-2 IVM is the same University of Texas at Dallas design)",
         doi="10.1007/s11214-017-0383-3",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/ivmL2m/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/",
         processing_chain="In-situ Ion Velocity Meter (IVM) planar ion trap measurements at ~550 km orbit: retarding potential analysis yields ion density and temperature, drift meter yields 3-component plasma velocity vectors."
     ),
     Product(
@@ -232,7 +232,7 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         "small",
         reference="WMO Manual on Codes (WMO-No. 306), Volume I.2",
         doi="",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/bfrPrf/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/",
         processing_chain="Binary Universal Form for the Representation of meteorological data (BUFR) encoding for operational assimilation into global NWP centers."
     ),
     Product(
@@ -242,7 +242,7 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         "large",
         reference="Schreiner, W. S., et al. (2020), COSMIC-2 radio occultation constellation: first results, Geophys. Res. Lett., 47, e2019GL086841",
         doi="10.1029/2019GL086841",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level1b/conPhs/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level1b/",
         processing_chain="High-rate 50 Hz carrier phase observations combined with precise satellite orbit and clock corrections to compute atmospheric excess phase."
     ),
     Product(
@@ -252,7 +252,7 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         "medium",
         reference="Weiss, J.-P., et al. (2022), COSMIC-2 mission summary at three years in orbit, Atmosphere, 13, 1409",
         doi="10.3390/atmos13091409",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/podTc2/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level1b/",
         processing_chain="Geometry-free linear combination of dual-frequency carrier phases from the upward-looking precise orbit determination (POD) antennas."
     ),
     Product(
@@ -262,7 +262,7 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         "medium",
         reference="Weiss, J.-P., et al. (2022), COSMIC-2 mission summary at three years in orbit, Atmosphere, 13, 1409",
         doi="10.3390/atmos13091409",
-        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level1b/leoOrb/",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level1b/",
         processing_chain="CDAAC precise orbit determination of the COSMIC-2 spacecraft from its GNSS navigation antennas."
     ),
 ]}
