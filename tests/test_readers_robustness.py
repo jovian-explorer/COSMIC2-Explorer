@@ -236,3 +236,18 @@ def test_second_frequency_text_covers_galileo_e5a():
     g = readers.load(str(next(sampledata_dir().glob("atmPrf_*E23*"))))
     assert g.attrs["freq2"] == "L5Q"
     assert "1176.45 MHz for Galileo E5a" in vocab.VAR_INFO["Bend_ang2"]["plain"]
+
+
+def test_ionprf_with_an_e_region_edmax_is_placed_at_the_f2_peak(tmp_path):
+    z = np.array([80.0, 120.0, 200.0, 300.0, 400.0])
+    attrs = dict(year=2026, month=9, day=18, hour=9, minute=3, second=0.0, setting=1,
+                 edmaxalt=80.0, edmaxlat=10.0, edmaxlon=-101.0, edmaxlct=2.0, edmax=2e5)
+    v = {"MSL_alt": (z, {}), "ELEC_dens": (np.array([2e5, 1e5, 1e5, 1.5e5, 1e5]), {}),
+         "GEO_lat": (np.array([10.0, 8.0, 4.0, 0.3, -3.0]), {}),
+         "GEO_lon": (np.array([-101.0, -99.0, -95.0, -91.0, -87.0]), {})}
+    p = tmp_path / "ionPrf_C2E4.2026.261.09.03.G06_0001.0001_nc"
+    m = readers.load(_write(p, attrs, v)).meta
+    assert (m["lat"], m["lon"]) == pytest.approx((0.3, -91.0))
+    assert m["local_time"] == pytest.approx((9.05 - 91.0 / 15.0) % 24.0)
+    m = readers.load(_write(p, dict(attrs, edmaxalt=300.0, edmaxlat=0.3), v)).meta
+    assert (m["lat"], m["lon"], m["local_time"]) == pytest.approx((0.3, -101.0, 2.0))

@@ -543,6 +543,19 @@ def _read_ionprf(path: str) -> Granule:
         ref_sat=attrs.get("reference_sat_id"),
         mission=_to_str(attrs.get("mission", "")),
     )
+    # The profile is placed at its density peak (edmax).  CDAAC's edmax is
+    # sometimes an E-region or bottomside maximum (5 of 690 ionPrf of
+    # 2026-09-18, at 40-93 km), whose tangent point is up to 1600 km from
+    # the F2 peak's: place those at the largest density above 150 km.
+    z, ne = data.get("MSL_alt"), data.get("ELEC_dens")
+    hm = scrub(attrs.get("edmaxalt"))
+    if (hm is not None and hm < 150.0 and z is not None and ne is not None
+            and {"GEO_lat", "GEO_lon"} <= data.keys()):
+        f2 = np.flatnonzero((z > 150.0) & np.isfinite(ne))
+        if f2.size:
+            i = f2[np.argmax(ne[f2])]
+            meta.update(lat=float(data["GEO_lat"][i]), lon=float(data["GEO_lon"][i]))
+            meta["local_time"] = _local_time(meta["lon"], epoch)
     nmf2 = attrs.get("edmax")
     meta["good"] = bool(nmf2 and nmf2 > 0)
     meta["bad_code"] = "0" if meta["good"] else "1"
