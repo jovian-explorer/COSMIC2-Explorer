@@ -105,7 +105,8 @@ Work that reads many granules (composites, profile plots, the diagnostics table,
 
 * In `atmPrf`, the variables `Temp` and `Pres` are the **dry** temperature and pressure (refractivity inverted with no water vapour). In `wetPf2` the same names hold the 1D-Var moist retrieval. The app labels them accordingly and never averages one with the other in a composite.
 * The WMO tropopause on `atmPrf` dry temperature only considers levels colder than 235 K: lower down, water vapour makes the dry temperature's lapse rate fall below 2 K/km and the test would fire near 6 km in the tropics. On `wetPf2` the moist temperature is used as it is.
-* Pressure, density, vapour pressure, specific humidity and electron density are interpolated in log space when profiles are put on a common grid.
+* Pressure, density, vapour pressure, specific humidity, refractivity and electron density (and bending angle, by impact height) are interpolated in log space when profiles are put on a common grid.
+* Setting or rising: atmPrf and wetPf2 give it in `irs` (-1 setting), ionPrf in `setting` (1 setting). PAZ profiles are shown as setting whatever their files say: PAZ records setting occultations only (Padulles et al. 2020), yet its files carry `irs = 1`.
 * Profile error bars are the running scatter of the values about their running mean (an estimate of level-to-level noise), not a retrieval uncertainty.
 * The integrated water vapour starts at the lowest retrieved level; the height of that level is given alongside the value.
 * Penetration depth is the lowest retrieved level of good atmPrf/wetPf2 profiles. Above the ground it uses the terrain height stored in the wetPf2 retrieved from the same atmPrf; on the 600 atmPrf profiles of 2026-06-20 and 2026-09-30, 84.5 % reach within 1 km of the ground (76.8 % below 1 km above sea level), in line with the more than 80 % reported by Schreiner et al. (2020).
@@ -224,4 +225,5 @@ The test suite validates:
 * Strict zero em/en-dash compliance and local asset integrity
 * Windows double-click launch of a built EXE (skipped unless `dist/COSMIC2-Explorer/COSMIC2-Explorer.exe` or `COSMIC2_EXE` exists), including that a hard kill leaves no `_MEI*` folder in `%TEMP%`
 * Every DOI shown in the app is on a list checked against doi.org (re-resolved with `COSMIC2_NETWORK_TESTS=1`)
+* Every "CDAAC Archive" link is an archive folder (opened with `COSMIC2_NETWORK_TESTS=1`)
 * Live CDAAC download (opt-in: `COSMIC2_NETWORK_TESTS=1`)
