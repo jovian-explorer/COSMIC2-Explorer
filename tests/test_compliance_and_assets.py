@@ -16,7 +16,7 @@ def test_zero_em_en_dashes():
 
     ignored_dirs = {
         ".git", "__pycache__", ".pytest_cache", "build", "dist",
-        "vendor", ".venv", "venv", ".idea", ".vscode"
+        "vendor", ".venv", "venv", ".idea", ".vscode", "graphify-out"
     }
 
     scanned_exts = {".py", ".html", ".js", ".css", ".md", ".json", ".spec", ".toml", ".yml"}
