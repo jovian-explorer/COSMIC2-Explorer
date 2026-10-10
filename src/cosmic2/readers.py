@@ -472,8 +472,11 @@ def _read_atmprf(path: str) -> Granule:
     meta.update(
         time_utc=iso, epoch=epoch,
         lat=attrs.get("lat"), lon=attrs.get("lon"),
-        local_time=attrs.get("timloc") if attrs.get("timloc") is not None
-        else _local_time(attrs.get("lon"), epoch),
+        # Computed like every other product.  CDAAC's timloc is the local
+        # time of hh:mm:00 GPS time, the occultation's start cut to the
+        # minute (exactly, on 22 atmPrf of COSMIC-2 and PAZ): 0-60 s early,
+        # and 18 s more against UTC.
+        local_time=_local_time(attrs.get("lon"), epoch),
         setting=_direction(attrs.get("irs")),
         bad_code=str(attrs.get("bad", "0")),
         ref_sat=attrs.get("reference_sat_id"),
@@ -555,7 +558,8 @@ def _read_ionprf(path: str) -> Granule:
     meta.update(
         time_utc=iso, epoch=epoch,
         lat=attrs.get("edmaxlat"), lon=attrs.get("edmaxlon"),
-        local_time=attrs.get("edmaxlct"),
+        # edmaxlct is the local time of edmaxtime taken as UTC, 18 s late
+        local_time=_local_time(attrs.get("edmaxlon"), epoch),
         setting=_direction(attrs.get("setting")),
         ref_sat=attrs.get("reference_sat_id"),
         mission=_to_str(attrs.get("mission", "")),
@@ -761,7 +765,7 @@ def _read_avnprf(path: str) -> Granule:
 # Raised whenever a reader change alters what is indexed (position, local
 # time, quality, extras); an index written by an older version is then
 # re-read once at start-up (see store.index_outdated).
-INDEX_VERSION = 3
+INDEX_VERSION = 4
 
 READERS = {
     "atmPrf": _read_atmprf,

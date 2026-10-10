@@ -249,7 +249,9 @@ def test_ionprf_with_an_e_region_edmax_is_placed_at_the_f2_peak(tmp_path):
     assert (m["lat"], m["lon"]) == pytest.approx((0.3, -91.0))
     assert m["local_time"] == pytest.approx((9.05 - 18 / 3600 - 91.0 / 15.0) % 24.0)
     m = readers.load(_write(p, dict(attrs, edmaxalt=300.0, edmaxlat=0.3), v)).meta
-    assert (m["lat"], m["lon"], m["local_time"]) == pytest.approx((0.3, -101.0, 2.0))
+    assert (m["lat"], m["lon"]) == pytest.approx((0.3, -101.0))
+    # edmaxlct (2.0 here) is not used: local time of the UTC time at edmaxlon
+    assert m["local_time"] == pytest.approx((9.05 - 18 / 3600 - 101.0 / 15.0) % 24.0)
 
 
 def test_cdaac_times_are_gps_time_and_read_as_utc():
@@ -276,3 +278,13 @@ def test_ivm_nonpositive_ion_density_is_missing():
     assert not (n <= 0).any()
     assert g.meta["extras"]["n_nonpositive_ion_dens"] == 604
     assert np.isfinite(g.data["orig_ion_density"][np.isnan(n)]).sum() >= 604
+
+
+def test_atmprf_local_time_is_computed_not_cdaacs_minute_value():
+    # timloc is the local time of the start cut to the minute in GPS time
+    g = readers.load(str(next(sampledata_dir().glob("atmPrf_*E23*"))))
+    lt = readers._local_time(g.attrs["lon"], g.meta["epoch"])
+    assert g.meta["local_time"] == pytest.approx(lt)
+    gps0 = 315964800.0
+    t = gps0 + g.attrs["start_time"]
+    assert g.attrs["timloc"] == pytest.approx(readers._local_time(g.attrs["lon"], t - t % 60), abs=1e-6)
