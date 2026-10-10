@@ -38,8 +38,9 @@ STREAMS: dict[str, dict] = {
     },
     "rapid": {
         "label": "Rapid",
-        "blurb": "Reprocessed within days with better orbits. Ionosphere and "
-                 "scintillation products live here.",
+        "blurb": "Reprocessed within days with better orbits. The scintillation "
+                 "(scnLv2) and in-situ IVM (ivmL2m) files live here; ionospheric "
+                 "profiles (ionPrf) are in the provisional stream.",
         "levels": ["level2", "level1b", "level3"],
     },
     "postProc": {
