@@ -190,7 +190,7 @@ VAR_INFO: dict[str, dict] = {
     ),
     "Bend_ang1": dict(
         label="Bending angle, L1", units="rad",
-        plain="Bending measured on the first radio frequency (1575.42 MHz).", role=FIELD,
+        plain="Bending measured on the first radio frequency: 1575.42 MHz for GPS L1 and Galileo E1, near 1602 MHz for GLONASS (each satellite its own channel).", role=FIELD,
         formula=r"\alpha_1(a) = -\int_{-\infty}^\infty \frac{1}{n} \frac{\partial n}{\partial r} \frac{a}{r} ds",
         reference="Kursinski, E. R., et al. (1997), J. Geophys. Res., 102(D19), 23429-23465",
         doi="10.1029/97JD01569",
@@ -200,13 +200,13 @@ VAR_INFO: dict[str, dict] = {
     ),
     "Bend_ang2": dict(
         label="Bending angle, L2", units="rad",
-        plain="Bending measured on the second radio frequency (1227.60 MHz).", role=FIELD,
+        plain="Bending measured on the second radio frequency: 1227.60 MHz for GPS L2C, 1176.45 MHz for Galileo E5a, near 1246 MHz for GLONASS L2 (the file's freq2 names the signal).", role=FIELD,
         formula=r"\alpha_2(a) = -\int_{-\infty}^\infty \frac{1}{n} \frac{\partial n}{\partial r} \frac{a}{r} ds",
         reference="Kursinski, E. R., et al. (1997), J. Geophys. Res., 102(D19), 23429-23465",
         doi="10.1029/97JD01569",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/atmPrf/",
         data_level="Level 1b / Level 2 Frequency-Specific Bending",
-        algorithm="Doppler frequency shift converted to ray bending angle on GPS L2 carrier frequency."
+        algorithm="Doppler frequency shift converted to ray bending angle on the second carrier (GPS L2C, Galileo E5a or GLONASS L2)."
     ),
     "Bend_ang_stdv": dict(
         label="Bending-angle standard deviation", units="rad",

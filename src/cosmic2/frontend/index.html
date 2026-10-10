@@ -246,7 +246,7 @@
       <div class="guide-formula-box" style="padding: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px;">
         <h4 style="margin: 0 0 6px 0; color: var(--accent);">2. Dual-Frequency Ionospheric Combination</h4>
         <p style="font-size: calc(12px * var(--font-scale, 1.0)); margin-bottom: 6px;">
-          First-order dispersive ionospheric bending is eliminated by taking the linear combination of bending angles \( \alpha_1 \) and \( \alpha_2 \) measured on frequencies \( f_1 \) (1575.42 MHz) and \( f_2 \) (1227.60 MHz):
+          First-order dispersive ionospheric bending is eliminated by taking the linear combination of bending angles \( \alpha_1 \) and \( \alpha_2 \) measured on frequencies \( f_1 \) and \( f_2 \) (COSMIC-2: GPS L1 1575.42 and L2C 1227.60 MHz, Galileo E1 1575.42 and E5a 1176.45 MHz, GLONASS L1 and L2 near 1602 and 1246 MHz, each satellite on its own channel; the atmPrf attributes freq1 and freq2 name the signals):
         </p>
         <p style="text-align: center; margin: 8px 0;">$$\alpha_{corr}(a) = \frac{f_1^2 \alpha_1(a) - f_2^2 \alpha_2(a)}{f_1^2 - f_2^2}$$</p>
         <p style="font-size: calc(11px * var(--font-scale, 1.0)); color: var(--text-muted); margin: 0;">

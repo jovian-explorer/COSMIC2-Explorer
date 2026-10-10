@@ -228,3 +228,11 @@ def test_atmprf_geoid_undulation_is_in_metres():
     atm, wet = (readers.load(str(sorted(sampledata_dir().glob(f"{p}_*E23*"))[0]))
                 for p in ("atmPrf", "wetPf2"))
     assert atm.meta["extras"]["geoid_undulation_m"] == pytest.approx(wet.attrs["rgeoid"])
+
+
+def test_second_frequency_text_covers_galileo_e5a():
+    # COSMIC-2 tracks Galileo on E1/E5a (freq2 L5Q), not only GPS L1/L2
+    from cosmic2 import vocab
+    g = readers.load(str(next(sampledata_dir().glob("atmPrf_*E23*"))))
+    assert g.attrs["freq2"] == "L5Q"
+    assert "1176.45 MHz for Galileo E5a" in vocab.VAR_INFO["Bend_ang2"]["plain"]
