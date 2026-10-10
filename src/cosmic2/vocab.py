@@ -282,7 +282,7 @@ VAR_INFO: dict[str, dict] = {
     ),
     "iv_zon": dict(
         label="Zonal ion drift", units="m/s",
-        plain="East-west speed of the ionospheric plasma.", role=FIELD,
+        plain="Plasma speed across the geomagnetic field, positive eastward.", role=FIELD,
         formula=r"v_{i,zon} = \frac{\mathbf{E} \times \mathbf{B}}{B^2} \cdot \hat{\mathbf{e}}_{\phi}",
         reference="Heelis, R. A., et al. (2017), Ion velocity measurements for the Ionospheric Connections Explorer, Space Sci. Rev., 212, 615-629 (the COSMIC-2 IVM is the same University of Texas at Dallas design)",
         doi="10.1007/s11214-017-0383-3",
@@ -292,17 +292,17 @@ VAR_INFO: dict[str, dict] = {
     ),
     "iv_mer": dict(
         label="Meridional ion drift", units="m/s",
-        plain="North-south speed of the ionospheric plasma.", role=FIELD,
+        plain="Plasma speed across the geomagnetic field in the magnetic meridian, positive upward (vertical at the magnetic equator; the file's \"+up\"), not a north-south speed.", role=FIELD,
         formula=r"v_{i,mer} = \frac{\mathbf{E} \times \mathbf{B}}{B^2} \cdot \hat{\mathbf{e}}_{\theta}",
         reference="Heelis, R. A., et al. (2017), Ion velocity measurements for the Ionospheric Connections Explorer, Space Sci. Rev., 212, 615-629 (the COSMIC-2 IVM is the same University of Texas at Dallas design)",
         doi="10.1007/s11214-017-0383-3",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/",
         data_level="Level 2 (In-Situ IVM Drift)",
-        algorithm="Cross-track plasma drift component in the local geomagnetic meridional direction."
+        algorithm="Plasma drift perpendicular to the geomagnetic field in the magnetic meridian plane, positive upward."
     ),
     "iv_par": dict(
         label="Field-parallel ion drift", units="m/s",
-        plain="Plasma speed along the geomagnetic field lines.", role=FIELD,
+        plain="Plasma speed along the geomagnetic field lines, positive northward.", role=FIELD,
         formula=r"v_{i,\parallel} = \mathbf{v}_i \cdot \frac{\mathbf{B}}{\|B\|}",
         reference="Heelis, R. A., et al. (2017), Ion velocity measurements for the Ionospheric Connections Explorer, Space Sci. Rev., 212, 615-629 (the COSMIC-2 IVM is the same University of Texas at Dallas design)",
         doi="10.1007/s11214-017-0383-3",
@@ -475,7 +475,7 @@ VAR_INFO: dict[str, dict] = {
                     formula=r"\lambda", reference="WGS-84", doi="",
                     archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/", data_level="Level 2 Coordinate",
                     algorithm="Geographic longitude."),
-    "Azim": dict(label="Ray azimuth", units="deg", plain="Compass direction the ray travelled.", role=AUX,
+    "Azim": dict(label="Occultation-plane azimuth", units="deg", plain="Azimuth of the occultation plane from north (the file's long_name).", role=AUX,
                  formula=r"\psi_{ray} \in [0^\circ, 360^\circ]", reference="CDAAC file attributes",
                  doi="", archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/",
                  data_level="Level 2 Geometry", algorithm="Geodetic azimuth of radio ray tangent point direction."),

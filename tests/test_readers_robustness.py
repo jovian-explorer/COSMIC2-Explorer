@@ -296,3 +296,14 @@ def test_imp_height_corr_is_described_as_a_correction_not_a_height():
     assert np.nanmax(np.abs(g.data["Imp_height_corr"])) < 0.01      # km
     v = vocab.VAR_INFO["Imp_height_corr"]
     assert v["role"] != vocab.VERTICAL and "correction" in v["label"]
+
+
+def test_ivm_drift_texts_follow_the_file_sign_conventions():
+    from scipy.io import netcdf_file
+    from cosmic2 import vocab
+    f = netcdf_file(str(next(sampledata_dir().glob("ivmL2m_*"))), "r", mmap=False)
+    assert b"+up" in f.variables["iv_mer"].long_name
+    assert b"+north" in f.variables["iv_par"].long_name
+    f.close()
+    assert "positive upward" in vocab.VAR_INFO["iv_mer"]["plain"]
+    assert "positive northward" in vocab.VAR_INFO["iv_par"]["plain"]

@@ -16,6 +16,7 @@
 
 ### Documentation and references
 
+- IVM drift texts follow the files: `iv_mer` was described as the north-south plasma speed, but the file defines it as the meridional drift positive upward (perpendicular to the field in the magnetic meridian, vertical at the magnetic equator); `iv_par` is positive northward along the field and `iv_zon` positive eastward. atmPrf `Azim` is the azimuth of the occultation plane (its long_name), not the direction a ray travelled.
 - atmPrf `Imp_height_corr` was described as the corrected impact height and offered as a height coordinate. The file calls it the "Impact height correction for oblateness", and its values are a few metres (-3.8 to 0.6 m on the bundled profile): it is the correction, not a height. The variable text says so and it is no longer marked as a height axis.
 - The guide and README said 8 bundled example granules of 5 products; the app ships and loads 12 of 7 (with the ECMWF and NCEP profiles). The help's list of fields interpolated in log space now names all of them (vapour pressure, specific humidity, refractivity and bending angle were missing).
 - The rapid stream text said the ionosphere products are there; CDAAC's rapid level2 holds scnLv2 and ivmL2m, while ionPrf is in the provisional stream. The stream text and the guide now say so.
