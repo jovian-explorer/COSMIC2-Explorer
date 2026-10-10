@@ -321,6 +321,10 @@ const DIAG_SPECS = [
    'How hard the signal flickered: the scintillation class calls a peak below 0.2 quiet, ' +
    '0.2-0.4 moderate, 0.4-0.7 strong and 0.7 or more severe.'],
   ['scintillation.severity', 'Scintillation class', '', ''],
+  ['scintillation.s4_max_height_km', 'Tangent height of peak S4', 'km',
+   'Where the ray grazed when the signal flickered most: 80-160 km is the E-region range and ' +
+   '200-600 km the F-region range of Dymond (2023); a low height can also come from F-region ' +
+   'irregularities elsewhere along the ray.'],
   ['insitu.ion_dens_median_Ncc', 'Ion density at the spacecraft', 'N/cc', ''],
 ];
 
@@ -342,7 +346,8 @@ async function showDiagnostics(gid) {
   const m = detail.meta;
   body.append(el('p', {class: 'hint'},
     `${m.file_name} \u00b7 ${dayOf(m.time_utc)} ${(m.time_utc || '').slice(11, 19)}Z ` +
-    `\u00b7 ${latlon(m.lat, 'lat')} ${latlon(m.lon, 'lon')} ` +
+    `\u00b7 ${latlon(m.lat, 'lat')} ${latlon(m.lon, 'lon')}` +
+    `${m.product === 'scnLv2' ? ' (tangent point of the S4 maximum)' : ''} ` +
     `\u00b7 local solar time ${fmt(m.local_time, 1)} h ` +
     `\u00b7 ${m.setting || ''} occultation`));
   if (m.error_text) {

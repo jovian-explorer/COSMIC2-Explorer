@@ -252,3 +252,12 @@ def test_fmt_writes_powers_of_ten_with_superscripts():
     assert out.returncode == 0, out.stderr
     assert json.loads(out.stdout) == ["4.12×10⁻⁴", "1.23×10⁶", "-2.50×10⁻⁵",
                                       "1.00×10⁵", "0.5", "99999"]
+
+
+def test_scintillation_panel_shows_where_the_peak_was():
+    """The diagnostics panel of a scnLv2 file showed its peak S4 but not the
+    tangent height of that peak, which tells the E region from the F region,
+    and gave the file's position without saying it is the tangent point."""
+    js = _read(FRONTEND / "js" / "tabs_science.js")
+    assert "['scintillation.s4_max_height_km', 'Tangent height of peak S4', 'km'," in js
+    assert "m.product === 'scnLv2' ? ' (tangent point of the S4 maximum)'" in js
