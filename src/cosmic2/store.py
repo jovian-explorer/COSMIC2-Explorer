@@ -412,6 +412,41 @@ def cache_bytes() -> int:
     return total
 
 
+def index_outdated(version: int) -> bool:
+    """True when the index was written by readers older than ``version``.
+    An empty index is simply marked current."""
+    conn = connect()
+    row = conn.execute("SELECT v FROM kv WHERE k='index_version'").fetchone()
+    if row and row[0] == str(version):
+        return False
+    if conn.execute("SELECT 1 FROM granules LIMIT 1").fetchone():
+        return True
+    with conn:
+        conn.execute("INSERT OR REPLACE INTO kv VALUES ('index_version', ?)", (str(version),))
+    return False
+
+
+def refresh_metadata() -> dict:
+    """Re-read every indexed granule with the current readers, keeping where
+    it came from (stream, level, archive day), so a reader fix reaches
+    downloaded and imported files alike."""
+    from . import readers
+    from .parallel import pmap
+    conn = connect()
+    rows = [dict(r) for r in conn.execute(
+        "SELECT path, product, stream, level, year, doy, date FROM granules")]
+    results = pmap(readers.quick_meta_safe, [(r["path"], r["product"]) for r in rows])
+    batch = []
+    for r, (m, _err) in zip(rows, results):
+        if m is not None:
+            batch.append(dict(m, **{k: r[k] for k in ("stream", "level", "year", "doy", "date")}))
+    n = upsert_granules(batch) if batch else 0
+    with conn:
+        conn.execute("INSERT OR REPLACE INTO kv VALUES ('index_version', ?)",
+                     (str(readers.INDEX_VERSION),))
+    return {"indexed": n, "failed": len(rows) - n}
+
+
 def prune_missing() -> dict:
     """Drop index rows whose granule file is gone from disk.
 

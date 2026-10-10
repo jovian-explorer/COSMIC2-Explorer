@@ -37,6 +37,8 @@ async def lifespan(app: FastAPI):
     ensure_dirs()
     store.init_db()
     store.prune_missing()
+    if store.index_outdated(readers.INDEX_VERSION):
+        fetch.manager().submit_reindex(refresh=True)
     # Spawn the analysis workers now, in the background, so the first large
     # composite or plot does not wait for them (see parallel.warm_up).
     if os.environ.get("COSMIC2_NO_WARM_UP") != "1":

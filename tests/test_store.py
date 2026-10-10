@@ -76,3 +76,30 @@ def test_reindex_keeps_the_archive_day_of_the_cache_folder(tmp_path, monkeypatch
         conn = store.connect()
         with conn:
             conn.execute("DELETE FROM granules WHERE stream='t-reidx'")
+
+
+def test_index_from_older_readers_is_reread_once(tmp_path, monkeypatch):
+    import shutil
+    from cosmic2 import readers
+    from cosmic2.config import sampledata_dir
+    src = next(sampledata_dir().glob("atmPrf_*E23*"))
+    path = str(tmp_path / src.name)
+    shutil.copy(src, path)
+    # an index row as an older version wrote it, outside the cache folder
+    store.upsert_granules([dict(path=path, product="atmPrf", stream="t-ver", level="imported",
+                                year=2026, doy=199, date="2026-07-18", lat=0.0, lon=0.0,
+                                extras={"geoid_undulation_m": 0.05091})])
+    conn = store.connect()
+    try:
+        with conn:
+            conn.execute("DELETE FROM kv WHERE k='index_version'")
+        assert store.index_outdated(readers.INDEX_VERSION)
+        store.refresh_metadata()
+        assert not store.index_outdated(readers.INDEX_VERSION)
+        row = store.get_granule(store.granule_id(path))
+        assert (row["stream"], row["level"], row["date"]) == ("t-ver", "imported", "2026-07-18")
+        assert row["lat"] == readers.load(path).meta["lat"]
+        assert row["extras"]["geoid_undulation_m"] == 50.91
+    finally:
+        with conn:
+            conn.execute("DELETE FROM granules WHERE stream='t-ver'")

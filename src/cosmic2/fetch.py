@@ -231,9 +231,12 @@ class DownloadManager:
         self._executor().submit(self._run_download, job)
         return job
 
-    def submit_reindex(self) -> Job:
+    def submit_reindex(self, refresh: bool = False) -> Job:
+        """Rebuild the index from the cache folder, or (``refresh``) re-read
+        every indexed granule after a reader change."""
+        title = "Update the index for this version" if refresh else "Rebuild local index"
         job = self._add(Job(id=uuid.uuid4().hex[:12], kind="reindex",
-                            title="Rebuild local index", params={}))
+                            title=title, params={"refresh": refresh}))
         self._executor().submit(self._run_reindex, job)
         return job
 
@@ -241,7 +244,8 @@ class DownloadManager:
     def _run_reindex(self, job: Job) -> None:
         job.state, job.started_at, job.phase = "running", time.time(), "scanning"
         try:
-            res = store.reindex_cache()
+            res = (store.refresh_metadata() if job.params.get("refresh")
+                   else store.reindex_cache())
             job.result = res
             job.indexed = res["indexed"]
             job.state, job.phase = "completed", "done"

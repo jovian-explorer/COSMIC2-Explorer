@@ -731,6 +731,11 @@ def _read_avnprf(path: str) -> Granule:
     return _read_model(path, "avnPrf")
 
 
+# Raised whenever a reader change alters what is indexed (position, local
+# time, quality, extras); an index written by an older version is then
+# re-read once at start-up (see store.index_outdated).
+INDEX_VERSION = 1
+
 READERS = {
     "atmPrf": _read_atmprf,
     "echPrf": _read_echprf,
