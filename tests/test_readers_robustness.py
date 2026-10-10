@@ -288,3 +288,11 @@ def test_atmprf_local_time_is_computed_not_cdaacs_minute_value():
     gps0 = 315964800.0
     t = gps0 + g.attrs["start_time"]
     assert g.attrs["timloc"] == pytest.approx(readers._local_time(g.attrs["lon"], t - t % 60), abs=1e-6)
+
+
+def test_imp_height_corr_is_described_as_a_correction_not_a_height():
+    from cosmic2 import vocab
+    g = readers.load(str(next(sampledata_dir().glob("atmPrf_*E23*"))))
+    assert np.nanmax(np.abs(g.data["Imp_height_corr"])) < 0.01      # km
+    v = vocab.VAR_INFO["Imp_height_corr"]
+    assert v["role"] != vocab.VERTICAL and "correction" in v["label"]

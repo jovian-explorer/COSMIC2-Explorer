@@ -45,14 +45,14 @@ VAR_INFO: dict[str, dict] = {
         algorithm="Impact parameter 'a = n*r*sin(phi)' minus local center-of-curvature radius Rc."
     ),
     "Imp_height_corr": dict(
-        label="Impact height (corrected)", units="km",
-        plain="Impact height after spherical symmetry geometry correction.", role=VERTICAL,
-        formula=r"h_{imp,corr} = a_{corr} - R_c",
+        label="Impact-height correction for oblateness", units="km",
+        plain="The few-metre correction CDAAC applies to the impact height for the Earth's oblateness (the file's long_name); a correction, not a height.", role=AUX,
+        formula=r"\Delta h_{imp}",
         reference="Syndergaard, S. (1998), J. Atmos. Sol.-Terr. Phys., 60(2), 171-180",
         doi="10.1016/S1364-6826(97)00056-4",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/",
         data_level="Level 1b Calibrated Geometry",
-        algorithm="Impact height with correction for Earth oblateness and local ellipsoidal curvature."
+        algorithm="Correction to the impact height for the Earth's oblateness (CDAAC values within -1 to 1 km, a few metres in practice)."
     ),
     "occheight": dict(
         label="Occultation (tangent point) height", units="km",
