@@ -16,6 +16,7 @@
 
 ### Documentation and references
 
+- The guide and README said 8 bundled example granules of 5 products; the app ships and loads 12 of 7 (with the ECMWF and NCEP profiles). The help's list of fields interpolated in log space now names all of them (vapour pressure, specific humidity, refractivity and bending angle were missing).
 - The rapid stream text said the ionosphere products are there; CDAAC's rapid level2 holds scnLv2 and ivmL2m, while ionPrf is in the provisional stream. The stream text and the guide now say so.
 - The postProc stream was described as the final reprocessing to use for climate work, published weeks to months after observation. On CDAAC, COSMIC-2's postProc holds only in-situ IVM files (ivmL2m, 2019-08-01 to 2022-05-31, and ivmL2b/ivmLv2 in 2019-2020) and podTc2 of 2020: no atmPrf, wetPf2 or ionPrf. The stream text, the guide and the README now say so.
 - Every citation with a DOI (35) was checked against its registry record (Crossref, DataCite): one was wrong. Bean and Dutton's *Radio Meteorology* was cited as the 1968 Dover edition, but its DOI (10.6028/NBS.MONO.92) is the 1966 National Bureau of Standards Monograph 92; the reference now matches the record.

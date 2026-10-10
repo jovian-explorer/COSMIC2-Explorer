@@ -85,7 +85,7 @@ python -m cosmic2                # same as cosmic2-explorer
 ```
 
 The app binds 127.0.0.1 on the first free port from 8765, so it runs alongside other local apps.
-On first launch with no data, press **"Load the bundled example profiles"** to index 8 real granules that ship with the app and explore every feature offline.
+On first launch with no data, press **"Load the bundled example profiles"** to index the 12 real granules (7 products) that ship with the app and explore every feature offline.
 
 Your data (downloads, index, exports, settings, logs) lives in a per-user folder, never next to the app:
 
