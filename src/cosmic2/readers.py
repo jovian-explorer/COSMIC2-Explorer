@@ -224,7 +224,22 @@ def _read_raw(path: str) -> tuple[dict, dict, dict]:
     return attrs, desc, variables
 
 
+# GPS minus UTC (leap seconds) from each date on (IERS Bulletin C)
+_GPS_UTC = ((dt.datetime(2006, 1, 1, tzinfo=dt.timezone.utc), 14),
+            (dt.datetime(2009, 1, 1, tzinfo=dt.timezone.utc), 15),
+            (dt.datetime(2012, 7, 1, tzinfo=dt.timezone.utc), 16),
+            (dt.datetime(2015, 7, 1, tzinfo=dt.timezone.utc), 17),
+            (dt.datetime(2017, 1, 1, tzinfo=dt.timezone.utc), 18))
+
+
 def _iso(year, month, day, hour, minute, second) -> tuple[str | None, float | None]:
+    """UTC of a CDAAC date and time, which is GPS time.
+
+    The calendar attributes are the GPS seconds fields (atmPrf start_time,
+    ionPrf edmaxtime) counted from 1980-01-06 with no leap seconds, and the
+    scnLv2 ones put the Earth 18 s ahead of the rotation angle (gast1) the
+    file itself gives: UTC is 18 s earlier (since 2017).
+    """
     try:
         sec = float(second)
         whole = int(math.floor(sec))
@@ -233,6 +248,7 @@ def _iso(year, month, day, hour, minute, second) -> tuple[str | None, float | No
                         min(whole, 59), min(micro, 999999), tzinfo=dt.timezone.utc)
     except (TypeError, ValueError):
         return None, None
+    t -= dt.timedelta(seconds=next((s for d, s in reversed(_GPS_UTC) if t >= d), 13))
     return t.isoformat().replace("+00:00", "Z"), t.timestamp()
 
 
@@ -734,7 +750,7 @@ def _read_avnprf(path: str) -> Granule:
 # Raised whenever a reader change alters what is indexed (position, local
 # time, quality, extras); an index written by an older version is then
 # re-read once at start-up (see store.index_outdated).
-INDEX_VERSION = 1
+INDEX_VERSION = 2
 
 READERS = {
     "atmPrf": _read_atmprf,

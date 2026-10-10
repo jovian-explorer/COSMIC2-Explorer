@@ -86,8 +86,8 @@ def test_scnlv2_without_s4_maximum_falls_back_to_ray_start(tmp_path):
     })
     g = readers.load(p)
     assert g.meta["lat"] == 10.0 and g.meta["lon"] == 30.0
-    # 06:00 UTC at 30 E is 08:00 local solar time
-    assert g.meta["local_time"] == pytest.approx(8.0)
+    # 06:00 GPS time (05:59:42 UTC) at 30 E is 08:00 local solar time less 18 s
+    assert g.meta["local_time"] == pytest.approx(8.0 - 18 / 3600)
 
 
 def test_scnlv2_is_placed_at_the_tangent_point_of_the_s4_maximum():
@@ -248,6 +248,24 @@ def test_ionprf_with_an_e_region_edmax_is_placed_at_the_f2_peak(tmp_path):
     p = tmp_path / "ionPrf_C2E4.2026.261.09.03.G06_0001.0001_nc"
     m = readers.load(_write(p, attrs, v)).meta
     assert (m["lat"], m["lon"]) == pytest.approx((0.3, -91.0))
-    assert m["local_time"] == pytest.approx((9.05 - 91.0 / 15.0) % 24.0)
+    assert m["local_time"] == pytest.approx((9.05 - 18 / 3600 - 91.0 / 15.0) % 24.0)
     m = readers.load(_write(p, dict(attrs, edmaxalt=300.0, edmaxlat=0.3), v)).meta
     assert (m["lat"], m["lon"], m["local_time"]) == pytest.approx((0.3, -101.0, 2.0))
+
+
+def test_cdaac_times_are_gps_time_and_read_as_utc():
+    import datetime as dt
+    import math
+    gps0 = dt.datetime(1980, 1, 6, tzinfo=dt.timezone.utc).timestamp()
+    a = readers.load(str(next(sampledata_dir().glob("atmPrf_*E23*"))))
+    # the calendar attributes are start_time (GPS seconds) with no leap seconds
+    assert a.meta["epoch"] == pytest.approx(gps0 + a.attrs["start_time"] + 0.112 - 18, abs=0.01)
+    assert a.meta["time_utc"].startswith("2026-07-18T23:57:16")
+    # scnLv2: the Earth rotation angle at the file's first sample (gast1)
+    # matches its time as UTC = header - 18 s, not the header itself
+    s = readers.load(str(next(sampledata_dir().glob("scnLv2_*G01*"))))
+    t = s.meta["epoch"] / 86400.0 + 2440587.5 - 2451545.0
+    gmst = math.radians((67310.54841 + (876600 * 3600 + 8640184.812866) * t / 36525)
+                        % 86400 / 240)
+    diff = (gmst - s.data["gast1"][0] + math.pi) % (2 * math.pi) - math.pi
+    assert abs(diff) / 7.2921159e-5 < 1.5          # seconds of time
