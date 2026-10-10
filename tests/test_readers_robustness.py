@@ -208,19 +208,18 @@ def test_scintillation_files_name_their_satellite_like_the_others():
 
 
 def test_occultation_direction_from_irs_and_setting(tmp_path):
-    # ionPrf says it in "setting" (1 setting, 0 rising), atmPrf/wetPf2 in irs
+    # 1 is setting in both irs (atmPrf, wetPf2) and setting (ionPrf), as
+    # CDAAC's atmPrf format says and same-occultation ionPrf confirm
     ion = readers.load(str(next(sampledata_dir().glob("ionPrf_*"))))
     assert ion.attrs["setting"] == 1 and ion.meta["setting"] == "setting"
-    assert readers._direction("C2E2", 0, 1) == "rising"
-    assert readers._direction("C2E1", 1, -1) == "rising"
-    assert readers._direction("C2E1", None, -1) is None
-    # PAZ files say irs = 1, but PAZ records setting occultations only
-    rising = dict(_atm_attrs(), irs=1)
+    assert readers._direction(0) == "rising"
+    assert readers._direction(-1) == "rising"
+    assert readers._direction(None) is None
     v = {"MSL_alt": (np.array([1.0, 2.0]), {})}
-    assert readers.load(_write(tmp_path / "atmPrf_C2E1.2026.200.01.02.G01_0001.0001_nc",
-                               rising, v)).meta["setting"] == "rising"
-    assert readers.load(_write(tmp_path / "atmPrf_PAZ1.2026.200.01.02.G01_0001.0001_nc",
-                               rising, v)).meta["setting"] == "setting"
+    for sat, irs, want in (("C2E1", 1, "setting"), ("C2E1", -1, "rising"),
+                           ("PAZ1", 1, "setting")):
+        p = tmp_path / f"atmPrf_{sat}.2026.200.01.02.G01_0001.0001_nc"
+        assert readers.load(_write(p, dict(_atm_attrs(), irs=irs), v)).meta["setting"] == want
 
 
 def test_atmprf_geoid_undulation_is_in_metres():
