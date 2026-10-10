@@ -23,7 +23,9 @@ CP_DRY = 1004.6       # J kg-1 K-1, isobaric specific heat of dry air
 KAPPA = R_DRY / CP_DRY
 P_REF_HPA = 1000.0    # reference pressure for potential temperature
 DUCTING_GRADIENT = -157.0   # N-units km-1: critical refractivity gradient
-PLASMA_FREQ_COEFF = 8.98e-3  # foF2[MHz] = coeff * sqrt(Ne[cm-3])
+# foF2[MHz] = coeff * sqrt(Ne[cm-3]), coeff = sqrt(e^2 / (eps0 m_e)) / (2 pi)
+# (CODATA 2018); the rounded 8.98e-3 put foF2 0.015 % high
+PLASMA_FREQ_COEFF = 8.97866e-3
 
 
 # ---------------------------------------------------------------------------

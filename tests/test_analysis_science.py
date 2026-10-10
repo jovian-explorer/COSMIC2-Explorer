@@ -363,3 +363,9 @@ def test_boundary_layer_top_only_from_observed_refractivity():
             seen.add(g.product)
             assert ("boundary_layer" in analysis.diagnostics(g)) == (g.product == "atmPrf")
     assert seen == {"atmPrf", "wetPf2"}
+
+
+def test_plasma_frequency_coefficient_from_the_constants():
+    from scipy.constants import e, epsilon_0, m_e, pi
+    exact = (e * e / (epsilon_0 * m_e)) ** 0.5 / (2 * pi) * 1e-3   # MHz per sqrt(cm-3)
+    assert analysis.PLASMA_FREQ_COEFF == pytest.approx(exact, rel=1e-6)
