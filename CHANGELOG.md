@@ -110,6 +110,7 @@
 
 ### Exports and figures
 
+- **Profile CSV with several products keeps every value under its own name.** The columns were those of the first profile, so in an export of atmPrf and wetPf2 together the wetPf2 rows put their values under the atmPrf names (geopotential height under `Ref`, temperature under `Azim`). The columns are now every variable met, each profile's values in its own columns and blank where it has none.
 - CSV cells and composite JSON are written at full double precision (they were rounded to 6 decimal places, leaving small fields such as N^2 with one or two significant digits).
 - netCDF exports use UDUNITS unit strings (`degree_Celsius`, `kg m-3`, `s-2`, ...). `C` is the coulomb to UDUNITS, so tools that decode units read temperature as a charge.
 - The `Software License` line in CSV headers is plain text (name, copyright, URL); it was a Python dictionary dump.

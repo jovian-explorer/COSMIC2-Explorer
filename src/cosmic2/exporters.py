@@ -89,11 +89,15 @@ def export_profiles_csv(granules: Sequence[dict], variables: Sequence[str] | Non
     path = export_path(basename, "csv")
     prov = provenance(granules, extra_prov)
     n_rows = 0
-    with path.open("w", newline="", encoding="utf-8") as fh:
-        if comment_header:
-            for line in _header_lines(prov):
-                fh.write(f"# {line}\n")
-        writer = None
+    # Profiles of different products have different variables, so the
+    # columns are every variable met, each in its own column, empty where a
+    # profile has none.  (The first profile's columns used to head the file,
+    # and a wetPf2 after an atmPrf put its values under the atmPrf names.)
+    # Rows go to a scratch file until all columns are known.
+    columns: list[str] = []
+    body = path.with_name(path.name + ".part")
+    with body.open("w", newline="", encoding="utf-8") as fb:
+        writer = csv.writer(fb)
         for gmeta in granules:
             try:
                 g = readers.load(gmeta["path"], gmeta.get("product"))
@@ -111,18 +115,31 @@ def export_profiles_csv(granules: Sequence[dict], variables: Sequence[str] | Non
             if zname in names:
                 names.remove(zname)
             cols = [zname] + names
-            if writer is None:
-                writer = csv.writer(fh)
-                writer.writerow(["granule", "product", "time_utc", "lat", "lon",
-                                 "local_time_h", "level_index"] + cols)
+            columns += [c for c in cols if c not in columns]
+            idx = [columns.index(c) for c in cols]
             base = [g.meta["file_name"], g.meta["product"], g.meta["time_utc"],
                     g.meta["lat"], g.meta["lon"], g.meta["local_time"]]
             arrs = [src[c] for c in cols]
             n = min(a.size for a in arrs)
             for i in range(n):
-                row = base + [i] + [_fmt(a[i]) for a in arrs]
-                writer.writerow(row)
+                vals = [""] * len(columns)
+                for k, a in zip(idx, arrs):
+                    vals[k] = _fmt(a[i])
+                writer.writerow(base + [i] + vals)
                 n_rows += 1
+    width = 7 + len(columns)
+    with path.open("w", newline="", encoding="utf-8") as fh, \
+            body.open(newline="", encoding="utf-8") as fb:
+        if comment_header:
+            for line in _header_lines(prov):
+                fh.write(f"# {line}\n")
+        if columns:
+            writer = csv.writer(fh)
+            writer.writerow(["granule", "product", "time_utc", "lat", "lon",
+                             "local_time_h", "level_index"] + columns)
+            for row in csv.reader(fb):
+                writer.writerow(row + [""] * (width - len(row)))
+    body.unlink()
     return {"path": str(path), "filename": path.name, "bytes": path.stat().st_size,
             "mime": "text/csv", "rows": n_rows, "provenance": prov}
 

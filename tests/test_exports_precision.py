@@ -1,5 +1,6 @@
 """Exported numbers must read back at full precision."""
 import csv
+from pathlib import Path
 
 import numpy as np
 
@@ -91,3 +92,18 @@ def test_csv_header_licence_is_readable_text():
     assert "{" not in line and "'" not in line
     if isinstance(DATA_LICENSES.get("software"), dict):
         assert DATA_LICENSES["software"]["name"] in line
+
+
+def test_profiles_csv_keeps_each_product_under_its_own_columns():
+    import csv
+    metas = [readers.quick_meta(str(next(sampledata_dir().glob(f"{p}_*E23*"))))
+             for p in ("atmPrf", "wetPf2")]
+    res = exporters.export_profiles_csv(metas, None, comment_header=False)
+    rows = list(csv.DictReader(open(res["path"], encoding="utf-8")))
+    atm = [r for r in rows if r["product"] == "atmPrf"]
+    wet = [r for r in rows if r["product"] == "wetPf2"]
+    assert {len(r) for r in rows} == {len(rows[0])}
+    assert atm[0]["Bend_ang"] and not wet[0]["Bend_ang"]
+    assert wet[-1]["gph"] and not atm[0]["gph"]
+    assert float(wet[-1]["MSL_alt"]) == 60.0
+    assert not list(Path(res["path"]).parent.glob("*.part"))
