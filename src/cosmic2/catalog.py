@@ -275,10 +275,6 @@ def describe_product(code: str) -> Product:
                    "An extra data product from the archive.", "medium")
 
 
-def readable_products() -> list[str]:
-    return [c for c, p in PRODUCTS.items() if p.reader]
-
-
 # --------------------------------------------------------------------------
 # Remote listing
 # --------------------------------------------------------------------------

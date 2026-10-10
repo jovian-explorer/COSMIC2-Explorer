@@ -380,3 +380,10 @@ def test_tec_columns_start_at_80_km_like_cdaac_tec0():
     top = z >= 80.0
     expected = np.trapezoid(ne[top] * 1e6, z[top] * 1e3) / 1e16
     assert res["vtec_profile_TECU"] == pytest.approx(expected, rel=1e-9)
+
+
+def test_bending_angle_is_interpolated_in_log_space():
+    z = np.array([30.0, 32.0])
+    b = 1e-3 * np.exp(-z / 6.0)
+    mid = analysis.interp_field(z, b, np.array([31.0]), "Bend_ang")[0]
+    assert mid == pytest.approx(1e-3 * np.exp(-31.0 / 6.0), rel=1e-9)

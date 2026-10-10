@@ -482,19 +482,3 @@ def render(fig: Figure, fmt: str = "png", dpi: int | None = None) -> bytes:
     plt.close(fig)
     return buf.getvalue()
 
-
-def check_layout(fig: Figure) -> list[str]:
-    """Report text that overlaps other text or spills outside the canvas.
-
-    Used by the test suite as a regression guard on the exported figures.
-    """
-    fig.canvas.draw()
-    r = fig.canvas.get_renderer()
-    items = [(t, t.get_window_extent(r)) for t in fig.findobj(matplotlib.text.Text)
-             if t.get_text().strip() and t.get_visible()]
-    problems = []
-    for i, (t1, b1) in enumerate(items):
-        for t2, b2 in items[i + 1:]:
-            if b1.overlaps(b2):
-                problems.append(f"text overlap: {t1.get_text()!r} / {t2.get_text()!r}")
-    return problems

@@ -82,6 +82,10 @@ LOG_INTERP_FIELDS = frozenset({
     # refractivity is close to exponential too: linear interpolation across the
     # 2-3 km between NCEP model levels above 17 km made it 2 % too large
     "Ref", "ref",
+    # so is bending angle (scale height about 6 km in the stratosphere): across
+    # the 2 km between echPrf levels above 30 km a straight line put it up to
+    # 1.3 % too high
+    "Bend_ang", "Bend_ang1", "Bend_ang2",
 })
 
 
@@ -1003,11 +1007,3 @@ def mean_uncertainty(mean: np.ndarray, std: np.ndarray, count: np.ndarray,
         q = np.where(n >= 2, student_t.ppf(0.5 + level / 2.0, np.maximum(n - 1, 1)), np.nan)
     return sem, mean - q * sem, mean + q * sem
 
-
-def anomaly_against(reference: np.ndarray, grid: np.ndarray,
-                    z: np.ndarray, v: np.ndarray, percent: bool = True) -> np.ndarray:
-    """Departure of one profile from a reference profile on ``grid``."""
-    col = interp_to_grid(z, v, grid)
-    with np.errstate(invalid="ignore", divide="ignore"):
-        diff = col - reference
-        return 100.0 * diff / reference if percent else diff
