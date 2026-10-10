@@ -221,3 +221,10 @@ def test_occultation_direction_from_irs_and_setting(tmp_path):
                                rising, v)).meta["setting"] == "rising"
     assert readers.load(_write(tmp_path / "atmPrf_PAZ1.2026.200.01.02.G01_0001.0001_nc",
                                rising, v)).meta["setting"] == "setting"
+
+
+def test_atmprf_geoid_undulation_is_in_metres():
+    # atmPrf's rgeoid is in km, wetPf2's in m (same occultation)
+    atm, wet = (readers.load(str(sorted(sampledata_dir().glob(f"{p}_*E23*"))[0]))
+                for p in ("atmPrf", "wetPf2"))
+    assert atm.meta["extras"]["geoid_undulation_m"] == pytest.approx(wet.attrs["rgeoid"])

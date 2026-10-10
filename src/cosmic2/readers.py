@@ -471,7 +471,10 @@ def _read_atmprf(path: str) -> Granule:
         "profile_top_km": attrs.get("ztop"),
         "profile_bottom_km": attrs.get("zbot"),
         "radius_curvature_km": attrs.get("rfict"),
-        "geoid_undulation_m": attrs.get("rgeoid"),
+        # atmPrf gives rgeoid in km (wetPf2 in m: 0.05091 and 50.91 for
+        # the same occultation)
+        "geoid_undulation_m": None if scrub(attrs.get("rgeoid")) is None
+        else 1000.0 * attrs["rgeoid"],
         "l1_snr_mean_Vv": attrs.get("snr1avg"),
         "l2_snr_mean_Vv": attrs.get("snr2avg"),
         "occ_point_offset_km": attrs.get("occpt_offset"),
