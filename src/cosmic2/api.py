@@ -24,7 +24,7 @@ from contextlib import asynccontextmanager
 
 from . import (analysis, climatology, exporters, fetch, parallel, plotting,
                radiosonde, readers, store, vocab)
-from .catalog import (COLLECTIONS, PRODUCTS, STREAMS, Archive, date_to_doy,
+from .catalog import (COLLECTIONS, PRODUCTS, STREAMS, Archive,
                       describe_product, doy_to_date)
 from .config import (APP_TITLE, APP_VERSION, CACHE_DIR, EXPORT_DIR, SETTINGS,
                      CITATION_SOURCE, LEAD_RESEARCHER, DATA_AVAILABILITY_STATEMENT,

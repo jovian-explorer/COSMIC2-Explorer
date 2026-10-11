@@ -15,7 +15,7 @@ import json
 import threading
 from contextlib import contextmanager
 from functools import lru_cache
-from typing import Iterable, Sequence
+from typing import Sequence
 
 import matplotlib
 import matplotlib.ticker
@@ -25,7 +25,7 @@ import numpy as np
 from matplotlib.collections import LineCollection
 from matplotlib.figure import Figure
 
-from . import analysis, vocab
+from . import vocab
 from .config import SETTINGS, frontend_dir
 
 # Font ladder: base / annotation / tick.  Three sizes, mapped to role.
