@@ -584,7 +584,10 @@ def _read_ionprf(path: str) -> Granule:
         "NmF2_el_cm3": nmf2,
         "hmF2_km": attrs.get("edmaxalt"),
         "foF2_MHz": attrs.get("critfreq"),
-        "scale_height_km": attrs.get("hscale"),
+        # "Scale height at orbit altitude (estimated and used only for
+        # icalib = 0)" in CDAAC's ionPrf format; -999 otherwise (475 of 690
+        # files of 2026-09-18).  Not the topside scale height of the profile.
+        "scale_height_at_orbit_km": attrs.get("hscale"),
         # CDAAC ionPrf format: tec0 is the TEC integrated between the bottom
         # and the top of the profile (not below the peak), tec1 the
         # extrapolated TEC above the top.
@@ -767,7 +770,7 @@ def _read_avnprf(path: str) -> Granule:
 # Raised whenever a reader change alters what is indexed (position, local
 # time, quality, extras); an index written by an older version is then
 # re-read once at start-up (see store.index_outdated).
-INDEX_VERSION = 5
+INDEX_VERSION = 6
 
 READERS = {
     "atmPrf": _read_atmprf,

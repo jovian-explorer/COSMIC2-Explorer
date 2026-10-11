@@ -319,3 +319,11 @@ def test_scnlv2_without_ray_geometry_gets_a_computed_local_time(tmp_path):
     m = readers.load(p).meta
     assert m["local_time"] == pytest.approx(readers._local_time(163.97, m["epoch"]), abs=1e-4)
     assert abs(m["local_time"] - 15.38) > 10.0
+
+
+def test_ionprf_hscale_is_kept_as_the_scale_height_at_orbit():
+    g = readers.load(str(next(sampledata_dir().glob("ionPrf_*"))))
+    ex = g.meta["extras"]
+    assert "scale_height_km" not in ex
+    # CDAAC fills hscale only when icalib = 0; this file has icalib = 1
+    assert g.attrs["icalib"] == 1 and ex["scale_height_at_orbit_km"] is None
