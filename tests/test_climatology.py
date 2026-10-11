@@ -80,7 +80,7 @@ def test_cross_section_band_means_and_departure_by_hand(monkeypatch):
 
     def fake(task):
         path = task[0]
-        return "all", np.array(cols[path], float), "N", "Ref"
+        return "all", np.array(cols[path], float), "N", "Ref", ""
     monkeypatch.setattr(analysis, "_composite_column", fake)
     rows = [(p, {"lat": lats[p], "good": True}) for p in cols]
     s = climatology.cross_section(rows, "Ref", lat_step=5, top_km=2, step_km=1,
@@ -105,7 +105,7 @@ def test_cross_section_refuses_dry_and_moist_temperature(monkeypatch):
     from cosmic2 import analysis
     qty = {"a": "temp_dry", "b": "Temp"}
     monkeypatch.setattr(analysis, "_composite_column",
-                        lambda t: ("all", np.ones(3), "K", qty[t[0]]))
+                        lambda t: ("all", np.ones(3), "K", qty[t[0]], ""))
     with pytest.raises(ValueError, match="different quantities"):
         climatology.cross_section([("a", {"lat": 0.0}), ("b", {"lat": 1.0})],
                                   "Temp", top_km=2, step_km=1, workers=1)

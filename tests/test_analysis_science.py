@@ -299,7 +299,7 @@ def test_composite_reports_screened_profiles(monkeypatch):
     cols = {f"p{i}": 250 + rng.normal(0, 1, grid.size) for i in range(20)}
     cols["bad"] = 250 + rng.normal(0, 1, grid.size) + np.where(grid > 3, 15.0, 0.0)
     monkeypatch.setattr(analysis, "_composite_column",
-                        lambda t: ("all", cols[t[0]], "K", "Temp"))
+                        lambda t: ("all", cols[t[0]], "K", "Temp", ""))
     rows = [(k, {"good": True}) for k in cols]
     plain = analysis.composite(rows, "Temp", top_km=10, step_km=0.5, workers=1)
     comp = analysis.composite(rows, "Temp", top_km=10, step_km=0.5, workers=1, screen_k=5)
@@ -387,3 +387,10 @@ def test_bending_angle_is_interpolated_in_log_space():
     b = 1e-3 * np.exp(-z / 6.0)
     mid = analysis.interp_field(z, b, np.array([31.0]), "Bend_ang")[0]
     assert mid == pytest.approx(1e-3 * np.exp(-31.0 / 6.0), rel=1e-9)
+
+
+def test_composite_keeps_observations_and_ecmwf_apart():
+    paths = [(str(next(sampledata_dir().glob(f"{p}_*E23*"))), {"product": p, "good": True})
+             for p in ("wetPf2", "echPrf")]
+    comp = analysis.composite(paths, "Temp", top_km=10.0, step_km=1.0, min_count=1, workers=1)
+    assert sorted(comp.groups) == ["all - Temperature", "all - Temperature (ECMWF)"]

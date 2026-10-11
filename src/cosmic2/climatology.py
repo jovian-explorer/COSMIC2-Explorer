@@ -168,8 +168,8 @@ def _section_column(task: tuple):
     res = _composite_column(task)
     if res is None or meta.get("lat") is None:
         return None
-    _key, col, units, qty = res
-    return float(meta["lat"]), col, units, qty
+    _key, col, units, qty, source = res
+    return float(meta["lat"]), col, units, qty, source
 
 
 def cross_section(granule_paths: Sequence[tuple[str, dict]], field: str,
@@ -184,8 +184,8 @@ def cross_section(granule_paths: Sequence[tuple[str, dict]], field: str,
     averaging (:func:`analysis.robust_screen`).
 
     Every profile is put on the common height grid exactly as for the
-    Compare tab's averages (log interpolation for pressure, density and
-    electron density, never across gaps wider than 2 km), then the columns
+    Compare tab's averages (log interpolation for the quantities in
+    ``analysis.LOG_INTERP_FIELDS``, never across gaps wider than 2 km), then the columns
     are averaged in latitude bands ``lat_step`` degrees wide.  A cell with
     fewer than ``min_count`` profiles is blank.
 
@@ -200,8 +200,9 @@ def cross_section(granule_paths: Sequence[tuple[str, dict]], field: str,
     departure from this selection's own mean, not a bias against an
     independent reference (see the radiosonde comparison for that).
 
-    A selection mixing dry (atmPrf) and moist (wetPf2) ``Temp`` is refused
-    rather than averaged.
+    A selection mixing dry (atmPrf) and moist (wetPf2) ``Temp``, or
+    observations with weather-model profiles, is refused rather than
+    averaged.
     """
     from . import vocab
     from .analysis import make_grid
@@ -215,10 +216,11 @@ def cross_section(granule_paths: Sequence[tuple[str, dict]], field: str,
     results = [r for r in pmap(_section_column, tasks, workers=workers)
                if r is not None]
     quantities = {r[3] for r in results}
-    if len(quantities) > 1:
+    kinds = {r[3:5] for r in results}
+    if len(kinds) > 1:
         raise ValueError(
             f"the selection holds {field} as different quantities "
-            f"({', '.join(sorted(vocab.info(q)['label'] for q in quantities))}); "
+            f"({', '.join(sorted(vocab.info(q)['label'] + (f' ({s})' if s else '') for q, s in kinds))}); "
             f"choose one product")
     edges = np.arange(-90.0, 90.0 + lat_step / 2, lat_step)
     if not results:

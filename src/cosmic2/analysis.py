@@ -869,7 +869,10 @@ def _composite_column(task: tuple) -> tuple[str, np.ndarray, str] | None:
     # (and the processing stream) exist only in the index, so grouping by
     # date put every profile under "unknown" before.
     gmeta = {**meta, **{k: v for k, v in g.meta.items() if v is not None}}
-    return _group_key(gmeta, group_by), col, units, vocab.quantity(field, g.product)
+    # The weather-model profiles (echPrf, avnPrf) use the observations'
+    # variable names but are not observations: kept apart by their source.
+    source = {"echPrf": "ECMWF", "avnPrf": "NCEP"}.get(g.product, "")
+    return _group_key(gmeta, group_by), col, units, vocab.quantity(field, g.product), source
 
 
 def composite(granule_paths: Sequence[tuple[str, dict]], field: str,
@@ -899,12 +902,14 @@ def composite(granule_paths: Sequence[tuple[str, dict]], field: str,
     results = [r for r in pmap(_composite_column, tasks, workers=workers)
                if r is not None]
     # Never average different quantities that share a variable name (atmPrf
-    # dry "Temp" with wetPf2 moist "Temp"): if the selection holds both, each
-    # group is split and labelled by quantity.
+    # dry "Temp" with wetPf2 moist "Temp", or an observation with the ECMWF
+    # profile of the same name): if the selection holds both, each group is
+    # split and labelled by quantity and source.
     quantities = {r[3] for r in results}
-    for key, col, u, qty in results:
-        if len(quantities) > 1:
-            key = f"{key} - {vocab.info(qty)['label']}"
+    kinds = {r[3:5] for r in results}
+    for key, col, u, qty, source in results:
+        if len(kinds) > 1:
+            key = f"{key} - {vocab.info(qty)['label']}" + (f" ({source})" if source else "")
         units = units or u
         buckets.setdefault(key, []).append(col)
         used += 1
