@@ -301,6 +301,29 @@ class warnings_off:
 EP_COLUMN = "gravity_waves.ep_J_per_kg"
 
 
+def once_per_occultation(rows: Sequence[dict], values: Sequence) -> list:
+    """``values`` (one per row, ``None`` for none), each occultation once.
+
+    With both the atmPrf and the wetPf2 of an occultation selected, a
+    per-occultation statistic would count it twice, and intervals that take
+    the profiles as independent would come out too narrow by about sqrt(2).
+    The wetPf2's value stands for the occultation (moist, real temperature),
+    the atmPrf's where the wetPf2 has none (the boundary-layer top is
+    atmPrf-only).  Rows of other products are all kept."""
+    out, seen = [], set()
+    for i in sorted(range(len(rows)), key=lambda i: rows[i].get("product") != "wetPf2"):
+        r, v = rows[i], values[i]
+        if v is None:
+            continue
+        stamp = r.get("stamp") if r.get("product") in ("atmPrf", "wetPf2") else None
+        if stamp:
+            if stamp in seen:
+                continue
+            seen.add(stamp)
+        out.append(v)
+    return out
+
+
 def _map_value(task: tuple):
     """``(lat, lon, value)`` of one profile, or ``None``.  Module-level so
     it runs on the worker processes.
@@ -350,18 +373,9 @@ def diagnostic_map(rows: Sequence[dict], column: str = EP_COLUMN,
         raise ValueError("lat_step and lon_step must be > 0")
     if gw and gw.get("method", "polynomial") not in ("polynomial", "highpass"):
         raise ValueError("method must be polynomial or highpass")
-    # Each occultation once: of its atmPrf and wetPf2, the wetPf2's value
-    # when it has one, else the atmPrf's (the boundary layer is atmPrf-only)
-    rows = sorted(rows, key=lambda r: r.get("product") != "wetPf2")
     tasks = [(r, column, gw or None) for r in rows]
-    vals, seen = [], set()
-    for r, v in zip(rows, pmap(_map_value, tasks, workers=workers)):
-        key = (r.get("stamp"), r.get("product") in ("atmPrf", "wetPf2"))
-        if v is None or (key[0] and key[1] and key in seen):
-            continue
-        seen.add(key)
-        vals.append(v)
-    vals = np.array(vals, float).reshape(-1, 3)
+    vals = np.array(once_per_occultation(rows, pmap(_map_value, tasks, workers=workers)),
+                    float).reshape(-1, 3)
     lat_edges = np.arange(-90.0, 90.0 + lat_step / 2, lat_step)
     lon_edges = np.arange(-180.0, 180.0 + lon_step / 2, lon_step)
     nlat, nlon = lat_edges.size - 1, lon_edges.size - 1
@@ -550,13 +564,8 @@ def tropopause_table(rows: Sequence[dict], lat_step: float = 10.0, min_count: in
         raise ValueError("lat_step must be > 0")
     good = [r for r in rows if r.get("product") in ("atmPrf", "wetPf2") and r.get("good", True)
             and r.get("lat") is not None]
-    # Each occultation once: with both of its files selected, the wetPf2
-    # (moist, real temperature) stands for it, or the intervals, which take
-    # the profiles as independent, would be too narrow by about sqrt(2).
-    # CDAAC's columns still come from the atmPrf files.
-    wet = {r.get("stamp") for r in good if r["product"] == "wetPf2" and r.get("stamp")}
-    once = [r for r in good if r["product"] == "wetPf2" or r.get("stamp") not in wet]
-    diag = [d for d in pmap(diagnostics_row, once, workers=workers) if d]
+    # CDAAC's columns still come from every atmPrf file
+    diag = once_per_occultation(good, pmap(diagnostics_row, good, workers=workers))
     edges = np.arange(-90.0, 90.0 + lat_step / 2, lat_step)
     bands = []
     for lo, hi in zip(edges[:-1], edges[1:]):

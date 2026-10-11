@@ -231,7 +231,7 @@ def test_tropopause_table_counts_each_occultation_once(monkeypatch):
     rows.append({"file_name": "atmPrf_s3", "product": "atmPrf", "stamp": "s3", "good": True,
                  "lat": 5.0, "extras": {}})
     t = climatology.tropopause_table(rows, lat_step=10, min_count=1, workers=1)
-    assert t["n_profiles"] == 3 and sorted(seen) == ["atmPrf", "wetPf2", "wetPf2"]
+    assert t["n_profiles"] == 3 and t["bands"][0]["n_profiles"] == 3
 
 
 def test_diagnostic_map_counts_each_occultation_once(monkeypatch):
@@ -244,3 +244,10 @@ def test_diagnostic_map_counts_each_occultation_once(monkeypatch):
     m = climatology.diagnostic_map(rows, "x", lat_step=10, lon_step=20, workers=1)
     # s1 by its wetPf2 (16), s2 by its atmPrf (17), as wetPf2 has no value there
     assert m["n"] == 2 and m["overall"]["mean"] == pytest.approx(16.5)
+
+
+def test_once_per_occultation_prefers_wetpf2_then_atmprf():
+    rows = [{"product": "atmPrf", "stamp": "a"}, {"product": "wetPf2", "stamp": "a"},
+            {"product": "atmPrf", "stamp": "b"}, {"product": "wetPf2", "stamp": "b"},
+            {"product": "ionPrf", "stamp": "a"}]
+    assert climatology.once_per_occultation(rows, [1, 2, 3, None, 5]) == [2, 3, 5]

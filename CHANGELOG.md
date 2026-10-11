@@ -176,6 +176,7 @@
 
 ### Robustness and security
 
+- The tropopause table and the diagnostic map count each occultation once through one shared rule (`climatology.once_per_occultation`: the wetPf2's value, else the atmPrf's).
 - One `analysis.column_stats` (mean, median, spread, count and 95 % interval by level) replaces four identical copies in the weather-model, mission and atmPrf-wetPf2 comparisons; unused imports removed.
 - Removed code nothing used: `selectionRequest` in the frontend's api.js, `Granule.to_columns`, `Granule.series`, `DownloadManager.active_count`, and `analysis.solar_local_time`, which duplicated the readers' local-time helper.
 - **A cut-off netCDF file is refused instead of read as zeros.** When scipy could not read a classic netCDF file, the reader fell back to netCDF4, which opens a truncated file and returns zeros for the missing records: a partly downloaded ivmL2m was indexed at 1970-01-01 00:00 UTC with local time 0 and 24902 zero densities. A classic netCDF file that scipy cannot read is now reported as unreadable (truncated?); netCDF-4 files still go to netCDF4.
