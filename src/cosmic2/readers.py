@@ -625,7 +625,9 @@ def _read_scnlv2(path: str) -> Granule:
     else:
         lat = scrub(attrs.get("lat_s4max_L1"))
         lon = scrub(attrs.get("lon_s4max_L1"))
-        local_time = scrub(attrs.get("lct_s4max_L1"))
+        # CDAAC's lct_s4max_L1 is not the local solar time there (15.38 h
+        # at 164 E at 15:22 UTC, where it is 2.3 h), so it is computed
+        local_time = None if lon is None else _local_time(lon, epoch)
     if lat is None or lon is None:
         # No S4 maximum (the attributes hold the -999 sentinel): place the
         # record at the start of the ray, with the local time of that point
@@ -765,7 +767,7 @@ def _read_avnprf(path: str) -> Granule:
 # Raised whenever a reader change alters what is indexed (position, local
 # time, quality, extras); an index written by an older version is then
 # re-read once at start-up (see store.index_outdated).
-INDEX_VERSION = 4
+INDEX_VERSION = 5
 
 READERS = {
     "atmPrf": _read_atmprf,

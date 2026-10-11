@@ -307,3 +307,15 @@ def test_ivm_drift_texts_follow_the_file_sign_conventions():
     f.close()
     assert "positive upward" in vocab.VAR_INFO["iv_mer"]["plain"]
     assert "positive northward" in vocab.VAR_INFO["iv_par"]["plain"]
+
+
+def test_scnlv2_without_ray_geometry_gets_a_computed_local_time(tmp_path):
+    attrs = dict(year=2026, month=7, day=19, hour=15, minute=16, second=19.0,
+                 lat_s4max_L1=16.28, lon_s4max_L1=163.97, lct_s4max_L1=15.38, s4max_L1=0.9)
+    p = _write(tmp_path / "scnLv2_2026.200.002.01.01.G01.SC001_0001.0001_nc", attrs, {
+        "occheight": (np.array([100.0, 200.0]), {"units": "km"}),
+        "s4_L1": (np.array([0.1, 0.9]), {}),
+    })
+    m = readers.load(p).meta
+    assert m["local_time"] == pytest.approx(readers._local_time(163.97, m["epoch"]), abs=1e-4)
+    assert abs(m["local_time"] - 15.38) > 10.0
