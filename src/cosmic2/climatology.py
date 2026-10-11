@@ -541,7 +541,13 @@ def tropopause_table(rows: Sequence[dict], lat_step: float = 10.0, min_count: in
         raise ValueError("lat_step must be > 0")
     good = [r for r in rows if r.get("product") in ("atmPrf", "wetPf2") and r.get("good", True)
             and r.get("lat") is not None]
-    diag = [d for d in pmap(diagnostics_row, good, workers=workers) if d]
+    # Each occultation once: with both of its files selected, the wetPf2
+    # (moist, real temperature) stands for it, or the intervals, which take
+    # the profiles as independent, would be too narrow by about sqrt(2).
+    # CDAAC's columns still come from the atmPrf files.
+    wet = {r.get("stamp") for r in good if r["product"] == "wetPf2" and r.get("stamp")}
+    once = [r for r in good if r["product"] == "wetPf2" or r.get("stamp") not in wet]
+    diag = [d for d in pmap(diagnostics_row, once, workers=workers) if d]
     edges = np.arange(-90.0, 90.0 + lat_step / 2, lat_step)
     bands = []
     for lo, hi in zip(edges[:-1], edges[1:]):

@@ -219,3 +219,17 @@ def test_tropopause_table_by_hand(monkeypatch):
     assert b0["archive"]["wmo_temp_K"]["mean"] == pytest.approx(191.0)
     assert b0["cp_height_km"]["n"] == 0 and b0["cp_height_km"]["mean"] is None
     assert t["bands"][1]["wmo_height_km"]["mean"] is None     # one profile < min_count
+
+
+def test_tropopause_table_counts_each_occultation_once(monkeypatch):
+    from cosmic2 import analysis
+    seen = []
+    monkeypatch.setattr(analysis, "diagnostics_row", lambda r: seen.append(r["product"]) or {
+        "lat": 5.0, "tropopause.height_km": 16.0, "tropopause.temp_K": 190.0,
+        "cold_point.height_km": None, "cold_point.temp_K": None})
+    rows = [{"file_name": f"{p}_{s}", "product": p, "stamp": s, "good": True, "lat": 5.0,
+             "extras": {}} for s in ("s1", "s2") for p in ("atmPrf", "wetPf2")]
+    rows.append({"file_name": "atmPrf_s3", "product": "atmPrf", "stamp": "s3", "good": True,
+                 "lat": 5.0, "extras": {}})
+    t = climatology.tropopause_table(rows, lat_step=10, min_count=1, workers=1)
+    assert t["n_profiles"] == 3 and sorted(seen) == ["atmPrf", "wetPf2", "wetPf2"]

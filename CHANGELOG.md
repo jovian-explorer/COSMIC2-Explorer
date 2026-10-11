@@ -68,6 +68,7 @@
 
 ### Science fixes (results change)
 
+- The tropopause table counted an occultation twice when both its atmPrf and its wetPf2 were selected, so its 95 % intervals, which take the profiles as independent, were too narrow by about a factor of 1.4. Each occultation now counts once, by its wetPf2 (moist, real temperature) when both are there; CDAAC's columns still come from the atmPrf files.
 - The radiosonde comparison read a station's file only for the year of each occultation, so near New Year it missed soundings within the time window that IGRA files under the other year (an occultation at 23:30 UTC on 31 December and the 00 UTC sonde of 1 January). It now reads both years whenever the window crosses into the other one.
 - **Averages never mix observations with weather-model profiles.** echPrf (ECMWF) and avnPrf (NCEP) use the observations' variable names (`Temp`, `Ref`, `Bend_ang`), so a Compare average or latitude-height section over a selection holding wetPf2 and echPrf, say, averaged the retrieved and the model temperature together. Such a selection is now split into separate groups ("Temperature" and "Temperature (ECMWF)"), and a section refuses it, as for dry and moist temperature.
 - A scintillation file without the ray geometry (placed at CDAAC's `lat/lon_s4max_L1`) took its local time from `lct_s4max_L1`, which is not the local solar time there: 15.38 h at 164 E at 15:22 UTC on a bundled file, where it is 2.3 h, and likewise for `lct_start`/`lct_stop`. Its local time is now computed from the time and longitude, like every other product's.
