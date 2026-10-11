@@ -198,3 +198,10 @@ def test_download_range_queues_one_job_per_day(monkeypatch):
             api.start_download(api.DownloadRequest(**bad))
         assert err.value.status_code == 400
     assert not calls
+
+
+def test_overlay_of_atmprf_and_wetpf2_temperature_names_both():
+    from cosmic2 import api
+    assert api._overlay_title("Temp", {"atmPrf", "wetPf2"}, "C") == \
+        "Dry temperature (atmPrf); Temperature (wetPf2) [°C]"
+    assert api._overlay_title("Temp", {"wetPf2"}, "C") == "Temperature [°C]"

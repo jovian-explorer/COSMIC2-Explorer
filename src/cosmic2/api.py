@@ -635,12 +635,21 @@ def plot_profiles(req: PlotRequest) -> dict:
         out.append(res["series"])
     return _clean({
         "field": req.field, "vertical": req.vertical, "units": units,
-        "field_label": (analysis.quantity_title(
-            analysis.quantity_label(req.field, next(iter(products))), units)
-            if len(products) == 1 else vocab.axis_title(req.field, units)),
+        "field_label": _overlay_title(req.field, products, units),
         "vertical_label": vocab.axis_title(req.vertical),
         "series": out, "skipped": skipped,
     })
+
+
+def _overlay_title(field: str, products: set[str], units: str) -> str:
+    """The x title of an overlay: the quantity as its products hold it, each
+    named when they differ (atmPrf "Temp" is the dry temperature)."""
+    labels = {p: analysis.quantity_label(field, p) for p in sorted(products)}
+    if not labels:
+        return vocab.axis_title(field, units)
+    if len(set(labels.values())) == 1:
+        return analysis.quantity_title(next(iter(labels.values())), units)
+    return analysis.quantity_title("; ".join(f"{lab} ({p})" for p, lab in labels.items()), units)
 
 
 class CompositeRequest(BaseModel):

@@ -108,6 +108,7 @@
 
 ### Interface
 
+- A profile overlay holding atmPrf and wetPf2 `Temp` together was titled "Temperature", although the atmPrf lines are the dry temperature. The title now names each: "Dry temperature (atmPrf); Temperature (wetPf2) [°C]" (found by a browser sweep over real files of every product).
 - The relationship scatter says how many occultations it draws twice, as their atmPrf (dry temperature) and their wetPf2 point, when both files of an occultation are selected.
 - Groups of an average are drawn in a fixed order (latitude bands south to north, other groups by name) instead of by size, so a group keeps its colour and its place in the key when the counts change between runs.
 - The diagnostics panel of a scintillation file (Profiles tab) also gives the tangent height of the S4 peak, which tells the E region (80-160 km in Dymond 2023) from the F region (200-600 km), with a note that a low height can also come from F-region irregularities along the ray, and says that the file's position is the tangent point of the S4 maximum. Checked in the browser at 1024 and 1366 px (a 2026-09-30 file: peak S4 0.51 at 78.4 km).
