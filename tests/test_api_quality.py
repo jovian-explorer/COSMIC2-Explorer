@@ -205,3 +205,10 @@ def test_overlay_of_atmprf_and_wetpf2_temperature_names_both():
     assert api._overlay_title("Temp", {"atmPrf", "wetPf2"}, "C") == \
         "Dry temperature (atmPrf); Temperature (wetPf2) [°C]"
     assert api._overlay_title("Temp", {"wetPf2"}, "C") == "Temperature [°C]"
+
+
+def test_file_unit_strings_read_unambiguously():
+    from cosmic2 import vocab
+    assert vocab.axis_title("Ref", "N") == "Refractivity [N-units]"      # not newton
+    assert vocab.axis_title("s4_L1", "unitless") == "S4 index, L1"
+    assert vocab.axis_title("ion_dens", "N/cc") == "Ion density (in-situ) [ions/cm³]"

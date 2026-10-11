@@ -647,6 +647,11 @@ def info(name: str, product: str | None = None) -> dict:
 # carry, so that axis labels are always human-readable.
 _UNIT_MAP: dict[str, str] = {
     "C": "°C",
+    "N": "N-units",          # refractivity in atmPrf/echPrf/avnPrf ("N" reads as newton)
+    "N-unit": "N-units",     # wetPf2
+    "unitless": "-",
+    "Unitless": "-",
+    "N/cc": "ions/cm³",      # ivmL2m
     "mb": "hPa",
     "Celsius_degree": "°C",
     "celsius_degree": "°C",
