@@ -42,8 +42,15 @@ def _stamp() -> str:
 
 
 def export_path(basename: str, ext: str) -> Path:
+    """A new file in the exports folder.  Two exports of the same name within
+    one second (the stamp's resolution) used to overwrite each other."""
     ensure_dirs()
-    return EXPORT_DIR / f"{_slug(basename)}_{_stamp()}.{ext.lstrip('.')}"
+    stem, ext = f"{_slug(basename)}_{_stamp()}", ext.lstrip(".")
+    path, n = EXPORT_DIR / f"{stem}.{ext}", 1
+    while path.exists():
+        n += 1
+        path = EXPORT_DIR / f"{stem}_{n}.{ext}"
+    return path
 
 
 def provenance(granules: Sequence[dict], extra: dict | None = None) -> dict:

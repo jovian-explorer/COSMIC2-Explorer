@@ -127,3 +127,14 @@ def test_grid_csv_names_atmprf_temp_as_dry_temperature():
     res = exporters.export_grid_csv([atm], "Temp", top_km=20.0, step_km=1.0)
     line = next(l for l in open(res["path"], encoding="utf-8") if l.startswith("# Field:"))
     assert line.startswith("# Field: Dry temperature [°C];")
+
+
+def test_two_exports_in_the_same_second_do_not_overwrite(monkeypatch):
+    monkeypatch.setattr(exporters, "_stamp", lambda: "20260101T000000Z")
+    a = exporters.export_path("same", "csv")
+    a.write_text("first", encoding="utf-8")
+    b = exporters.export_path("same", "csv")
+    try:
+        assert b != a and b.name == "same_20260101T000000Z_2.csv"
+    finally:
+        a.unlink()
