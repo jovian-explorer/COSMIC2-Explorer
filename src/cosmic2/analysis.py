@@ -622,6 +622,12 @@ def derived_fields(g: readers.Granule) -> dict[str, np.ndarray]:
     return out
 
 
+# derived_fields computed from the profile's temperature (and pressure)
+DERIVED_FROM_TEMPERATURE = frozenset({
+    "lapse_rate", "buoyancy_freq_sq", "speed_of_sound", "scale_height",
+    "buoyancy_period", "theta", "dtheta_dz", "density"})
+
+
 def fields_with(g: readers.Granule, *names: str) -> dict[str, np.ndarray]:
     """The granule's arrays, plus the derived fields only when one of
     ``names`` is not a native variable.  Deriving every field costs ~10 % of
@@ -865,6 +871,11 @@ def _composite_column(task: tuple) -> tuple[str, np.ndarray, str] | None:
     # The weather-model profiles (echPrf, avnPrf) use the observations'
     # variable names but are not observations: kept apart by their source.
     source = {"echPrf": "ECMWF", "avnPrf": "NCEP"}.get(g.product, "")
+    # Fields derived from temperature (and pressure) are dry-air ones on
+    # atmPrf, whose Temp and Pres are the dry retrieval: kept apart from the
+    # same fields of wetPf2 too.
+    if g.product == "atmPrf" and field in DERIVED_FROM_TEMPERATURE:
+        source = "from dry temperature"
     return _group_key(gmeta, group_by), col, units, vocab.quantity(field, g.product), source
 
 

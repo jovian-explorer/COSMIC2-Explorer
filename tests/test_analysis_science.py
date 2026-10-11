@@ -394,3 +394,13 @@ def test_composite_keeps_observations_and_ecmwf_apart():
              for p in ("wetPf2", "echPrf")]
     comp = analysis.composite(paths, "Temp", top_km=10.0, step_km=1.0, min_count=1, workers=1)
     assert sorted(comp.groups) == ["all - Temperature", "all - Temperature (ECMWF)"]
+
+
+def test_composite_keeps_dry_and_moist_derived_fields_apart():
+    paths = [(str(next(sampledata_dir().glob(f"{p}_*E23*"))), {"product": p, "good": True})
+             for p in ("wetPf2", "atmPrf")]
+    comp = analysis.composite(paths, "theta", top_km=10.0, step_km=1.0, min_count=1, workers=1)
+    assert sorted(comp.groups) == ["all - Potential temperature",
+                                   "all - Potential temperature (from dry temperature)"]
+    one = analysis.composite(paths[1:], "theta", top_km=10.0, step_km=1.0, min_count=1, workers=1)
+    assert list(one.groups) == ["all"]
