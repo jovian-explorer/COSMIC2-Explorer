@@ -9,10 +9,8 @@ from __future__ import annotations
 
 import csv
 import datetime as dt
-import io
 import json
 import re
-import zipfile
 from pathlib import Path
 from typing import Iterable, Sequence
 
@@ -467,34 +465,6 @@ def export_figure(fig, fmt: str = "png", basename: str = "cosmic2_figure",
     path.write_bytes(data)
     return {"path": str(path), "filename": path.name, "bytes": len(data),
             "mime": plotting.MIME[fmt.lower()]}
-
-
-def export_bundle(items: Sequence[dict], prov: dict,
-                  basename: str = "cosmic2_bundle") -> dict:
-    """Zip several exports together with a README explaining each file."""
-    path = export_path(basename, "zip")
-    readme = io.StringIO()
-    readme.write(f"{prov['generated_by']}\n{'=' * len(prov['generated_by'])}\n\n")
-    readme.write(f"Exported {prov['generated_at_utc']}\n\n")
-    readme.write("Contents\n--------\n")
-    for it in items:
-        readme.write(f"  {it['filename']}  ({it['bytes'] / 1024:.0f} kB)"
-                     f"  {it.get('description', '')}\n")
-    readme.write("\nProvenance\n----------\n")
-    for line in _header_lines(prov):
-        readme.write(f"  {line}\n")
-    readme.write("\nGranules included\n-----------------\n")
-    for f in prov.get("granule_files", [])[:2000]:
-        readme.write(f"  {f}\n")
-    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
-        z.writestr("README.txt", readme.getvalue())
-        z.writestr("provenance.json", json.dumps(prov, indent=2, default=str))
-        for it in items:
-            src = Path(it["path"])
-            if src.exists():
-                z.write(src, arcname=src.name)
-    return {"path": str(path), "filename": path.name, "bytes": path.stat().st_size,
-            "mime": "application/zip", "items": [i["filename"] for i in items]}
 
 
 def list_exports(limit: int = 100) -> list[dict]:

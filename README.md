@@ -152,7 +152,7 @@ COSMIC2-Explorer/
 │   ├── store.py              SQLite metadata index
 │   ├── analysis.py           Science layer (tropopause, diagnostics, composites)
 │   ├── plotting.py           Matplotlib publication figures
-│   ├── exporters.py          CSV / netCDF-4 / JSON / ZIP export
+│   ├── exporters.py          CSV / netCDF-4 / JSON export
 │   ├── vocab.py              Variable labels, units, physical definitions
 │   ├── config.py             Paths, settings, citation
 │   ├── frontend/             Static HTML/CSS/JS (no build step), bundled Plotly, TopoJSON, KaTeX

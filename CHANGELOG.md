@@ -167,6 +167,7 @@
 
 ### Robustness and security
 
+- Removed `exporters.export_bundle` (a ZIP of several exports), which no endpoint or page called; the README no longer lists a ZIP export.
 - Removed three functions nothing called: `analysis.anomaly_against`, `catalog.readable_products` and `plotting.check_layout` (its docstring named a test that no longer used it).
 - The local API accepts cross-origin requests only from loopback origins; previously any web page open in the browser could call it (including the delete endpoints).
 - Grid, DPI and settings values are validated (a zero grid step returned a server error, and could be saved as a setting).
