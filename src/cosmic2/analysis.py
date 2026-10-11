@@ -639,6 +639,12 @@ def quantity_label(field: str, product: str | None) -> str:
     return f"{label} ({model})" if model else label
 
 
+def quantity_title(label: str, units: str | None) -> str:
+    """Axis title: a quantity_label with its units."""
+    u = vocab.normalise_units(units or "")
+    return f"{label} [{u}]" if u and u != "-" else label
+
+
 def fields_with(g: readers.Granule, *names: str) -> dict[str, np.ndarray]:
     """The granule's arrays, plus the derived fields only when one of
     ``names`` is not a native variable.  Deriving every field costs ~10 % of
@@ -818,6 +824,7 @@ class Composite:
     min_count: int = 3
     dropped_groups: dict = field(default_factory=dict)
     quantity: str = ""   # vocabulary key when it differs from the name
+    label: str = ""      # quantity_label when the profiles hold one quantity
     screen_k: float | None = None
     screened_out: dict = field(default_factory=dict)
 
@@ -838,7 +845,8 @@ class Composite:
             "min_count": self.min_count,
             "dropped_groups": self.dropped_groups,
             "screen_k": self.screen_k, "screened_out": self.screened_out,
-            "field_label": vocab.axis_title(self.quantity or self.field, self.units),
+            "field_label": (quantity_title(self.label, self.units) if self.label
+                            else vocab.axis_title(self.quantity or self.field, self.units)),
             "vertical_label": vocab.axis_title(self.vertical),
             "groups": {
                 name: {
@@ -962,7 +970,8 @@ def composite(granule_paths: Sequence[tuple[str, dict]], field: str,
     return Composite(field, vertical, grid, ordered, used, units,
                      min_count=min_count, dropped_groups=dropped,
                      screen_k=screen_k, screened_out=screened,
-                     quantity=next(iter(quantities)) if len(quantities) == 1 else "")
+                     quantity=next(iter(quantities)) if len(quantities) == 1 else "",
+                     label=next(iter(kinds)) if len(kinds) == 1 else "")
 
 
 def robust_screen(m: np.ndarray, grid: np.ndarray, k: float = 5.0,

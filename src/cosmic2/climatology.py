@@ -205,7 +205,7 @@ def cross_section(granule_paths: Sequence[tuple[str, dict]], field: str,
     averaged.
     """
     from . import vocab
-    from .analysis import make_grid
+    from .analysis import make_grid, quantity_title
     from .parallel import pmap
     if not (lat_step > 0):
         raise ValueError("lat_step must be > 0")
@@ -268,7 +268,7 @@ def cross_section(granule_paths: Sequence[tuple[str, dict]], field: str,
         sem = std / np.sqrt(np.where(count > 0, count, np.nan))
     return {
         "field": field, "vertical": vertical, "quantity": qty, "units": units,
-        "field_label": vocab.axis_title(qty, units),
+        "field_label": quantity_title(next(iter(kinds)), units),
         "vertical_label": vocab.axis_title(vertical),
         "n_profiles": int(len(lats)), "min_count": min_count,
         "screen_k": screen_k, "screened_out": screened,

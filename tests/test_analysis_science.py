@@ -404,3 +404,4 @@ def test_composite_keeps_dry_and_moist_derived_fields_apart():
                                    "all - Potential temperature (from dry temperature)"]
     one = analysis.composite(paths[1:], "theta", top_km=10.0, step_km=1.0, min_count=1, workers=1)
     assert list(one.groups) == ["all"]
+    assert one.to_json()["field_label"] == "Potential temperature (from dry temperature) [K]"

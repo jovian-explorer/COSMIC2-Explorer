@@ -635,8 +635,9 @@ def plot_profiles(req: PlotRequest) -> dict:
         out.append(res["series"])
     return _clean({
         "field": req.field, "vertical": req.vertical, "units": units,
-        "field_label": vocab.axis_title(
-            req.field, units, next(iter(products)) if len(products) == 1 else None),
+        "field_label": (analysis.quantity_title(
+            analysis.quantity_label(req.field, next(iter(products))), units)
+            if len(products) == 1 else vocab.axis_title(req.field, units)),
         "vertical_label": vocab.axis_title(req.vertical),
         "series": out, "skipped": skipped,
     })
