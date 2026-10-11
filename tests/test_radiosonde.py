@@ -221,3 +221,13 @@ def test_comparison_csv_export(tmp_path):
     assert "IGRA" in text
     assert "ro_pbl_km,sonde_pbl_km" in text and ",1.25,1.1" in text
     os.remove(out["path"])
+
+
+def test_soundings_near_reads_the_next_year_at_new_year(monkeypatch):
+    import datetime as dt
+    asked = []
+    monkeypatch.setattr(radiosonde, "station_file",
+                        lambda st, year, download, need_until=None: asked.append(year))
+    t = dt.datetime(2025, 12, 31, 23, 30, tzinfo=dt.timezone.utc)
+    radiosonde.soundings_near("USM00072201", [t], 3.0, download=False)
+    assert asked == [2025, 2026]

@@ -275,9 +275,13 @@ def soundings_near(station: str, times: Sequence[dt.datetime], max_hours: float,
     ``times``."""
     out = []
     ts = np.array([t.timestamp() for t in times], dtype="float64")
-    for year in sorted({t.year for t in times}):
+    # A sounding up to max_hours away can be filed under the next or the
+    # previous year (an occultation at 23:30 on 31 December and the 00 UTC
+    # sonde of 1 January)
+    win = dt.timedelta(hours=max_hours)
+    for year in sorted({(t + d).year for t in times for d in (-win, win)}):
         path = station_file(station, year, download,
-                            need_until=max(t for t in times if t.year == year))
+                            need_until=max(t + win for t in times))
         if path is None:
             continue
         a = _station_arrays(path)
