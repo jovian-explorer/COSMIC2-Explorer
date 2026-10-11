@@ -139,3 +139,12 @@ def test_two_exports_in_the_same_second_do_not_overwrite(monkeypatch):
         assert b != a and b.name == "same_20260101T000000Z_2.csv"
     finally:
         a.unlink()
+
+
+def test_metadata_csv_writes_lists_as_delimited_values():
+    meta = readers.quick_meta(str(next(sampledata_dir().glob("ivmL2m_*"))))
+    res = exporters.export_metadata_csv([meta])
+    rows = list(csv.DictReader(l for l in open(res["path"], encoding="utf-8")
+                               if not l.startswith("#")))
+    lo, hi = (float(x) for x in rows[0]["lat_range"].split(";"))
+    assert [lo, hi] == meta["extras"]["lat_range"]

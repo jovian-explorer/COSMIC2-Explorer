@@ -208,8 +208,10 @@ def export_metadata_csv(granules: Sequence[dict],
         w.writerow(fields + extra_keys)
         for g in granules:
             ex = g.get("extras") or {}
+            # a list (the IVM latitude range) as "a;b", not Python's "[a, b]"
             w.writerow([g.get(k) for k in fields] +
-                       [ex.get(k) for k in extra_keys])
+                       [";".join(map(str, v)) if isinstance(v, (list, tuple)) else v
+                        for v in (ex.get(k) for k in extra_keys)])
     return {"path": str(path), "filename": path.name, "bytes": path.stat().st_size,
             "mime": "text/csv", "rows": len(granules), "provenance": prov}
 
