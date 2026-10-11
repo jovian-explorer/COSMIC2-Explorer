@@ -278,7 +278,7 @@ VAR_INFO: dict[str, dict] = {
         doi="10.1007/s11214-017-0383-3",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/",
         data_level="Level 2 (In-Situ IVM Diagnostic)",
-        algorithm="Potential of the instrument aperture plane, found from the retarding potential analyzer's current-voltage curve."
+        algorithm="As given in the ivmL2m file (long_name: Aperture plane potential)."
     ),
     "iv_zon": dict(
         label="Zonal ion drift", units="m/s",
