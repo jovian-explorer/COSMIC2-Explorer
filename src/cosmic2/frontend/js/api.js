@@ -117,13 +117,6 @@ export function isSelected(id) { return state.selected.has(id); }
 export function selectedIds() { return [...state.selected.keys()]; }
 
 /** The selection if there is one, otherwise the active search. */
-export function selectionRequest(selectedOnly) {
-  const ids = selectedIds();
-  if (selectedOnly) return {granule_ids: ids};
-  if (ids.length) return {granule_ids: ids};
-  return {search: state.lastSearch || {good_only: true, limit: 2000}};
-}
-
 export function vocabInfo(name) {
   const v = state.meta && state.meta.vocabulary[name];
   return v || {name, label: name, units: '', plain: '', role: 'field'};
