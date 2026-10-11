@@ -186,10 +186,13 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
     ),
     Product(
         "ivmL2m", "Ion Velocity Meter (in-situ)", "insitu", "ivmL2m",
-        "In-situ ion density, ion temperature and 3-component ion drift measured at "
-        "the spacecraft (~550 km), 1 Hz along track.",
-        "Measured right at the satellite: how dense the plasma is and which way it "
-        "is drifting.",
+        "In-situ ion density, ion temperature and composition measured at the "
+        "spacecraft (~550 km), 1 Hz along track. The ion-drift fields are in the "
+        "format but empty: every file checked (all satellites, 2026-07-19 and "
+        "2026-09-27) has them as missing values, as UCAR masks fields not yet "
+        "validated in ivmL2m (Space Weather Data Release 4); some files also lack "
+        "the temperature and composition.",
+        "Measured right at the satellite: how dense and how hot the plasma is.",
         "medium",
         ("ion_dens", "ion_temp", "iv_zon", "iv_mer", "alt", "lat", "lon"),
         reference="Heelis, R. A., et al. (2017), Ion velocity measurements for the Ionospheric Connections Explorer, Space Sci. Rev., 212, 615-629 (the COSMIC-2 IVM is the same University of Texas at Dallas design)",

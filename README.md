@@ -185,7 +185,7 @@ Supported products:
 | `atmPrf` | Bending angle, refractivity, dry temperature and pressure at native resolution (~3800 levels, up to 80 km) |
 | `ionPrf` | Ionospheric electron density profile, up to the satellite's orbit (about 550-580 km) |
 | `scnLv2` | Signal scintillation indices (S4, sigma-phi) |
-| `ivmL2m` | In-situ plasma density, temperature and drift at spacecraft altitude |
+| `ivmL2m` | In-situ plasma density and temperature at spacecraft altitude (the drift fields are empty in every file checked: UCAR masks them until validated) |
 | `echPrf` | ECMWF model temperature, pressure, water vapour, refractivity and simulated bending angle along the path of each occultation (same file stamp as its atmPrf) |
 | `avnPrf` | NCEP model temperature, pressure, water vapour and refractivity along the path of each occultation (same file stamp as its atmPrf) |
 
