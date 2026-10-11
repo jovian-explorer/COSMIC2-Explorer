@@ -448,7 +448,8 @@ def compare(rows: Sequence[dict], max_km: float = 300.0, max_hours: float = 3.0,
     if not rows:
         return {"n_pairs": 0, "pairs": [], "stats": {}, "n_occultations": 0}
     t_occ = [dt.datetime.fromisoformat(r["time_utc"].replace("Z", "+00:00")) for r in rows]
-    years = {t.year for t in t_occ}
+    win = dt.timedelta(hours=max_hours)
+    years = {(t + d).year for t in t_occ for d in (-win, win)}
     st = [s for s in stations if s["last_year"] >= min(years) and s["first_year"] <= max(years)]
     slat = np.array([s["lat"] for s in st])
     slon = np.array([s["lon"] for s in st])
