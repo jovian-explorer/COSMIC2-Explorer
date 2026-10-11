@@ -60,6 +60,7 @@ def test_netcdf_export_uses_udunits_strings():
             assert ds["buoyancy_freq_sq"].units == "s-2"
             assert ds["sph"].units == "g kg-1"
             assert ds["MSL_alt"].units == "km"
+            assert ds["MSL_alt"].positive == "up"          # CF: required for heights
     finally:
         os.remove(res["path"])
 

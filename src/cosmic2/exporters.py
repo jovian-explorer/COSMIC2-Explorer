@@ -345,6 +345,7 @@ def export_netcdf(granules: Sequence[dict], fields: Sequence[str] | None = None,
         zv.units = "km"
         zv.long_name = vocab.info(vertical)["label"]
         zv.axis = "Z"
+        zv.positive = "up"   # CF: a height coordinate must say which way is up
         zv[:] = grid
 
         # Profile-level coordinates are prefixed: several products carry

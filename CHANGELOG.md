@@ -128,6 +128,7 @@
 
 ### Exports and figures
 
+- The netCDF export's height coordinate carries `positive = "up"`, which CF requires for a vertical coordinate that is not pressure; without it CF tools could not tell the direction of the axis.
 - Two exports with the same name started within the same second (the time stamp in the file name has one-second resolution) wrote to the same file, and the second replaced the first. The second now gets a `_2` suffix.
 - The regridded (wide) CSV named its field without the product, so an atmPrf `Temp` export said "Temperature" for what is the dry temperature. It now names the field as each product stores it, and lists both when products differ ("Dry temperature [°C] in atmPrf; Temperature [°C] in wetPf2"), as the netCDF export already did.
 - The profile CSV header has a `# Units:` line giving every column's units (from the files, or the app's vocabulary for derived fields). Unit strings `C` and `mb` now read `°C` and `hPa` in labels, so atmPrf and wetPf2 temperature and pressure share one unit.
