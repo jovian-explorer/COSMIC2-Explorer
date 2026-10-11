@@ -159,3 +159,11 @@ def test_exports_name_atmprf_derived_fields_as_dry():
     res = exporters.export_netcdf([atm, _wet_meta()], ["theta"], top_km=20.0, step_km=1.0)
     with Dataset(res["path"]) as ds:
         assert "product=atmPrf: Potential temperature (from dry temperature)" in ds["theta"].comment
+
+
+def test_scintillation_time_units_are_one_entry_for_many_files():
+    metas = [readers.quick_meta(str(p)) for p in sorted(sampledata_dir().glob("scnLv2_*"))]
+    res = exporters.export_profiles_csv(metas, ["time", "s4_L1"])
+    line = next(l for l in open(res["path"], encoding="utf-8") if l.startswith("# Units:"))
+    assert "time s since the start of each file (its time_utc)" in line
+    assert "2026-07-19" not in line

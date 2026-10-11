@@ -126,6 +126,10 @@ def export_profiles_csv(granules: Sequence[dict], variables: Sequence[str] | Non
             for c in cols:
                 u = vocab.normalise_units(g.units.get(c) or vocab.info(c, g.product)["units"])
                 if u and u != "-":
+                    # scnLv2 "time" counts from each file's own start: one
+                    # entry, not one per file
+                    if u.startswith("seconds since") and c == "time" and g.product == "scnLv2":
+                        u = "s since the start of each file (its time_utc)"
                     units.setdefault(c, set()).add(u)
             base = [g.meta["file_name"], g.meta["product"], g.meta["time_utc"],
                     g.meta["lat"], g.meta["lon"], g.meta["local_time"]]

@@ -139,6 +139,7 @@
 
 ### Exports and figures
 
+- In a profile CSV of scintillation files, the `# Units:` line listed one "seconds since <date>" per file for `time`, which counts from each file's own start; it now says that once.
 - Profile plots, averages and latitude-height sections of one product title the field as that product holds it: an atmPrf average of potential temperature reads "Potential temperature (from dry temperature) [K]", an echPrf one "... (ECMWF)". The radiosonde card's "Use only my selection" option says it compares the product chosen on the card.
 - The regridded CSV and the netCDF export name a field as each product holds it through one rule (`analysis.quantity_label`): atmPrf's fields derived from temperature are marked "(from dry temperature)" and the model profiles "(ECMWF)" or "(NCEP)", so an export mixing atmPrf and wetPf2 potential temperature says which rows are which.
 - The metadata CSV wrote list-valued fields (the IVM latitude range) as Python text, `[-24.1, 24.1]`; they are now semicolon-separated numbers, `-24.1;24.1`.
