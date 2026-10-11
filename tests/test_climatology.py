@@ -73,7 +73,6 @@ def test_cross_section_band_means_and_departure_by_hand(monkeypatch):
     """Columns are binned by latitude and averaged; the departure is from
     the mean of all profiles at each height."""
     from cosmic2 import analysis
-    grid = analysis.make_grid(2.0, 1.0)          # 0, 1, 2 km
     cols = {"a": [10, 20, 30], "b": [12, 22, 32],   # lat 2, 4   -> band 0-5
             "c": [20, 40, np.nan], "d": [22, 44, np.nan]}  # lat 12, 14 -> band 10-15
     lats = {"a": 2.0, "b": 4.0, "c": 12.0, "d": 14.0}

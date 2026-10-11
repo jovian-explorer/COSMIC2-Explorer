@@ -76,7 +76,6 @@ def test_invalid_settings_are_not_persisted():
 
 
 def test_panels_figure_for_a_granule_without_position(tmp_path):
-    import numpy as np
     from scipy.io import netcdf_file
     from cosmic2 import api
     p = tmp_path / "atmPrf_C2E1.2026.200.01.02.G01_0001.0001_nc"
@@ -125,7 +124,6 @@ def test_profile_figure_export_uses_every_level(monkeypatch):
 
 
 def test_clean_float_arrays_match_elementwise():
-    import math
     import numpy as np
     from cosmic2 import api
     a = np.array([1.5, np.nan, -np.inf, 2.0, np.inf], dtype="f4")

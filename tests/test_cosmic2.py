@@ -4,7 +4,6 @@ Tests: reader normalisation, science calculations, API endpoints, export, netCDF
 Run with: python -m pytest tests/ -v
 """
 import json
-import math
 import os
 import urllib.request
 from pathlib import Path
@@ -441,7 +440,6 @@ class TestExports:
         assert res["bytes"] > 0
 
     def test_export_netcdf(self):
-        import netCDF4
         res = post("/api/export/data", {
             "kind": "netcdf",
             "field": "Temp",

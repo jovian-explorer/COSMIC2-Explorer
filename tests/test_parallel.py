@@ -4,7 +4,7 @@ import math
 import numpy as np
 import pytest
 
-from cosmic2 import analysis, exporters, fetch, parallel, readers
+from cosmic2 import analysis, exporters, parallel, readers
 from cosmic2.config import sampledata_dir
 
 
