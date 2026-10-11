@@ -335,3 +335,12 @@ def test_truncated_file_is_refused_not_read_as_zeros(tmp_path):
     p.write_bytes(src.read_bytes()[: 10_000_000])
     with pytest.raises(ValueError, match="truncated"):
         readers.load(str(p))
+
+
+def test_ap_pot_is_named_as_the_file_names_it():
+    from scipy.io import netcdf_file
+    from cosmic2 import vocab
+    f = netcdf_file(str(next(sampledata_dir().glob("ivmL2m_*"))), "r", mmap=False)
+    assert f.variables["ap_pot"].long_name == b"Aperture plane potential"
+    f.close()
+    assert vocab.VAR_INFO["ap_pot"]["label"] == "Aperture-plane potential"

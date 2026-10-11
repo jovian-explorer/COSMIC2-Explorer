@@ -271,14 +271,14 @@ VAR_INFO: dict[str, dict] = {
         algorithm="Ion velocity distribution Maxwellian temperature fit from Retarding Potential Analyzer (RPA)."
     ),
     "ap_pot": dict(
-        label="Spacecraft potential", units="V",
-        plain="Electrical charge the spacecraft built up relative to ambient plasma.", role=AUX,
-        formula=r"\Phi_{sc}",
+        label="Aperture-plane potential", units="V",
+        plain="Electric potential of the IVM's aperture plane relative to the surrounding plasma (the file's long_name).", role=AUX,
+        formula=r"\Phi_{ap}",
         reference="Heelis, R. A., et al. (2017), Ion velocity measurements for the Ionospheric Connections Explorer, Space Sci. Rev., 212, 615-629 (the COSMIC-2 IVM is the same University of Texas at Dallas design)",
         doi="10.1007/s11214-017-0383-3",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/",
         data_level="Level 2 (In-Situ IVM Diagnostic)",
-        algorithm="Floating potential of spacecraft body determined from IVM sensor characteristics."
+        algorithm="Potential of the instrument aperture plane, found from the retarding potential analyzer's current-voltage curve."
     ),
     "iv_zon": dict(
         label="Zonal ion drift", units="m/s",
