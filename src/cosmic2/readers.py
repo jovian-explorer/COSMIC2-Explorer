@@ -152,7 +152,7 @@ def _open(path: str):
         # netCDF4 would open it anyway and return zeros for the missing
         # records (a truncated ivmL2m read as time 1970-01-01, local time 0).
         with open(path, "rb") as fh:
-            if fh.read(4) in (b"CDF", b"CDF"):   # the formats scipy reads
+            if fh.read(4) in (b"CDF\x01", b"CDF\x02"):   # the formats scipy reads
                 raise ValueError(f"{os.path.basename(path)} cannot be read "
                                  f"(truncated?): {exc}") from exc
         if _NC4 is None:
