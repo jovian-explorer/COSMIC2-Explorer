@@ -10,7 +10,7 @@ from __future__ import annotations
 import math
 import warnings
 from dataclasses import dataclass, field
-from typing import Iterable, Sequence
+from typing import Sequence
 
 import numpy as np
 
@@ -1004,4 +1004,20 @@ def mean_uncertainty(mean: np.ndarray, std: np.ndarray, count: np.ndarray,
         sem = np.where(n >= 2, std / np.sqrt(n), np.nan)
         q = np.where(n >= 2, student_t.ppf(0.5 + level / 2.0, np.maximum(n - 1, 1)), np.nan)
     return sem, mean - q * sem, mean + q * sem
+
+
+def column_stats(m: np.ndarray, min_count: int) -> dict:
+    """Mean, median, sample spread, count and 95 % interval of the mean of
+    each column of ``m`` (rows: profiles, columns: levels); blank where fewer
+    than ``min_count`` values."""
+    with np.errstate(invalid="ignore", divide="ignore"), warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        n = np.isfinite(m).sum(axis=0)
+        mean, median = np.nanmean(m, axis=0), np.nanmedian(m, axis=0)
+        std = np.nanstd(m, axis=0, ddof=1)
+    sem, lo, hi = mean_uncertainty(mean, std, n)
+    for a in (mean, median, std, sem, lo, hi):
+        a[n < min_count] = np.nan
+    return {"mean": mean, "median": median, "std": std, "n": n, "sem": sem,
+            "ci95_lo": lo, "ci95_hi": hi}
 

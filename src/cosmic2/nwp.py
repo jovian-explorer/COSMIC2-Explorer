@@ -137,8 +137,7 @@ def model_differences(groups: Sequence[dict[str, dict]], quantity: str = "refrac
                       min_count: int = 3, workers: int | None = None) -> dict:
     """RO minus ECMWF and RO minus NCEP by height: mean, median, standard
     deviation, count, standard error and 95 % confidence interval of the mean."""
-    from .analysis import make_grid, mean_uncertainty
-    from .climatology import warnings_off
+    from .analysis import column_stats, make_grid
     if quantity not in QUANTITIES:
         raise ValueError(f"quantity must be one of {', '.join(QUANTITIES)}")
     from .parallel import pmap
@@ -166,15 +165,7 @@ def model_differences(groups: Sequence[dict[str, dict]], quantity: str = "refrac
                     diffs.append(100.0 * d / c[model] if relative else d)
         st = {"name": name, "n_profiles": len(diffs)}
         if diffs:
-            m = np.vstack(diffs)
-            with np.errstate(invalid="ignore", divide="ignore"), warnings_off():
-                n = np.isfinite(m).sum(axis=0)
-                mean, median = np.nanmean(m, axis=0), np.nanmedian(m, axis=0)
-                std = np.nanstd(m, axis=0, ddof=1)
-            sem, lo, hi = mean_uncertainty(mean, std, n)
-            for a in (mean, median, std, sem, lo, hi):
-                a[n < min_count] = np.nan
-            st.update(mean=mean, median=median, std=std, n=n, sem=sem, ci95_lo=lo, ci95_hi=hi)
+            st.update(column_stats(np.vstack(diffs), min_count))
         out["models"][model] = st
     out["n_profiles"] = max((v["n_profiles"] for v in out["models"].values()), default=0)
     return out
@@ -288,7 +279,7 @@ def ducting_differences(groups: Sequence[dict[str, dict]], top_km: float = 6.0,
     and PAZ occultations of 2026-06-20 and 09-30 ECMWF diagnosed a duct at
     183: there RO minus ECMWF was -4.2 % at 1 km (-1.4 % without a duct) and
     -8.4 % 0.2 km below the duct centre, back to +0.3 % 0.2 km above it."""
-    from .analysis import make_grid
+    from .analysis import column_stats, make_grid
     from .parallel import pmap
     grid = make_grid(top_km, step_km, bottom_km)
     rel = make_grid(half_width_km, step_km, -half_width_km)
@@ -310,20 +301,6 @@ def ducting_differences(groups: Sequence[dict[str, dict]], top_km: float = 6.0,
     for key, (name, diffs) in sets.items():
         st = {"name": name, "n_profiles": len(diffs)}
         if diffs:
-            st.update(_column_stats(np.vstack(diffs), min_count))
+            st.update(column_stats(np.vstack(diffs), min_count))
         out["models"][key] = st
     return out
-
-
-def _column_stats(m: np.ndarray, min_count: int) -> dict:
-    from .analysis import mean_uncertainty
-    from .climatology import warnings_off
-    with np.errstate(invalid="ignore", divide="ignore"), warnings_off():
-        n = np.isfinite(m).sum(axis=0)
-        mean, median = np.nanmean(m, axis=0), np.nanmedian(m, axis=0)
-        std = np.nanstd(m, axis=0, ddof=1)
-    sem, lo, hi = mean_uncertainty(mean, std, n)
-    for a in (mean, median, std, sem, lo, hi):
-        a[n < min_count] = np.nan
-    return {"mean": mean, "median": median, "std": std, "n": n, "sem": sem,
-            "ci95_lo": lo, "ci95_hi": hi}

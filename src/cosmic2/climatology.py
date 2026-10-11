@@ -164,7 +164,7 @@ def _section_column(task: tuple):
     """One profile of a cross section: ``(lat, gridded column, units,
     quantity)``.  Module-level so it runs on the worker processes."""
     from .analysis import _composite_column
-    path, meta = task[0], task[1]
+    meta = task[1]
     res = _composite_column(task)
     if res is None or meta.get("lat") is None:
         return None
@@ -478,7 +478,7 @@ def product_differences(pairs: Sequence[tuple[dict, dict]], quantity: str = "ref
     pressure differences check that both files carry the same dry retrieval.
     ``moisture_effect`` is wetPf2's temperature minus its dry temperature:
     how far water vapour makes the dry temperature wrong."""
-    from .analysis import make_grid, mean_uncertainty
+    from .analysis import column_stats, make_grid
     from .parallel import pmap
     if quantity not in PAIR_QUANTITIES:
         raise ValueError(f"quantity must be one of {', '.join(PAIR_QUANTITIES)}")
@@ -490,16 +490,7 @@ def product_differences(pairs: Sequence[tuple[dict, dict]], quantity: str = "ref
            "grid": grid.tolist(), "n_pairs": len(res), "min_count": min_count}
     if not res:
         return {**out, **{k: [] for k in ("mean", "median", "std", "n", "sem", "ci95_lo", "ci95_hi")}}
-    m = np.vstack([d for _, d in res])
-    with np.errstate(invalid="ignore", divide="ignore"), warnings_off():
-        n = np.isfinite(m).sum(axis=0)
-        mean, median = np.nanmean(m, axis=0), np.nanmedian(m, axis=0)
-        std = np.nanstd(m, axis=0, ddof=1)
-    sem, lo, hi = mean_uncertainty(mean, std, n)
-    thin = n < min_count
-    for a in (mean, median, std, sem, lo, hi):
-        a[thin] = np.nan
-    out.update(mean=mean, median=median, std=std, n=n, sem=sem, ci95_lo=lo, ci95_hi=hi)
+    out.update(column_stats(np.vstack([d for _, d in res]), min_count))
     return out
 
 

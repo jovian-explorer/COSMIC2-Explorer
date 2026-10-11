@@ -134,20 +134,6 @@ def _pair_diff(task: tuple):
     return raw, corrected
 
 
-def _stats(m: np.ndarray, min_count: int) -> dict:
-    from .analysis import mean_uncertainty
-    from .climatology import warnings_off
-    with np.errstate(invalid="ignore", divide="ignore"), warnings_off():
-        n = np.isfinite(m).sum(axis=0)
-        mean, median = np.nanmean(m, axis=0), np.nanmedian(m, axis=0)
-        std = np.nanstd(m, axis=0, ddof=1)
-    sem, lo, hi = mean_uncertainty(mean, std, n)
-    for a in (mean, median, std, sem, lo, hi):
-        a[n < min_count] = np.nan
-    return {"mean": mean, "median": median, "std": std, "n": n, "sem": sem,
-            "ci95_lo": lo, "ci95_hi": hi}
-
-
 def compare(rows: Sequence[dict], index_rows: Sequence[dict], other: str = "paz",
             quantity: str = "temperature", max_km: float = 300.0, max_hours: float = 3.0,
             top_km: float = 30.0, step_km: float = 0.5, bottom_km: float = 0.0,
@@ -157,7 +143,7 @@ def compare(rows: Sequence[dict], index_rows: Sequence[dict], other: str = "paz"
     the quantity's product); ``index_rows`` the index rows used to find each
     profile's echPrf."""
     from . import nwp
-    from .analysis import make_grid
+    from .analysis import column_stats, make_grid
     from .parallel import pmap
     if quantity not in QUANTITIES:
         raise ValueError(f"quantity must be one of {', '.join(QUANTITIES)}")
@@ -185,7 +171,7 @@ def compare(rows: Sequence[dict], index_rows: Sequence[dict], other: str = "paz"
         col.update(median_km=float(np.median([p[2] for p in pairs])),
                    median_hours=float(np.median([p[3] for p in pairs])))
     if diffs:
-        col.update(_stats(np.vstack(diffs), min_count))
+        col.update(column_stats(np.vstack(diffs), min_count))
     # The pair difference minus ECMWF's difference between the two
     # occultations: removes the part of the collocation mismatch the model
     # resolves (the sampling correction of Gilpin et al. 2018,
@@ -195,7 +181,7 @@ def compare(rows: Sequence[dict], index_rows: Sequence[dict], other: str = "paz"
     # 1.30 K at 29.5 km and from 1.16 to 0.74 K at 10 km.
     col["corrected"] = {"n_pairs": len(corrected)}
     if corrected:
-        col["corrected"].update(_stats(np.vstack(corrected), min_count))
+        col["corrected"].update(column_stats(np.vstack(corrected), min_count))
     out["collocated"] = col
     # double difference through ECMWF (no collocation), over the latitudes
     # both missions cover: COSMIC-2 reaches about 45 degrees, PAZ and

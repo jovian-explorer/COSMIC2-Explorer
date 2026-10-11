@@ -12,7 +12,7 @@ import datetime as dt
 import json
 import re
 from pathlib import Path
-from typing import Iterable, Sequence
+from typing import Sequence
 
 import numpy as np
 
