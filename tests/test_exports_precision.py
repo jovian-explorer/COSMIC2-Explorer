@@ -148,3 +148,14 @@ def test_metadata_csv_writes_lists_as_delimited_values():
                                if not l.startswith("#")))
     lo, hi = (float(x) for x in rows[0]["lat_range"].split(";"))
     assert [lo, hi] == meta["extras"]["lat_range"]
+
+
+def test_exports_name_atmprf_derived_fields_as_dry():
+    from netCDF4 import Dataset
+    atm = readers.quick_meta(str(next(sampledata_dir().glob("atmPrf_*E23*"))))
+    res = exporters.export_grid_csv([atm, _wet_meta()], "theta", top_km=20.0, step_km=1.0)
+    line = next(l for l in open(res["path"], encoding="utf-8") if l.startswith("# Field:"))
+    assert "Potential temperature (from dry temperature) [K] in atmPrf" in line
+    res = exporters.export_netcdf([atm, _wet_meta()], ["theta"], top_km=20.0, step_km=1.0)
+    with Dataset(res["path"]) as ds:
+        assert "product=atmPrf: Potential temperature (from dry temperature)" in ds["theta"].comment

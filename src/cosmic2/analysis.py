@@ -628,6 +628,17 @@ DERIVED_FROM_TEMPERATURE = frozenset({
     "buoyancy_period", "theta", "dtheta_dz", "density"})
 
 
+def quantity_label(field: str, product: str | None) -> str:
+    """What ``field`` holds in ``product``: atmPrf "Temp" is the dry
+    temperature (vocabulary alias), atmPrf's fields derived from temperature
+    are dry-air ones, and echPrf/avnPrf hold weather-model values."""
+    label = vocab.info(field, product)["label"]
+    if product == "atmPrf" and field in DERIVED_FROM_TEMPERATURE:
+        label += " (from dry temperature)"
+    model = {"echPrf": "ECMWF", "avnPrf": "NCEP"}.get(product or "")
+    return f"{label} ({model})" if model else label
+
+
 def fields_with(g: readers.Granule, *names: str) -> dict[str, np.ndarray]:
     """The granule's arrays, plus the derived fields only when one of
     ``names`` is not a native variable.  Deriving every field costs ~10 % of

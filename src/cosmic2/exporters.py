@@ -281,7 +281,10 @@ def export_grid_csv(granules: Sequence[dict], field: str, vertical: str = "MSL_a
         for res in pmap(_regrid_granule, tasks) if res is not None
         for meta, gridded in [res] if field in gridded]
     # Named as stored in each product: atmPrf "Temp" is the dry temperature
-    labels = sorted({(vocab.axis_title(field, None, p), p) for _, _, p in cols})
+    def title(p):
+        u = vocab.normalise_units(vocab.info(field, p)["units"])
+        return analysis.quantity_label(field, p) + (f" [{u}]" if u and u != "-" else "")
+    labels = sorted({(title(p), p) for _, _, p in cols})
     label = (labels[0][0] if len({lab for lab, _ in labels}) == 1 else "; ".join(
         f"{lab} in {p}" for lab, p in labels)) if labels else vocab.axis_title(field)
     with path.open("w", newline="", encoding="utf-8") as fh:
@@ -389,16 +392,16 @@ def export_netcdf(granules: Sequence[dict], fields: Sequence[str] | None = None,
             # Describe the variable as stored in these products (atmPrf
             # "Temp" is the dry temperature); if the rows mix products where
             # the name means different quantities, say which rows are which.
-            qtys = {vocab.quantity(name, p) for p in products}
+            qtys = {analysis.quantity_label(name, p) for p in products}
             vi = vocab.info(name, products[0] if len(qtys) == 1 else None)
             var = ds.createVariable(name, "f4", ("profile", "level"),
                                     fill_value=np.float32(-999.0), zlib=True,
                                     complevel=4)
             var.units = cf_units(vi["units"])
-            var.long_name = vi["label"]
+            var.long_name = next(iter(qtys)) if len(qtys) == 1 else vi["label"]
             if len(qtys) > 1:
                 var.comment = "; ".join(
-                    f"rows with product={p}: {vocab.info(name, p)['label']}"
+                    f"rows with product={p}: {analysis.quantity_label(name, p)}"
                     for p in products) + ". See the 'product' variable."
             elif vi["plain"]:
                 var.comment = vi["plain"]

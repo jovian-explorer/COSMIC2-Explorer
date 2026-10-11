@@ -134,6 +134,7 @@
 
 ### Exports and figures
 
+- The regridded CSV and the netCDF export name a field as each product holds it through one rule (`analysis.quantity_label`): atmPrf's fields derived from temperature are marked "(from dry temperature)" and the model profiles "(ECMWF)" or "(NCEP)", so an export mixing atmPrf and wetPf2 potential temperature says which rows are which.
 - The metadata CSV wrote list-valued fields (the IVM latitude range) as Python text, `[-24.1, 24.1]`; they are now semicolon-separated numbers, `-24.1;24.1`.
 - The netCDF export's height coordinate carries `positive = "up"`, which CF requires for a vertical coordinate that is not pressure; without it CF tools could not tell the direction of the axis.
 - Two exports with the same name started within the same second (the time stamp in the file name has one-second resolution) wrote to the same file, and the second replaced the first. The second now gets a `_2` suffix.
