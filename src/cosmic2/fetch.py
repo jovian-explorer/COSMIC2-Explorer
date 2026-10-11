@@ -205,9 +205,6 @@ class DownloadManager:
             return True
         return False
 
-    def active_count(self) -> int:
-        return sum(1 for j in self._jobs.values() if j.state in ("queued", "running"))
-
     # -- public API ------------------------------------------------------
     def submit_download(self, *, stream: str, level: str, product: str,
                         date: str, max_profiles: int | None = None,

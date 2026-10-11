@@ -393,28 +393,6 @@ class Granule:
             })
         return out
 
-    def series(self, name: str) -> np.ndarray:
-        if name not in self.data:
-            raise KeyError(f"{name!r} not present in {self.product} granule")
-        return self.data[name]
-
-    def to_columns(self, names: list[str] | None = None) -> tuple[list[str], np.ndarray]:
-        """Stack same-length variables into a 2-D column block."""
-        if names is None:
-            n0 = self.data[self.vertical or self.independent].size
-            names = [k for k, v in self.data.items()
-                     if v.size == n0 and not BULK_VAR_RE.match(k)]
-        if not names:
-            return [], np.empty((0, 0))
-        n = max(self.data[k].size for k in names)
-        cols = []
-        for k in names:
-            a = self.data[k]
-            if a.size != n:
-                a = np.full(n, np.nan)
-            cols.append(a)
-        return names, np.column_stack(cols)
-
 
 # ---------------------------------------------------------------------------
 # product-specific metadata normalisation
