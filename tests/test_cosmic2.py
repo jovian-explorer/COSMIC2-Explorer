@@ -465,3 +465,10 @@ def test_packaged_resource_loading():
     assert bundle_root() == pkg
     assert (frontend_dir() / "index.html").is_file()
     assert sampledata_dir().is_dir()
+
+
+def test_ecmwf_bending_angle_is_not_called_ionosphere_corrected():
+    from cosmic2 import analysis, vocab
+    assert analysis.quantity_label("Bend_ang", "echPrf") == "Bending angle, simulated (ECMWF)"
+    assert "ionosphere" not in vocab.info("Bend_ang", "echPrf")["label"]
+    assert vocab.VAR_INFO["Bend_ang_model"]["formula"].startswith(r"\alpha(a)")

@@ -16,6 +16,7 @@
 
 ### Documentation and references
 
+- echPrf's `Bend_ang` was labelled "Bending angle (ionosphere-corrected)", the observation's name; it is the bending angle CDAAC simulates from the ECMWF refractivity, with no ionosphere involved. It now has its own entry, "Bending angle, simulated (ECMWF)".
 - The gravity-wave help and the diagnostic's text say that wetPf2's temperature follows its ECMWF first guess where the observation weighs little: on 187 COSMIC-2 occultations of 2026-09-27, wetPf2 minus ECMWF temperature had a standard deviation of 0.9-1.0 K from 20 to 30 km and 1.4-2.0 K at 35-40 km, against 1.6-2.7 K and 3.8-4.2 K for atmPrf. Its waves are not an independent measurement above about 30 km; atmPrf is the product for gravity waves.
 - IVM `ap_pot` is labelled as its file names it, the aperture-plane potential (it was called the spacecraft potential, which the file does not say).
 - The ivmL2m description promised the 3-component ion drift. In all nine complete files checked (every satellite on 2026-07-19 and 2026-09-27) the drift fields are missing values throughout, and C2E5 of 2026-09-27 also has no temperature or composition: UCAR masks ivmL2m fields not yet validated (Space Weather Data Release 4). The bundled file is byte-for-byte the archive's current one, so this is not an old copy. The product text and README now say so.

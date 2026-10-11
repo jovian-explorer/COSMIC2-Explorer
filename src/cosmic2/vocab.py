@@ -188,6 +188,17 @@ VAR_INFO: dict[str, dict] = {
         data_level="Level 2 (Calibrated Neutral Bending)",
         algorithm="Dual-frequency linear combination of L1 and L2 bending angles to eliminate first-order ionospheric dispersion."
     ),
+    "Bend_ang_model": dict(
+        label="Bending angle, simulated", units="rad",
+        plain="Bending angle CDAAC computes from the weather-model refractivity along the occultation (echPrf, file long_name \"Bending Angle\"): no ionosphere is involved. Compare it with the observed one by impact height.",
+        role=FIELD,
+        formula=r"\alpha(a) = -2a \int_a^\infty \frac{d \ln n / dx}{\sqrt{x^2 - a^2}} dx",
+        reference="Kursinski, E. R., et al. (1997), J. Geophys. Res., 102(D19), 23429-23465",
+        doi="10.1029/97JD01569",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/nrt/level2/",
+        data_level="Model profile colocated by CDAAC (echPrf)",
+        algorithm="Forward (Abel) integral of the model refractivity profile."
+    ),
     "Bend_ang1": dict(
         label="Bending angle, L1", units="rad",
         plain="Bending measured on the first radio frequency: 1575.42 MHz for GPS L1 and Galileo E1, near 1602 MHz for GLONASS (each satellite its own channel).", role=FIELD,
@@ -624,6 +635,7 @@ DEFAULT_VERTICAL = {
 PRODUCT_ALIASES: dict[tuple[str, str], str] = {
     ("atmPrf", "Temp"): "temp_dry",
     ("atmPrf", "Pres"): "pres_dry",
+    ("echPrf", "Bend_ang"): "Bend_ang_model",
 }
 
 
