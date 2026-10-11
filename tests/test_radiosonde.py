@@ -193,7 +193,14 @@ def test_endpoint_without_downloads_reports_the_missing_station_list():
     urllib.request.urlopen(urllib.request.Request(
         BASE + "/api/local/load-samples", data=b"{}",
         headers={"Content-Type": "application/json"}), timeout=60)
+    # the samples hold atmPrf and wetPf2: never pooled against the sondes
     body = json.dumps({"search": {}, "download": False}).encode()
+    with pytest.raises(urllib.error.HTTPError) as err:
+        urllib.request.urlopen(urllib.request.Request(
+            BASE + "/api/validation/radiosonde", data=body,
+            headers={"Content-Type": "application/json"}), timeout=60)
+    assert err.value.code == 400 and b"choose one product" in err.value.read()
+    body = json.dumps({"search": {}, "download": False, "product": "wetPf2"}).encode()
     req = urllib.request.Request(BASE + "/api/validation/radiosonde", data=body,
                                  headers={"Content-Type": "application/json"})
     cached = (radiosonde.cache_dir() / "igra2-station-list.txt").exists()

@@ -992,6 +992,9 @@ class RadiosondeRequest(BaseModel):
     download: bool = True
     export_csv: bool = False
     max_profiles: int = Field(default=5000, ge=1)
+    # atmPrf "Temp" is the dry temperature, wetPf2's the real one: the two
+    # are never pooled against the same sondes
+    product: Literal["wetPf2", "atmPrf"] | None = None
 
 
 @app.post("/api/validation/radiosonde")
@@ -1002,9 +1005,13 @@ def validation_radiosonde(req: RadiosondeRequest) -> dict:
     afterwards), so the first comparison of a period takes a minute or two.
     """
     rows = _resolve_selection(req.granule_ids, req.search, req.max_profiles)
-    rows = [r for r in rows if r["product"] in ("atmPrf", "wetPf2") and r.get("good")]
+    rows = [r for r in rows if r["product"] in ((req.product,) if req.product
+                                                else ("atmPrf", "wetPf2")) and r.get("good")]
     if not rows:
-        raise HTTPException(400, "No good atmPrf or wetPf2 profiles in that selection")
+        raise HTTPException(400, f"No good {req.product or 'atmPrf or wetPf2'} profiles in that selection")
+    if len({r["product"] for r in rows}) > 1:
+        raise HTTPException(400, "The selection holds both atmPrf (dry temperature) and wetPf2: "
+                                 "choose one product")
     try:
         res = radiosonde.compare(rows, req.max_km, req.max_hours, req.top_km,
                                  bin_km=req.bin_km, download=req.download,

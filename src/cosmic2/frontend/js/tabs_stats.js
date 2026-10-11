@@ -753,6 +753,7 @@ async function drawRadiosonde() {
     max_stations: Math.min(2000, Math.max(1, Math.round(Number($('#rs-st').value) || 200))),
     bin_km: Number($('#rs-bin').value) || 1,
     export_csv: $('#rs-csv').checked,
+    product,
   }, statsSelection($('#rs-selected-only').checked));
   if (req.search) {
     req.search.good_only = true;
