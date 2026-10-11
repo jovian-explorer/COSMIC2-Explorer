@@ -664,6 +664,9 @@ _UNIT_MAP: dict[str, str] = {
     "unitless": "-",
     "Unitless": "-",
     "N/cc": "ions/cm³",      # ivmL2m
+    "(N/cc)^2": "(ions/cm³)²",
+    # ivmL2m "time" (its long_name: GPS time) counts GPS seconds, no leap seconds
+    "seconds since 1980-1-6 00:00:00": "s of GPS time since 1980-01-06",
     "mb": "hPa",
     "Celsius_degree": "°C",
     "celsius_degree": "°C",

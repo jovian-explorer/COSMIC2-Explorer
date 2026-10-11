@@ -109,7 +109,7 @@
 
 ### Interface
 
-- Unit strings from the files read unambiguously in titles and CSV headers: refractivity's `N` (which reads as newton) and wetPf2's `N-unit` are "N-units", scnLv2's `unitless` is dropped instead of printed ("S4 index, L1 [unitless]"), and ivmL2m's `N/cc` is "ions/cm³".
+- Unit strings from the files read unambiguously in titles and CSV headers: refractivity's `N` (which reads as newton) and wetPf2's `N-unit` are "N-units", scnLv2's `unitless` is dropped instead of printed ("S4 index, L1 [unitless]"), and ivmL2m's `N/cc` is "ions/cm³" and its `time` (GPS seconds since 1980-01-06, which the file's own unit string does not say) is "s of GPS time since 1980-01-06".
 - A profile overlay holding atmPrf and wetPf2 `Temp` together was titled "Temperature", although the atmPrf lines are the dry temperature. The title now names each: "Dry temperature (atmPrf); Temperature (wetPf2) [°C]" (found by a browser sweep over real files of every product).
 - The relationship scatter says how many occultations it draws twice, as their atmPrf (dry temperature) and their wetPf2 point, when both files of an occultation are selected.
 - Groups of an average are drawn in a fixed order (latitude bands south to north, other groups by name) instead of by size, so a group keeps its colour and its place in the key when the counts change between runs.
