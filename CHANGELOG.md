@@ -107,6 +107,7 @@
 
 ### Interface
 
+- The relationship scatter says how many occultations it draws twice, as their atmPrf (dry temperature) and their wetPf2 point, when both files of an occultation are selected.
 - Groups of an average are drawn in a fixed order (latitude bands south to north, other groups by name) instead of by size, so a group keeps its colour and its place in the key when the counts change between runs.
 - The diagnostics panel of a scintillation file (Profiles tab) also gives the tangent height of the S4 peak, which tells the E region (80-160 km in Dymond 2023) from the F region (200-600 km), with a note that a low height can also come from F-region irregularities along the ray, and says that the file's position is the tangent point of the S4 maximum. Checked in the browser at 1024 and 1366 px (a 2026-09-30 file: peak S4 0.51 at 78.4 km).
 - Very large and very small numbers in tables, captions and the diagnostics panel are written with a superscript power of ten (4.12×10⁻⁴, 1.23×10⁶) instead of "4.12×10^-4": the sampling card's agreement with CDAAC's `profile_bottom_km` read "to 4.12×10^-4 m", and peak electron densities in el/cm³ looked the same way.

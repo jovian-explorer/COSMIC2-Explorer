@@ -740,7 +740,7 @@ def diagnostics_row(r: dict) -> dict | None:
     except Exception:
         return None
     flat = {"granule_id": r["id"], "file_name": r["file_name"],
-            "product": r["product"], "time_utc": r["time_utc"],
+            "product": r["product"], "stamp": r.get("stamp"), "time_utc": r["time_utc"],
             "lat": r["lat"], "lon": r["lon"], "local_time": r["local_time"],
             "sat": r["sat"], "good": r["good"]}
     for key, val in d.items():

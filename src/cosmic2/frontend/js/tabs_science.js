@@ -618,7 +618,18 @@ async function drawScatter() {
   }), PLOT_CONFIG);
   $('#scatter-caption').textContent =
     `${rows.length} of ${diagCache.n} profiles have both quantities` +
-    (diagCache.unreadable ? `; ${diagCache.unreadable} were unreadable.` : '.');
+    (diagCache.unreadable ? `; ${diagCache.unreadable} were unreadable.` : '.') +
+    bothProductsNote(rows);
+}
+
+/** The atmPrf and wetPf2 of one occultation are two points of the scatter:
+ *  say how many occultations are drawn twice. */
+export function bothProductsNote(rows) {
+  const seen = {atmPrf: new Set(), wetPf2: new Set()};
+  for (const r of rows) if (r.stamp && seen[r.product]) seen[r.product].add(r.stamp);
+  const twice = [...seen.atmPrf].filter((s) => seen.wetPf2.has(s)).length;
+  return twice ? ` ${twice} occultation${twice > 1 ? 's are' : ' is'} drawn twice, as its ` +
+    'atmPrf (dry temperature) and its wetPf2 point.' : '';
 }
 
 function prettyCol(col) {

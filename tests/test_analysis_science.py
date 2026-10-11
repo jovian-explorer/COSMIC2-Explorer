@@ -415,3 +415,10 @@ def test_composite_groups_keep_a_fixed_order(monkeypatch):
     comp = analysis.composite([(k, {"good": True}) for k in cols], "Temp",
                               top_km=2.0, step_km=1.0, min_count=1, workers=1)
     assert list(comp.groups) == ["S mid-latitude", "Equatorial", "N mid-latitude"]
+
+
+def test_diagnostics_row_carries_the_occultation_stamp():
+    # the scatter uses it to say which occultations are drawn twice
+    m = readers.quick_meta(str(next(sampledata_dir().glob("atmPrf_*E23*"))))
+    m["id"] = "x"
+    assert analysis.diagnostics_row(m)["stamp"] == "C2E1.2026.200.00.00.E23"
