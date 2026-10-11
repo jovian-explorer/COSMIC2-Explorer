@@ -104,7 +104,7 @@ def test_cross_section_refuses_dry_and_moist_temperature(monkeypatch):
     from cosmic2 import analysis
     qty = {"a": "temp_dry", "b": "Temp"}
     monkeypatch.setattr(analysis, "_composite_column",
-                        lambda t: ("all", np.ones(3), "K", qty[t[0]], ""))
+                        lambda t: ("all", np.ones(3), "K", qty[t[0]], qty[t[0]]))
     with pytest.raises(ValueError, match="different quantities"):
         climatology.cross_section([("a", {"lat": 0.0}), ("b", {"lat": 1.0})],
                                   "Temp", top_km=2, step_km=1, workers=1)

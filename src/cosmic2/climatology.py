@@ -168,8 +168,8 @@ def _section_column(task: tuple):
     res = _composite_column(task)
     if res is None or meta.get("lat") is None:
         return None
-    _key, col, units, qty, source = res
-    return float(meta["lat"]), col, units, qty, source
+    _key, col, units, qty, label = res
+    return float(meta["lat"]), col, units, qty, label
 
 
 def cross_section(granule_paths: Sequence[tuple[str, dict]], field: str,
@@ -216,11 +216,11 @@ def cross_section(granule_paths: Sequence[tuple[str, dict]], field: str,
     results = [r for r in pmap(_section_column, tasks, workers=workers)
                if r is not None]
     quantities = {r[3] for r in results}
-    kinds = {r[3:5] for r in results}
+    kinds = {r[4] for r in results}
     if len(kinds) > 1:
         raise ValueError(
             f"the selection holds {field} as different quantities "
-            f"({', '.join(sorted(vocab.info(q)['label'] + (f' ({s})' if s else '') for q, s in kinds))}); "
+            f"({', '.join(sorted(kinds))}); "
             f"choose one product")
     edges = np.arange(-90.0, 90.0 + lat_step / 2, lat_step)
     if not results:
