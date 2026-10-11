@@ -350,9 +350,18 @@ def diagnostic_map(rows: Sequence[dict], column: str = EP_COLUMN,
         raise ValueError("lat_step and lon_step must be > 0")
     if gw and gw.get("method", "polynomial") not in ("polynomial", "highpass"):
         raise ValueError("method must be polynomial or highpass")
+    # Each occultation once: of its atmPrf and wetPf2, the wetPf2's value
+    # when it has one, else the atmPrf's (the boundary layer is atmPrf-only)
+    rows = sorted(rows, key=lambda r: r.get("product") != "wetPf2")
     tasks = [(r, column, gw or None) for r in rows]
-    vals = np.array([v for v in pmap(_map_value, tasks, workers=workers) if v is not None],
-                    float).reshape(-1, 3)
+    vals, seen = [], set()
+    for r, v in zip(rows, pmap(_map_value, tasks, workers=workers)):
+        key = (r.get("stamp"), r.get("product") in ("atmPrf", "wetPf2"))
+        if v is None or (key[0] and key[1] and key in seen):
+            continue
+        seen.add(key)
+        vals.append(v)
+    vals = np.array(vals, float).reshape(-1, 3)
     lat_edges = np.arange(-90.0, 90.0 + lat_step / 2, lat_step)
     lon_edges = np.arange(-180.0, 180.0 + lon_step / 2, lon_step)
     nlat, nlon = lat_edges.size - 1, lon_edges.size - 1

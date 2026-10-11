@@ -68,6 +68,7 @@
 
 ### Science fixes (results change)
 
+- The diagnostic map counted an occultation twice when both its atmPrf and its wetPf2 were selected (tropopause, cold point, gravity-wave energy are computed from both). Each occultation now counts once, by its wetPf2's value when it has one, else its atmPrf's (the boundary-layer top is atmPrf-only).
 - The radiosonde comparison of "selected profiles only" pooled atmPrf and wetPf2 when both were selected, so the temperature differences mixed the dry temperature (tens of kelvin from the real one in the moist lower troposphere) with the real one, and counted occultations twice. The comparison now uses the product chosen on the card, and the API refuses a selection holding both unless a product is named.
 - The tropopause table counted an occultation twice when both its atmPrf and its wetPf2 were selected, so its 95 % intervals, which take the profiles as independent, were too narrow by about a factor of 1.4. Each occultation now counts once, by its wetPf2 (moist, real temperature) when both are there; CDAAC's columns still come from the atmPrf files.
 - The radiosonde comparison read a station's file only for the year of each occultation, so near New Year it missed soundings within the time window that IGRA files under the other year (an occultation at 23:30 UTC on 31 December and the 00 UTC sonde of 1 January). It now reads both years whenever the window crosses into the other one.

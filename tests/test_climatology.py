@@ -233,3 +233,15 @@ def test_tropopause_table_counts_each_occultation_once(monkeypatch):
                  "lat": 5.0, "extras": {}})
     t = climatology.tropopause_table(rows, lat_step=10, min_count=1, workers=1)
     assert t["n_profiles"] == 3 and sorted(seen) == ["atmPrf", "wetPf2", "wetPf2"]
+
+
+def test_diagnostic_map_counts_each_occultation_once(monkeypatch):
+    from cosmic2 import analysis
+    vals = {"wetPf2": 16.0, "atmPrf": 17.0}
+    monkeypatch.setattr(analysis, "diagnostics_row",
+                        lambda r: {"x": vals[r["product"]] if r["stamp"] != "s2" or r["product"] == "atmPrf" else None})
+    rows = [{"product": p, "stamp": s, "lat": 5.0, "lon": 10.0}
+            for s in ("s1", "s2") for p in ("atmPrf", "wetPf2")]
+    m = climatology.diagnostic_map(rows, "x", lat_step=10, lon_step=20, workers=1)
+    # s1 by its wetPf2 (16), s2 by its atmPrf (17), as wetPf2 has no value there
+    assert m["n"] == 2 and m["overall"]["mean"] == pytest.approx(16.5)
