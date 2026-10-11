@@ -147,3 +147,18 @@ def test_provenance_records_the_running_version(monkeypatch):
     assert prof.provenance[0].software_version == APP_VERSION
     assert pipeline.ProvenanceRecord.__dataclass_fields__["software_version"].default \
         is APP_VERSION
+
+
+def test_outliers_are_departures_from_the_profile_not_extreme_values():
+    # a clean exponential refractivity profile, sampled like atmPrf (20 m,
+    # 0.1 % noise), keeps its lower levels; only the spike goes
+    import numpy as np
+    from cosmic2 import pipeline
+    z = np.arange(0.0, 60.0, 0.02)
+    n = 300.0 * np.exp(-z / 7.0) * (1 + 1e-3 * np.random.default_rng(1).standard_normal(z.size))
+    n[200] *= 1.2
+    for method in ("mad", "iqr"):
+        p = pipeline.apply_pipeline(z, n, outlier_method=method, outlier_kwargs={"threshold": 5.0})
+        assert np.flatnonzero(np.isnan(p.v)).tolist() == [200], method
+    p = pipeline.apply_pipeline(z, n, outlier_method="sigma", outlier_kwargs={"threshold": 3.0})
+    assert np.flatnonzero(np.isnan(p.v)).tolist() == [200]

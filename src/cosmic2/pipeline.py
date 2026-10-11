@@ -30,41 +30,55 @@ class ProcessedProfile:
         if self.mask is None:
             self.mask = np.ones_like(self.v, dtype=bool)
 
+# Levels in the running median that outliers are measured from
+OUTLIER_WINDOW = 21
+
+
 def remove_outliers(profile: ProcessedProfile, method: str, threshold: float = 3.0, **kwargs) -> dict:
     """Configurable outlier removal.
     Methods: sigma, mad, iqr, percentile, none
+
+    Each level is tested against the ``OUTLIER_WINDOW - 1`` levels around it
+    (the logarithm when every value is positive, so relative): sigma against
+    their mean and standard deviation, mad against their median and median
+    absolute deviation (a Hampel filter), iqr against their quartiles;
+    percentile drops the extreme departures from that local median.  A
+    profile's values change with height by orders of magnitude: tested
+    against the whole profile, as before, a clean refractivity profile lost
+    its lowest 20 km to the MAD test and its lowest 2.5 km to the 3-sigma
+    test.
     """
     valid = profile.mask & np.isfinite(profile.v)
-    v_valid = profile.v[valid]
-    
+
     if valid.sum() < 3 or method == "none":
         return {"method": "none", "removed": 0, "percent": 0.0}
-
+    x = profile.v[valid]
+    if (x > 0).all():
+        x = np.log(x)
+    # Point-reflected at both ends so a steady trend carries on there
+    h = min(OUTLIER_WINDOW // 2, x.size - 1)
+    padded = np.concatenate([2 * x[0] - x[h:0:-1], x, 2 * x[-1] - x[-2:-h - 2:-1]])
+    # each level's neighbours, the level itself left out so it cannot mask itself
+    nb = np.delete(np.lib.stride_tricks.sliding_window_view(padded, 2 * h + 1), h, axis=1)
+    bad = np.zeros(x.size, dtype=bool)
     outlier_mask = np.zeros_like(profile.v, dtype=bool)
 
     if method == "sigma":
-        mean = np.mean(v_valid)
-        std = np.std(v_valid)
-        outlier_mask[valid] = np.abs(profile.v[valid] - mean) > threshold * std
+        bad = np.abs(x - nb.mean(axis=1)) > threshold * nb.std(axis=1)
     elif method == "mad":
-        median = np.median(v_valid)
-        mad = np.median(np.abs(v_valid - median))
-        if mad == 0:
-            mad = 1e-6
-        outlier_mask[valid] = np.abs(profile.v[valid] - median) > threshold * 1.4826 * mad
+        med = np.median(nb, axis=1)
+        mad = np.median(np.abs(nb - med[:, None]), axis=1)
+        bad = np.abs(x - med) > threshold * 1.4826 * mad
     elif method == "iqr":
-        q25, q75 = np.percentile(v_valid, [25, 75])
-        iqr = q75 - q25
-        lower = q25 - threshold * iqr
-        upper = q75 + threshold * iqr
-        outlier_mask[valid] = (profile.v[valid] < lower) | (profile.v[valid] > upper)
+        q25, q75 = np.percentile(nb, [25, 75], axis=1)
+        bad = (x < q25 - threshold * (q75 - q25)) | (x > q75 + threshold * (q75 - q25))
     elif method == "percentile":
-        lower_p = kwargs.get("lower", 5.0)
-        upper_p = kwargs.get("upper", 95.0)
-        low_val, high_val = np.percentile(v_valid, [lower_p, upper_p])
-        outlier_mask[valid] = (profile.v[valid] < low_val) | (profile.v[valid] > high_val)
+        dep = x - np.median(nb, axis=1)
+        low_val, high_val = np.percentile(dep, [kwargs.get("lower", 5.0), kwargs.get("upper", 95.0)])
+        bad = (dep < low_val) | (dep > high_val)
     else:
         raise ValueError(f"Unknown outlier method: {method}")
+    outlier_mask[valid] = bad
 
     removed_count = int(outlier_mask.sum())
     total_valid = int(valid.sum())
