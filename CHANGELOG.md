@@ -168,6 +168,7 @@
 
 ### Robustness and security
 
+- **A cut-off netCDF file is refused instead of read as zeros.** When scipy could not read a classic netCDF file, the reader fell back to netCDF4, which opens a truncated file and returns zeros for the missing records: a partly downloaded ivmL2m was indexed at 1970-01-01 00:00 UTC with local time 0 and 24902 zero densities. A classic netCDF file that scipy cannot read is now reported as unreadable (truncated?); netCDF-4 files still go to netCDF4.
 - Removed `exporters.export_bundle` (a ZIP of several exports), which no endpoint or page called; the README no longer lists a ZIP export.
 - Removed three functions nothing called: `analysis.anomaly_against`, `catalog.readable_products` and `plotting.check_layout` (its docstring named a test that no longer used it).
 - The local API accepts cross-origin requests only from loopback origins; previously any web page open in the browser could call it (including the delete endpoints).

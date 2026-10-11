@@ -147,7 +147,14 @@ def _open(path: str):
     # scipy cannot open.
     try:
         return _NC3(path, "r", mmap=False), "nc3"
-    except Exception:
+    except Exception as exc:
+        # A netCDF-3 file scipy cannot read is broken, typically cut off.
+        # netCDF4 would open it anyway and return zeros for the missing
+        # records (a truncated ivmL2m read as time 1970-01-01, local time 0).
+        with open(path, "rb") as fh:
+            if fh.read(4) in (b"CDF", b"CDF"):   # the formats scipy reads
+                raise ValueError(f"{os.path.basename(path)} cannot be read "
+                                 f"(truncated?): {exc}") from exc
         if _NC4 is None:
             raise
     return _NC4(path, "r"), "nc4"

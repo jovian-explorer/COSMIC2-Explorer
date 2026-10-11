@@ -327,3 +327,11 @@ def test_ionprf_hscale_is_kept_as_the_scale_height_at_orbit():
     assert "scale_height_km" not in ex
     # CDAAC fills hscale only when icalib = 0; this file has icalib = 1
     assert g.attrs["icalib"] == 1 and ex["scale_height_at_orbit_km"] is None
+
+
+def test_truncated_file_is_refused_not_read_as_zeros(tmp_path):
+    src = next(sampledata_dir().glob("ivmL2m_*"))
+    p = tmp_path / src.name
+    p.write_bytes(src.read_bytes()[: 10_000_000])
+    with pytest.raises(ValueError, match="truncated"):
+        readers.load(str(p))
