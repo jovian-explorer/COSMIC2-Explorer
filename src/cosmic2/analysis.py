@@ -618,7 +618,7 @@ def derived_fields(g: readers.Granule) -> dict[str, np.ndarray]:
         # Local solar time of every sample (the file carries only magnetic
         # local time, "mlt").
         n = min(d["uts"].size, d["lon"].size)
-        out["slt"] = solar_local_time(d["uts"][:n], d["lon"][:n])
+        out["slt"] = readers._local_time(d["lon"][:n], d["uts"][:n])
     return out
 
 
@@ -646,13 +646,6 @@ def moist_air_density(p_pa: np.ndarray, temp_k: np.ndarray,
             return p / (R_DRY * t)
         e = np.asarray(e_pa, dtype="float64")
         return (p - e) / (R_DRY * t) + e / (R_VAPOUR * t)
-
-
-def solar_local_time(epoch_s: np.ndarray, lon_deg: np.ndarray) -> np.ndarray:
-    """Mean local solar time in hours from UNIX time and east longitude."""
-    t = np.asarray(epoch_s, dtype="float64")
-    lon = np.asarray(lon_deg, dtype="float64")
-    return ((t % 86400.0) / 3600.0 + lon / 15.0) % 24.0
 
 
 def diagnostics(g: readers.Granule) -> dict:

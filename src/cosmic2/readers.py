@@ -259,7 +259,9 @@ def _iso(year, month, day, hour, minute, second) -> tuple[str | None, float | No
     return t.isoformat().replace("+00:00", "Z"), t.timestamp()
 
 
-def _local_time(lon: float | None, epoch: float | None) -> float | None:
+def _local_time(lon, epoch):
+    """Mean local solar time in hours from UNIX time and east longitude
+    (scalars or arrays); None when either is missing."""
     if lon is None or epoch is None:
         return None
     utc_h = (epoch % 86400.0) / 3600.0
@@ -637,7 +639,7 @@ def _read_scnlv2(path: str) -> Granule:
         lon = scrub(attrs.get("lon_s4max_L1"))
         # CDAAC's lct_s4max_L1 is not the local solar time there (15.38 h
         # at 164 E at 15:22 UTC, where it is 2.3 h), so it is computed
-        local_time = None if lon is None else _local_time(lon, epoch)
+        local_time = _local_time(lon, epoch)
     if lat is None or lon is None:
         # No S4 maximum (the attributes hold the -999 sentinel): place the
         # record at the start of the ray, with the local time of that point
