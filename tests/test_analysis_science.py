@@ -405,3 +405,13 @@ def test_composite_keeps_dry_and_moist_derived_fields_apart():
     one = analysis.composite(paths[1:], "theta", top_km=10.0, step_km=1.0, min_count=1, workers=1)
     assert list(one.groups) == ["all"]
     assert one.to_json()["field_label"] == "Potential temperature (from dry temperature) [K]"
+
+
+def test_composite_groups_keep_a_fixed_order(monkeypatch):
+    # latitude bands south to north whatever their sizes
+    cols = {f"p{i}": (lat, np.ones(3)) for i, lat in enumerate([50, 50, 50, -45, 0])}
+    monkeypatch.setattr(analysis, "_composite_column", lambda t: (
+        analysis.band_of(cols[t[0]][0]), cols[t[0]][1], "K", "Temp", "Temperature"))
+    comp = analysis.composite([(k, {"good": True}) for k in cols], "Temp",
+                              top_km=2.0, step_km=1.0, min_count=1, workers=1)
+    assert list(comp.groups) == ["S mid-latitude", "Equatorial", "N mid-latitude"]

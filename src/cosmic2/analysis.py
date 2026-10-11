@@ -966,7 +966,15 @@ def composite(granule_paths: Sequence[tuple[str, dict]], field: str,
     dropped = {n: g["n"] for n, g in groups.items()
                if not np.isfinite(g["mean"]).any()}
     groups = {n: g for n, g in groups.items() if n not in dropped}
-    ordered = dict(sorted(groups.items(), key=lambda kv: -kv[1]["n"]))
+    # A fixed order (latitude bands south to north, anything else by name),
+    # so a group keeps its colour and place in the key from one run to the
+    # next; ordering by size swapped them whenever the counts changed.
+    bands = [name for _, _, name in LAT_BANDS]
+
+    def place(name):
+        base = name.split(" - ")[0]
+        return (bands.index(base) if base in bands else len(bands), name)
+    ordered = dict(sorted(groups.items(), key=lambda kv: place(kv[0])))
     return Composite(field, vertical, grid, ordered, used, units,
                      min_count=min_count, dropped_groups=dropped,
                      screen_k=screen_k, screened_out=screened,
