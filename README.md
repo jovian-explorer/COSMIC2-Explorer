@@ -4,6 +4,22 @@ A desktop GUI and analysis environment for the FORMOSAT-7 / COSMIC-2 radio occul
 
 The retrievals themselves (bending angle, refractivity, temperature, humidity, electron density) are CDAAC's; the app reads those files and computes its diagnostics from them.
 
+### In plain words
+
+Six COSMIC-2 satellites watch GPS and other navigation signals bend as they pass through the air on their way to the satellite. How much a signal bends tells how dense the air is along its path, and from that comes a vertical profile of temperature, humidity and pressure up to about 40-60 km, and higher up of the free electrons of the ionosphere. Thousands of such profiles are measured every day between about 45 S and 45 N, and anyone can download them from UCAR. With this app you can:
+
+* see where and when they were measured, on a map;
+* plot temperature, humidity or electron density against height, one profile or hundreds;
+* find the tropopause, the top of the boundary layer, the ionosphere's peak and other features;
+* average profiles by latitude, season or time of day, and compare them with weather models, weather balloons and other satellites;
+* export the numbers (CSV, netCDF) and publication-ready figures.
+
+### Quick start
+
+1. Download the app for your computer from the [Releases page](https://github.com/jovian-explorer/COSMIC2-Explorer/releases), unzip it and double-click `COSMIC2-Explorer` (details under [Install](#install)). No Python, no account.
+2. The first time it opens it shows the example files that come with it (real profiles of 19 July 2026): on the **Explore** tab tick a few rows of the table, then open **Profiles** and press **Draw**.
+3. To look at another day, open **Get data**, pick a date, press **Show what is available** and fetch a product (`wetPf2` is the friendliest: temperature and humidity). Every tab has a short explanation of what it shows; **Help** explains the science.
+
 ---
 
 ## Author and Affiliation
@@ -85,7 +101,7 @@ python -m cosmic2                # same as cosmic2-explorer
 ```
 
 The app binds 127.0.0.1 on the first free port from 8765, so it runs alongside other local apps.
-On first launch with no data, press **"Load the bundled example profiles"** to index the 12 real granules (7 products) that ship with the app and explore every feature offline.
+On first launch the app loads the 12 real granules (7 products) that ship with it, so every feature can be tried offline; **"Load the bundled example profiles"** on the Get data tab loads them again.
 
 Your data (downloads, index, exports, settings, logs) lives in a per-user folder, never next to the app:
 
