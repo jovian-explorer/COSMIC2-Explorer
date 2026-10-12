@@ -782,9 +782,8 @@ async function boot() {
   updateProfileCounter(summary ? summary.n_granules : 0);
   if (summary && summary.n_granules) {
     await runSearch().catch(() => {});
-  } else if (firstStart()) {
+  } else if (firstStart() && await loadSamples().then(() => true, () => false)) {
     // Something real to look at straight away: the bundled example day
-    await loadSamples().catch(() => {});
     banner('Showing the example files that come with the app (real COSMIC-2 ' +
            'profiles of 19 July 2026). Pick a profile on the map or in the table, or ' +
            'download any other day on the "Get data" tab.');
