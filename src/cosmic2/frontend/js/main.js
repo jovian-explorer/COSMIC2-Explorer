@@ -669,7 +669,7 @@ function wireGuideTab() {
       await loadSamples(btn);
       showTab('explore');
     } catch (err) {
-      toast('Error loading sample granules: ' + err.message, 'bad');
+      toast('The example files could not be loaded: ' + err.message, 'bad');
     }
   };
 
@@ -743,7 +743,7 @@ function wireDragAndDrop() {
         }
       }
 
-      toast(`Successfully ingested and indexed ${indexedTotal} ${indexedTotal === 1 ? 'granule' : 'granules'}.`, 'good');
+      toast(`Added ${indexedTotal} ${indexedTotal === 1 ? 'file' : 'files'}.`, 'good');
       await refreshLocal();
       await refreshFacets();
       await runSearch();

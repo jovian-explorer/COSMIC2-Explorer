@@ -365,7 +365,7 @@ async function showDiagnostics(gid) {
     `\u00b7 ${m.setting || ''} occultation`));
   if (m.error_text) {
     body.append(el('p', {class: 'pill bad'},
-      `The archive marked this granule as failed: ${m.error_text}`));
+      `The archive marked this file as a failed retrieval: ${m.error_text}`));
   }
   const grid = el('div', {class: 'diag-grid'});
   let shown = 0;

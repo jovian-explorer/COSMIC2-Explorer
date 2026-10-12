@@ -157,7 +157,7 @@ async function startDownload(f, button) {
 export async function loadSamples(button) {
   const run = async () => {
     const res = await api.loadSamples();
-    toast(`Indexed ${res.indexed} bundled granules.`, 'good');
+    toast(`Loaded ${res.indexed} example files.`, 'good');
     await refreshLocal();
     // The Explore filters list the products and dates on this computer: on an
     // empty index they offered only wetPf2 until the app was reopened.
@@ -199,7 +199,7 @@ function jobCard(j) {
   const pill = {running: '', queued: '', completed: 'ok', failed: 'bad',
                 cancelled: 'warn'}[j.state] || '';
   const bits = [];
-  if (j.extracted) bits.push(`${j.extracted} granules kept`);
+  if (j.extracted) bits.push(`${j.extracted} files kept`);
   if (j.members_seen) bits.push(`${j.members_seen} scanned`);
   if (j.bytes_done) {
     bits.push(`${bytes(j.bytes_done)}` +
@@ -263,7 +263,7 @@ export async function refreshLocal() {
     for (const d of datasets) {
       const del = el('button', {class: 'ghost danger'}, 'Delete');
       del.addEventListener('click', async () => {
-        if (!confirm(`Delete ${d.n_granules} granules of ${d.product} ` +
+        if (!confirm(`Delete ${d.n_granules} files of ${d.product} ` +
                      `for ${d.date}? The files are removed from disk.`)) return;
         await withBusy(del, '...', async () => {
           const r = await api.deleteDataset(d.key);
