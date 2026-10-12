@@ -225,7 +225,7 @@ def test_comparison_csv_export(tmp_path):
                                                  "product": "wetPf2"}], basename="rs_test")
     text = open(out["path"], encoding="utf-8").read()
     assert "temp_K_mean_diff_K" in text and "0.1" in text and "wetPf2_x" in text
-    assert "IGRA" in text
+    assert "IGRA" in text and "geopotential_height_km," in text
     assert "ro_pbl_km,sonde_pbl_km" in text and ",1.25,1.1" in text
     os.remove(out["path"])
 

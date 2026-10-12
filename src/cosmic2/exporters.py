@@ -453,7 +453,7 @@ def export_radiosonde_csv(result: dict, granules: Sequence[dict],
                 f"differences are occultation minus sonde\n")
         w = csv.writer(f)
         stats = result.get("stats", {})
-        cols = ["bin_centre_km"]
+        cols = ["geopotential_height_km"]   # bin centres; the comparison is on geopotential height
         for q, st in stats.items():
             u = st["units"]
             cols += [f"{q}_mean_diff_{u}", f"{q}_std_{u}", f"{q}_median_diff_{u}", f"{q}_n"]
