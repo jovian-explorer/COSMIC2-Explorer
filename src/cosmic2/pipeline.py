@@ -245,7 +245,8 @@ def profile_series(task: tuple) -> dict:
     field, vertical = req["field"], req["vertical"]
     src = analysis.fields_with(g, field, vertical)
     if field not in src or vertical not in src:
-        return {"skip": f"no {field} on {vertical}"}
+        return {"skip": f"it has no {vocab.info(field, g.product)['label'].lower()} "
+                        f"({field}) against {vocab.info(vertical)['label'].lower()}"}
     y, x = src[vertical], src[field]
     if req["convert_kelvin"] and field in ("Temp", "temp_dry"):
         x = analysis.to_kelvin(x, g.units.get(field, "C"))

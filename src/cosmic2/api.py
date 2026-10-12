@@ -647,7 +647,8 @@ def plot_profiles(req: PlotRequest) -> dict:
     params = req.model_dump(exclude={"granule_ids"})
     for row, res in zip(rows, pmap(profile_series, [(r, params) for r in rows])):
         if "skip" in res:
-            skipped.append({"file": row["file_name"], "why": res["skip"]})
+            skipped.append({"file": row["file_name"], "product": row["product"],
+                            "why": res["skip"]})
             continue
         # Kelvin conversion labels every series "K"; otherwise the first
         # profile's units stand for the overlay.

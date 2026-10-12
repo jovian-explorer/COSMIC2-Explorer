@@ -234,3 +234,13 @@ def test_map_leaves_out_flagged_profiles_of_a_selection(monkeypatch):
                         lambda rows, *a, **k: seen.setdefault("rows", rows) and {"n": len(rows)})
     post("/api/climatology/map", {"granule_ids": ["a", "b"], "column": "x"})
     assert [r["id"] for r in seen["rows"]] == ["a"]
+
+
+def test_profile_overlay_says_which_products_it_left_out():
+    post("/api/local/load-samples", {})
+    ids = {r["product"]: r["id"] for r in post("/api/profiles/search", {"limit": 50})["granules"]}
+    res = post("/api/plot/profiles", {"granule_ids": [ids["wetPf2"], ids["ionPrf"]],
+                                      "field": "Temp", "vertical": "MSL_alt"})
+    assert len(res["series"]) == 1
+    (sk,) = res["skipped"]
+    assert sk["product"] == "ionPrf" and "has no temperature (Temp)" in sk["why"]

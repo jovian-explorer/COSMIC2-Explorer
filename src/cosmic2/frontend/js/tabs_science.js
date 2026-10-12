@@ -249,7 +249,12 @@ async function drawProfiles() {
   const parts = [`${res.series.length} profile(s).`];
   if (many) parts.push('Line colour runs from blue at the south to red at the north.');
   if (res.skipped.length) {
-    parts.push(`${res.skipped.length} skipped: ${res.skipped[0].why}.`);
+    // say which products were left out and why, so a mixed selection is clear
+    const by = {};
+    for (const k of res.skipped) (by[k.product] = by[k.product] || []).push(k.why);
+    parts.push(Object.entries(by).map(([p, whys]) =>
+      `${whys.length} ${p} profile${whys.length > 1 ? 's' : ''} not drawn (${whys[0]})`)
+      .join('; ') + '. Choose a quantity and height those products carry, or select one product.');
   }
   if (res.series[0] && res.series[0].x.length >= 900) {
     parts.push('Displayed at reduced vertical resolution; exports use every level.');
