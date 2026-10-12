@@ -110,7 +110,7 @@
 
 ### Interface
 
-- Hover values on profile, average and scatter plots show four significant digits instead of a fixed number of decimals, which printed small quantities as zero (N^2 of 2e-4 s^-2 read "0.000", electron densities lost nothing but a bending angle of 1e-5 rad read "0.000").
+- Hover values on profile, average and scatter plots show four significant digits instead of a fixed number of decimals, which printed small quantities as zero (N^2 of 2e-4 s^-2 and a bending angle of 1e-5 rad both read "0.000").
 - Messages speak of files rather than "granules" (the archive's word): "Loaded 12 example files", "Delete 120 files of wetPf2", "The archive marked this file as a failed retrieval". The Get data tab says which day the example files are, and its stream control carries the glossary tooltip.
 - The hover text of a profile plot gave the height in km whatever the vertical axis was; it now uses the axis's own unit (h for time, ° for latitude).
 - **Plain-language glossary.** One list of 29 terms the screens use without explaining them (product codes, stream, LST, PRN, QC, tropopause, refractivity, S4, TEC, 1D-Var, confidence interval and others) gives each a one-line explanation: as a tooltip on table headings (dotted underline) and on every product in the drop-downs, and as "Words used on the screens" at the top of Help. A test keeps every marked heading in the list.
