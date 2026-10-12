@@ -330,6 +330,11 @@ def summary() -> dict:
         "by_product": [dict(r) for r in per],
         "n_datasets": conn.execute("SELECT COUNT(*) FROM datasets").fetchone()[0],
         "cache_dir": str(CACHE_DIR),
+        # the files in the cache folder, by their indexed sizes: walking the
+        # folder took 0.2-0.9 s for a month of files on every refresh
+        "cache_bytes_indexed": conn.execute(
+            "SELECT COALESCE(SUM(size_bytes),0) FROM granules WHERE path LIKE ?",
+            (str(CACHE_DIR) + "%",)).fetchone()[0],
     }
 
 

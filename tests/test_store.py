@@ -111,3 +111,15 @@ def test_cache_bytes_counts_every_file_below_the_folder(tmp_path):
     (tmp_path / "a" / "b" / "y.nc").write_bytes(b"123456")
     assert store.cache_bytes(tmp_path) == 10
     assert store.cache_bytes(tmp_path / "missing") == 0
+
+
+def test_summary_counts_cache_bytes_from_the_index():
+    from cosmic2.config import CACHE_DIR
+    before = store.summary()["cache_bytes_indexed"]
+    store.upsert_granules([dict(path=str(CACHE_DIR / "t-sum" / "x_nc"), product="tsum",
+                                stream="t-sum", level="level2", size_bytes=1234, good=True)])
+    try:
+        assert store.summary()["cache_bytes_indexed"] - before == 1234
+    finally:
+        with store.connect() as conn:
+            conn.execute("DELETE FROM granules WHERE stream='t-sum'")

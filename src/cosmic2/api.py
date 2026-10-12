@@ -507,7 +507,7 @@ def load_samples() -> dict:
 @app.get("/api/local/summary")
 def local_summary() -> dict:
     s = store.summary()
-    s["cache_bytes_on_disk"] = store.cache_bytes()
+    s["cache_bytes_on_disk"] = s.pop("cache_bytes_indexed")
     s["cache_quota_bytes"] = int(SETTINGS.cache_quota_gb * 1024 ** 3)
     return _clean(s)
 
