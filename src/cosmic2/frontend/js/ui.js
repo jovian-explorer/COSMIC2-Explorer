@@ -433,6 +433,11 @@ const GLOSSARY = {
   'F2 peak': 'The height and density of the ionosphere\'s densest layer (hmF2, NmF2); foF2 is the highest radio frequency it reflects.',
   '1D-Var': 'A retrieval that blends the measurement with a weather model\'s first guess, weighting each by how much it is trusted (used for wetPf2).',
   'confidence interval': 'The range that would contain the true mean in 95 of 100 repeats; narrow means the mean is well determined.',
+  section: 'Averages of many profiles, latitude band by latitude band and height by height, drawn as a picture of the atmosphere from south to north.',
+  'zonal mean': 'The average around the whole Earth at each latitude (all longitudes together).',
+  'weather model': 'A computer forecast of the atmosphere (ECMWF in Europe, NCEP in the US); comparing with it shows where the measurement and the model disagree.',
+  'three-cornered hat': 'A way to estimate the error of each of three data sets measuring the same thing from how much each pair differs.',
+  duct: 'A thin layer, usually the top of a moist boundary layer, that traps radio waves; a radio occultation profile cannot see inside it.',
   radiosonde: 'A weather balloon carrying instruments, launched twice a day at hundreds of stations; the classic reference for upper-air temperature and humidity.',
 };
 
