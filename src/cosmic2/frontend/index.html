@@ -534,7 +534,7 @@
       <button class="ghost" id="btn-open-cache">Open data folder</button>
     </div>
     <table class="table" id="datasets-table">
-      <thead><tr><th>Product</th><th>Date</th><th>Stream</th><th>Profiles</th>
+      <thead><tr><th>Product</th><th>Date</th><th data-term="stream">Stream</th><th>Profiles</th>
         <th>Size</th><th>Coverage</th><th></th></tr></thead>
       <tbody></tbody>
     </table>
@@ -620,8 +620,8 @@
         <div class="scroll-x">
           <table class="table" id="results-table">
             <thead><tr>
-              <th></th><th>Time (UTC)</th><th>Lat</th><th>Lon</th><th>LST</th>
-              <th>Sat</th><th>PRN</th><th>Levels</th><th>Top (km)</th><th>QC</th>
+              <th></th><th>Time (UTC)</th><th>Lat</th><th>Lon</th><th data-term="LST">LST</th>
+              <th data-term="sat">Sat</th><th data-term="PRN">PRN</th><th data-term="levels">Levels</th><th>Top (km)</th><th data-term="QC">QC</th>
             </tr></thead>
             <tbody></tbody>
           </table>
@@ -769,9 +769,9 @@
     </div>
     <div class="scroll-x">
       <table class="table" id="st-table">
-        <thead><tr><th>Product</th><th>Profiles</th><th>Flagged bad</th>
+        <thead><tr><th>Product</th><th>Profiles</th><th data-term="flagged bad">Flagged bad</th>
           <th>Bad codes</th><th>Median levels</th><th>Latitudes</th>
-          <th>Median lowest level</th><th>Below 1 km (sea level)</th>
+          <th data-term="lowest level">Median lowest level</th><th>Below 1 km (sea level)</th>
           <th>Below 1 km (ground)</th></tr></thead>
         <tbody><tr><td colspan="9" class="hint">Press Compute.</td></tr></tbody>
       </table>
@@ -909,7 +909,7 @@
       <table class="table" id="tp-table">
         <thead>
           <tr><th rowspan="2">Latitude</th><th rowspan="2" class="num">Profiles</th>
-            <th colspan="2">WMO tropopause</th><th colspan="2">Cold point</th>
+            <th colspan="2" data-term="tropopause">WMO tropopause</th><th colspan="2" data-term="cold point">Cold point</th>
             <th colspan="2" class="tp-cdaac">CDAAC's WMO tropopause</th></tr>
           <tr><th class="num">Height (km)</th><th class="num">Temperature (K)</th>
             <th class="num">Height (km)</th><th class="num">Temperature (K)</th>
@@ -1020,7 +1020,7 @@
       <table class="table" id="rs-table">
         <thead><tr><th>Occultation (UTC)</th><th>Product</th><th>Lat</th><th>Lon</th>
           <th>Station</th><th>Launch (UTC)</th><th>Distance (km)</th><th>&Delta;t (h)</th>
-          <th>Sonde top (km)</th><th>Boundary-layer top, RO / sonde (km)</th></tr></thead>
+          <th>Sonde top (km)</th><th data-term="boundary layer">Boundary-layer top, RO / sonde (km)</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>

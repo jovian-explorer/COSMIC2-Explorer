@@ -288,3 +288,14 @@ def test_get_tab_fetches_a_range_of_days():
     js = _read(FRONTEND / "js" / "tabs_data.js")
     assert "if (days > 1) req.date_end = end;" in js
     assert 'id="get-date-end"' in _read(FRONTEND / "index.html")
+
+
+def test_every_data_term_on_the_page_is_in_the_glossary():
+    import re
+    from pathlib import Path
+    fe = Path(__file__).resolve().parents[1] / "src" / "cosmic2" / "frontend"
+    ui = (fe / "js" / "ui.js").read_text(encoding="utf-8")
+    block = ui[ui.index("const GLOSSARY = {"):ui.index("};", ui.index("const GLOSSARY = {"))]
+    keys = set(re.findall(r"^\s*'?([\w\- ]+?)'?\s*:", block, re.M))
+    used = set(re.findall(r'data-term="([^"]+)"', (fe / "index.html").read_text(encoding="utf-8")))
+    assert used and not used - keys, used - keys

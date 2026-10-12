@@ -812,3 +812,8 @@ body.no-curious [data-curious] { display: none; }
 .whats-new { border-left: 3px solid var(--line, #94a3b8); padding-left: 10px; }
 .whats-new h4 { margin: 8px 0 2px; }
 .whats-new ul { margin: 2px 0 6px 18px; padding: 0; }
+
+/* terms explained by a tooltip (ui.js GLOSSARY) */
+.term { text-decoration: underline dotted; text-underline-offset: 3px; cursor: help; }
+.glossary dt { font-weight: 600; margin-top: 6px; }
+.glossary dd { margin: 0 0 4px 0; }

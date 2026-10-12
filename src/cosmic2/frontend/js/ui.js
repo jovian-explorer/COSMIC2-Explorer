@@ -307,7 +307,7 @@ export function fillSelect(select, options, value) {
   clear(select);
   for (const o of options) {
     const opt = typeof o === 'string' ? {value: o, label: o} : o;
-    select.append(el('option', {value: opt.value, title: opt.title || null},
+    select.append(el('option', {value: opt.value, title: opt.title || GLOSSARY[opt.value] || null},
                      opt.label));
   }
   if (value !== undefined && value !== null) select.value = value;
@@ -397,4 +397,56 @@ export function emptyPlot(nodeId, message) {
   clear(node);
   node.append(el('p', {class: 'hint', style: 'padding:34px 6px;text-align:center'},
                  message));
+}
+
+// ------------------------------------------------------------- glossary
+// One plain-language line per term the screens use without explaining it.
+// Elements marked data-term="key" get the line as a tooltip (dotted
+// underline), product codes in drop-downs get it too, and the Help drawer
+// lists them all.
+const GLOSSARY = {
+  'radio occultation': 'A satellite watches a navigation (GPS) signal bend as it passes through the air at the horizon; the bending gives the air\'s density, hence temperature and humidity, at each height.',
+  occultation: 'One set of measurements as a GPS satellite sets or rises behind the Earth seen from COSMIC-2: one vertical profile.',
+  atmPrf: 'Atmospheric profile: bending angle, refractivity and the "dry" temperature and pressure (computed as if the air held no water vapour), up to 80 km.',
+  wetPf2: 'Moist profile: temperature, pressure and humidity from CDAAC\'s retrieval that also uses a weather model; the friendliest product to start with.',
+  ionPrf: 'Ionospheric profile: the density of free electrons from about 100 km up to the satellite (about 575 km).',
+  scnLv2: 'Scintillation: how much the signal flickered (S4) as it crossed irregular patches of the ionosphere; files exist only for flickering signals.',
+  ivmL2m: 'In-situ measurements at the satellite itself (about 575 km): ion density, temperature and composition, one day per file.',
+  echPrf: 'The European weather model (ECMWF) profile at the same place and time as an occultation, for comparison.',
+  avnPrf: 'The US weather model (NCEP) profile at the same place and time as an occultation, for comparison.',
+  stream: 'How the archive produced the files: nrt within hours (most days), rapid within days, provisional for the space-weather products.',
+  LST: 'Local solar time: the clock time set by the Sun at the profile\'s longitude (noon when the Sun is highest).',
+  sat: 'Which of the six COSMIC-2 satellites (C2E1 to C2E6), or another mission such as PAZ.',
+  PRN: 'The navigation satellite whose signal was measured: G for GPS, R for GLONASS, E for Galileo, and its number.',
+  levels: 'How many heights the profile holds.',
+  QC: 'Quality control: whether the archive (CDAAC) marked the retrieval as good or failed.',
+  'flagged bad': 'Profiles the archive marked as failed retrievals; the statistics leave them out.',
+  'lowest level': 'How far down the profile reaches: low means the signal was tracked close to the ground.',
+  tropopause: 'The boundary between the weather layer (troposphere) and the stratosphere above, where temperature stops falling with height: about 16-17 km in the tropics, 8-12 km at higher latitudes.',
+  'cold point': 'The coldest level between 10 and 30 km; in the tropics it marks the tropopause.',
+  refractivity: 'How much the air slows (and so bends) radio waves, in N-units; it grows with pressure and humidity and falls with temperature.',
+  'bending angle': 'How much the atmosphere bent the radio ray; the basic measurement from which everything else is derived.',
+  'impact height': 'The height at which a straight ray would have passed: the natural height scale for bending angles.',
+  'boundary layer': 'The lowest kilometre or two of the air, stirred by the ground; its top is often marked by a sharp drop in humidity.',
+  S4: 'Amplitude scintillation index: how much the signal strength flickered (0 steady, above about 0.4 strong).',
+  TEC: 'Total electron content: the number of free electrons in a column of the ionosphere, in TEC units (10^16 per square metre).',
+  'F2 peak': 'The height and density of the ionosphere\'s densest layer (hmF2, NmF2); foF2 is the highest radio frequency it reflects.',
+  '1D-Var': 'A retrieval that blends the measurement with a weather model\'s first guess, weighting each by how much it is trusted (used for wetPf2).',
+  'confidence interval': 'The range that would contain the true mean in 95 of 100 repeats; narrow means the mean is well determined.',
+  radiosonde: 'A weather balloon carrying instruments, launched twice a day at hundreds of stations; the classic reference for upper-air temperature and humidity.',
+};
+
+/** Tooltips from GLOSSARY on [data-term] elements (fillSelect gives them to
+ *  product codes in drop-downs); also fills #glossary (Help) when present. */
+export function explainTerms(root = document) {
+  root.querySelectorAll('[data-term]').forEach((n) => {
+    const text = GLOSSARY[n.dataset.term];
+    if (text) { n.title = text; n.classList.add('term'); }
+  });
+  const list = root.querySelector('#glossary');
+  if (list && !list.childElementCount) {
+    for (const [term, text] of Object.entries(GLOSSARY)) {
+      list.append(el('dt', {}, term), el('dd', {}, text));
+    }
+  }
 }

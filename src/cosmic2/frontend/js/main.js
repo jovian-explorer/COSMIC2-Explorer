@@ -1,7 +1,8 @@
 // Bootstrap: load metadata, wire tabs, install the help drawer.
 
 import {api, state} from './api.js';
-import {$, $$, el, banner, toast, drawer, closeDrawer, renderMath, updatePlotlyFonts} from './ui.js';
+import {$, $$, el, banner, toast, drawer, closeDrawer, renderMath, updatePlotlyFonts,
+        explainTerms} from './ui.js';
 import {initGetTab, initExploreTab, refreshLocal, refreshFacets,
         runSearch, loadSamples, updateProfileCounter} from './tabs_data.js';
 import {initProfileTab, initCompositeTab, initExportTab} from './tabs_science.js';
@@ -470,6 +471,7 @@ function helpBody() {
     .then(html => {
       container.innerHTML = html;
       renderMath(container);
+      explainTerms(container);
     })
     .catch(err => {
       container.innerHTML = `<p class="error">Failed to load help: ${err}</p>`;
@@ -775,6 +777,7 @@ async function boot() {
   showSettingsChanges();
 
   await refreshFacets();
+  explainTerms();
   const summary = await api.localSummary().catch(() => null);
   updateProfileCounter(summary ? summary.n_granules : 0);
   if (summary && summary.n_granules) {
