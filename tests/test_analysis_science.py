@@ -437,3 +437,16 @@ def test_ivm_day_can_be_drawn_against_time_along_the_orbit():
                                     "uncert_kwargs": {}, "max_points": 500}))
     assert "series" in res and len(res["series"]["y"]) == 500
     assert len(res["series"]["colour_lat"]) == 500      # points coloured by latitude
+
+
+def test_per_profile_diagnostics_are_computed_once_per_file(monkeypatch):
+    m = readers.quick_meta(str(next(sampledata_dir().glob("atmPrf_*E23*"))))
+    m["id"] = "x"
+    analysis._DIAG_CACHE.clear()
+    calls = []
+    real = analysis.diagnostic_columns
+    monkeypatch.setattr(analysis, "diagnostic_columns", lambda t: calls.append(t) or real(t))
+    a = analysis.diagnostics_rows([m], workers=1)
+    b = analysis.diagnostics_rows([m, m], workers=1)
+    assert len(calls) == 1 and a[0] == b[0] == b[1]
+    assert a[0]["tropopause.height_km"] == pytest.approx(12.1, abs=0.2)

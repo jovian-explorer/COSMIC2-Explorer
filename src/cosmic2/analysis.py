@@ -8,6 +8,7 @@ the application as science products.
 from __future__ import annotations
 
 import math
+import os
 import warnings
 from dataclasses import dataclass, field
 from typing import Sequence
@@ -732,19 +733,26 @@ def diagnostics(g: readers.Granule) -> dict:
     return res
 
 
-def diagnostics_row(r: dict) -> dict | None:
-    """Flat ``{column: scalar}`` diagnostics for one index row (``None`` if
-    the granule cannot be read).  Module-level so it can run in a worker
-    process."""
-    try:
-        g = readers.load(r["path"], r["product"])
-        d = diagnostics(g)
-    except Exception:
+def _flat_row(r: dict, cols: dict | None) -> dict | None:
+    if cols is None:
         return None
     flat = {"granule_id": r["id"], "file_name": r["file_name"],
             "product": r["product"], "stamp": r.get("stamp"), "time_utc": r["time_utc"],
             "lat": r["lat"], "lon": r["lon"], "local_time": r["local_time"],
             "sat": r["sat"], "good": r["good"]}
+    flat.update(cols)
+    return flat
+
+
+def diagnostic_columns(task: tuple) -> dict | None:
+    """``{column: scalar}`` diagnostics of the file ``(path, product)``, or
+    ``None`` if it cannot be read.  Module-level so it runs on the workers."""
+    path, product = task[:2]
+    try:
+        d = diagnostics(readers.load(path, product))
+    except Exception:
+        return None
+    flat = {}
     for key, val in d.items():
         if key in ("product", "archive_values"):
             continue
@@ -755,6 +763,40 @@ def diagnostics_row(r: dict) -> dict | None:
         else:
             flat[key] = val
     return flat
+
+
+# Diagnostics already computed in this process, by (path, product, file time,
+# size): the map, the tropopause table and the scatter all need them, and
+# reading the files is most of the cost (24 s serially, 6 s on the workers,
+# for a month of atmPrf; 0.1 s from here).
+_DIAG_CACHE: dict[tuple, dict] = {}
+_DIAG_CACHE_MAX = 50000
+
+
+def diagnostics_rows(rows: Sequence[dict], workers: int | None = None) -> list[dict | None]:
+    """``diagnostics_row`` of every row, computing only the files not yet
+    done (on the worker processes)."""
+    from .parallel import pmap
+    keys = []
+    for r in rows:
+        try:
+            st = os.stat(r["path"])
+            keys.append((r["path"], r["product"], st.st_mtime_ns, st.st_size))
+        except OSError:
+            keys.append(None)
+    todo = list({k for k in keys if k is not None and k not in _DIAG_CACHE})
+    for k, cols in zip(todo, pmap(diagnostic_columns, todo, workers=workers)):
+        if cols is not None:
+            if len(_DIAG_CACHE) >= _DIAG_CACHE_MAX:
+                _DIAG_CACHE.clear()
+            _DIAG_CACHE[k] = cols
+    return [_flat_row(r, _DIAG_CACHE.get(k) if k else None) for r, k in zip(rows, keys)]
+
+
+def diagnostics_row(r: dict) -> dict | None:
+    """Flat ``{column: scalar}`` diagnostics for one index row (``None`` if
+    the granule cannot be read)."""
+    return diagnostics_rows([r], workers=1)[0]
 
 
 def _iwv_mm(z_km: np.ndarray, q_g_kg: np.ndarray,

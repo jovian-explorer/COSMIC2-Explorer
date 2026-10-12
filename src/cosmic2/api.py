@@ -741,8 +741,7 @@ def diagnostics_table(req: DiagnosticsTableRequest) -> dict:
     peak electron density against local time, across a whole day.
     """
     rows = _resolve_selection(req.granule_ids, req.search, req.max_profiles)
-    from .parallel import pmap
-    results = pmap(analysis.diagnostics_row, rows)
+    results = analysis.diagnostics_rows(rows)
     table = [r for r in results if r is not None]
     failed = len(results) - len(table)
     columns = sorted({k for row in table for k in row})

@@ -122,9 +122,9 @@ def test_section_endpoint_on_bundled_samples():
 
 def test_diagnostic_map_cells_and_zonal_mean_by_hand(monkeypatch):
     pts = [(5, 10, 2.0), (6, 12, 4.0), (5, 100, 9.0), (-25, -170, 1.0), (None, 0, 5.0)]
-    monkeypatch.setattr(climatology, "_map_value",
-                        lambda t: None if t[0]["lat"] is None else
-                        (t[0]["lat"], t[0]["lon"], t[0]["v"]))
+    from cosmic2 import analysis
+    monkeypatch.setattr(analysis, "diagnostics_rows",
+                        lambda rows, workers=None: [{"x": r["v"]} for r in rows])
     rows = [{"lat": a, "lon": b, "v": v} for a, b, v in pts]
     m = climatology.diagnostic_map(rows, "x", lat_step=10, lon_step=20, workers=1)
     assert m["n"] == 4
@@ -199,10 +199,10 @@ def test_tropopause_table_by_hand(monkeypatch):
     from cosmic2 import analysis
     diag = {"a": (5.0, 16.0, 190.0), "b": (6.0, 17.0, 192.0), "c": (7.0, 16.5, 191.0),
             "d": (45.0, 11.0, 215.0)}
-    monkeypatch.setattr(analysis, "diagnostics_row", lambda r: {
+    monkeypatch.setattr(analysis, "diagnostics_rows", lambda rows, workers=None: [{
         "lat": diag[r["file_name"]][0], "tropopause.height_km": diag[r["file_name"]][1],
         "tropopause.temp_K": diag[r["file_name"]][2], "cold_point.height_km": None,
-        "cold_point.temp_K": None})
+        "cold_point.temp_K": None} for r in rows])
     rows = [{"file_name": k, "product": "atmPrf", "good": True, "lat": v[0],
              "extras": {"tropopause_height_wmo_km": v[1] - 0.1, "tropopause_temp_wmo_C": v[2] - 273.15}}
             for k, v in diag.items()]
@@ -223,9 +223,10 @@ def test_tropopause_table_by_hand(monkeypatch):
 def test_tropopause_table_counts_each_occultation_once(monkeypatch):
     from cosmic2 import analysis
     seen = []
-    monkeypatch.setattr(analysis, "diagnostics_row", lambda r: seen.append(r["product"]) or {
-        "lat": 5.0, "tropopause.height_km": 16.0, "tropopause.temp_K": 190.0,
-        "cold_point.height_km": None, "cold_point.temp_K": None})
+    monkeypatch.setattr(analysis, "diagnostics_rows", lambda rows, workers=None: [
+        seen.append(r["product"]) or {
+            "lat": 5.0, "tropopause.height_km": 16.0, "tropopause.temp_K": 190.0,
+            "cold_point.height_km": None, "cold_point.temp_K": None} for r in rows])
     rows = [{"file_name": f"{p}_{s}", "product": p, "stamp": s, "good": True, "lat": 5.0,
              "extras": {}} for s in ("s1", "s2") for p in ("atmPrf", "wetPf2")]
     rows.append({"file_name": "atmPrf_s3", "product": "atmPrf", "stamp": "s3", "good": True,
@@ -237,8 +238,9 @@ def test_tropopause_table_counts_each_occultation_once(monkeypatch):
 def test_diagnostic_map_counts_each_occultation_once(monkeypatch):
     from cosmic2 import analysis
     vals = {"wetPf2": 16.0, "atmPrf": 17.0}
-    monkeypatch.setattr(analysis, "diagnostics_row",
-                        lambda r: {"x": vals[r["product"]] if r["stamp"] != "s2" or r["product"] == "atmPrf" else None})
+    monkeypatch.setattr(analysis, "diagnostics_rows", lambda rows, workers=None: [
+        {"x": vals[r["product"]] if r["stamp"] != "s2" or r["product"] == "atmPrf" else None}
+        for r in rows])
     rows = [{"product": p, "stamp": s, "lat": 5.0, "lon": 10.0}
             for s in ("s1", "s2") for p in ("atmPrf", "wetPf2")]
     m = climatology.diagnostic_map(rows, "x", lat_step=10, lon_step=20, workers=1)

@@ -349,6 +349,12 @@ def _map_value(task: tuple):
     else:
         flat = analysis.diagnostics_row(row)
         v = None if flat is None else flat.get(column)
+    return _map_point(row, v)
+
+
+def _map_point(row: dict, v) -> tuple | None:
+    if row.get("lat") is None or row.get("lon") is None:
+        return None
     if not isinstance(v, (int, float)) or isinstance(v, bool) or not np.isfinite(v):
         return None
     return float(row["lat"]), float(row["lon"]), float(v)
@@ -373,9 +379,14 @@ def diagnostic_map(rows: Sequence[dict], column: str = EP_COLUMN,
         raise ValueError("lat_step and lon_step must be > 0")
     if gw and gw.get("method", "polynomial") not in ("polynomial", "highpass"):
         raise ValueError("method must be polynomial or highpass")
-    tasks = [(r, column, gw or None) for r in rows]
-    vals = np.array(once_per_occultation(rows, pmap(_map_value, tasks, workers=workers)),
-                    float).reshape(-1, 3)
+    if column == EP_COLUMN and gw:
+        found = pmap(_map_value, [(r, column, gw) for r in rows], workers=workers)
+    else:
+        # the per-profile diagnostics, computed once per file and kept
+        from .analysis import diagnostics_rows
+        found = [_map_point(r, f and f.get(column))
+                 for r, f in zip(rows, diagnostics_rows(rows, workers=workers))]
+    vals = np.array(once_per_occultation(rows, found), float).reshape(-1, 3)
     lat_edges = np.arange(-90.0, 90.0 + lat_step / 2, lat_step)
     lon_edges = np.arange(-180.0, 180.0 + lon_step / 2, lon_step)
     nlat, nlon = lat_edges.size - 1, lon_edges.size - 1
@@ -558,14 +569,13 @@ def tropopause_table(rows: Sequence[dict], lat_step: float = 10.0, min_count: in
     good neutral profiles in ``rows``; for atmPrf, CDAAC's own values from the
     same files beside them.  The cold point is the coldest level between 10
     and 30 km, which is a tropopause in the tropics only."""
-    from .analysis import diagnostics_row
-    from .parallel import pmap
+    from .analysis import diagnostics_rows
     if not lat_step > 0:
         raise ValueError("lat_step must be > 0")
     good = [r for r in rows if r.get("product") in ("atmPrf", "wetPf2") and r.get("good", True)
             and r.get("lat") is not None]
     # CDAAC's columns still come from every atmPrf file
-    diag = once_per_occultation(good, pmap(diagnostics_row, good, workers=workers))
+    diag = once_per_occultation(good, diagnostics_rows(good, workers=workers))
     edges = np.arange(-90.0, 90.0 + lat_step / 2, lat_step)
     bands = []
     for lo, hi in zip(edges[:-1], edges[1:]):
