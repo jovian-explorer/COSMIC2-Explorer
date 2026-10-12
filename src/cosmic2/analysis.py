@@ -619,6 +619,8 @@ def derived_fields(g: readers.Granule) -> dict[str, np.ndarray]:
         # local time, "mlt").
         n = min(d["uts"].size, d["lon"].size)
         out["slt"] = readers._local_time(d["lon"][:n], d["uts"][:n])
+        # time along the orbit, for a time series of the day's samples
+        out["elapsed_h"] = (d["uts"] - np.nanmin(d["uts"])) / 3600.0
     return out
 
 

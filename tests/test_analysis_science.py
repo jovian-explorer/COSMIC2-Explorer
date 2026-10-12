@@ -422,3 +422,17 @@ def test_diagnostics_row_carries_the_occultation_stamp():
     m = readers.quick_meta(str(next(sampledata_dir().glob("atmPrf_*E23*"))))
     m["id"] = "x"
     assert analysis.diagnostics_row(m)["stamp"] == "C2E1.2026.200.00.00.E23"
+
+
+def test_ivm_day_can_be_drawn_against_time_along_the_orbit():
+    g = readers.load(str(next(sampledata_dir().glob("ivmL2m_*"))))
+    t = analysis.derived_fields(g)["elapsed_h"]
+    assert np.nanmin(t) == 0.0 and 23.0 < np.nanmax(t) < 24.1
+    from cosmic2 import pipeline
+    res = pipeline.profile_series(({"path": str(g.path), "product": "ivmL2m", "id": "x"},
+                                   {"field": "frac_dens_o", "vertical": "elapsed_h",
+                                    "convert_kelvin": False, "outlier_method": "none",
+                                    "outlier_kwargs": {}, "smooth_method": "none",
+                                    "smooth_kwargs": {}, "uncert_method": "none",
+                                    "uncert_kwargs": {}, "max_points": 500}))
+    assert "series" in res and len(res["series"]["y"]) == 500

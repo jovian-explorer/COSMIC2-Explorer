@@ -350,6 +350,24 @@ VAR_INFO: dict[str, dict] = {
         doi="10.1007/s11214-016-0275-y", archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/",
         data_level="Level 2 Coordinate", algorithm="Magnetic local time derived from IGRF / Apex magnetic coordinates."
     ),
+    "elapsed_h": dict(
+        label="Time since the first sample", units="h",
+        plain="Hours along the orbit since the file's first sample (its time_utc), for a time series of an in-situ day.", role=COORD,
+        formula=r"(t - t_0) / 3600", reference="", doi="", archive_url="",
+        data_level="Derived Coordinate", algorithm="From the file's UTC sample times (uts) (computed by this application)."
+    ),
+    "frac_dens_o": dict(
+        label="O+ fraction", units="-",
+        plain="Share of the ions that are atomic oxygen (the file's long_name: O+ fractional ion composition).", role=FIELD,
+        formula="", reference="", doi="", archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/",
+        data_level="Level 2 (In-Situ IVM)", algorithm="As given in the ivmL2m file."
+    ),
+    "frac_dens_h": dict(
+        label="H+ fraction", units="-",
+        plain="Share of the ions that are hydrogen (the file's long_name: H+ fractional ion composition).", role=FIELD,
+        formula="", reference="", doi="", archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level2/",
+        data_level="Level 2 (In-Situ IVM)", algorithm="As given in the ivmL2m file."
+    ),
     "slt": dict(
         label="Local solar time", units="h",
         plain="Clock time set by the Sun's position at the sample's longitude.", role=COORD,

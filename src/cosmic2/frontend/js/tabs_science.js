@@ -15,10 +15,12 @@ let diagCache = null;     // diagnostics table for the scatter panel
 export const FIELD_CHOICES = [
   'Temp', 'temp_dry', 'Pres', 'sph', 'rh', 'Vp', 'ref', 'Ref', 'Bend_ang',
   'ELEC_dens', 'TEC_cal', 's4_L1', 'sigma_phi_L1', 'ion_dens', 'ion_temp',
-  'iv_zon', 'iv_mer', 'theta', 'dtheta_dz', 'lapse_rate', 'dNdz', 'buoyancy_freq_sq',
+  'frac_dens_o', 'frac_dens_h', 'iv_zon', 'iv_mer', 'theta', 'dtheta_dz', 'lapse_rate', 'dNdz', 'buoyancy_freq_sq',
   'buoyancy_period', 'speed_of_sound', 'density', 'scale_height',
 ];
 export const VERTICAL_CHOICES = ['MSL_alt', 'gph', 'Impact_height', 'occheight', 'alt'];
+// The Profiles tab can also draw an in-situ day (ivmL2m) against time or position
+const PROFILE_VERTICALS = [...VERTICAL_CHOICES, 'elapsed_h', 'slt', 'lat', 'mlat'];
 
 // What each product can draw ([quantities], [heights]); the first of each is
 // the default when a selection of that product cannot show the current pick.
@@ -31,7 +33,8 @@ export const PRODUCT_AXES = {
            ['MSL_alt', 'gph']],
   ionPrf: [['ELEC_dens', 'TEC_cal'], ['MSL_alt']],
   scnLv2: [['s4_L1', 'sigma_phi_L1'], ['occheight']],
-  ivmL2m: [['ion_dens', 'ion_temp', 'iv_zon', 'iv_mer'], ['alt']],
+  ivmL2m: [['ion_dens', 'ion_temp', 'frac_dens_o', 'frac_dens_h', 'iv_zon', 'iv_mer'],
+           ['elapsed_h', 'alt', 'slt', 'lat', 'mlat']],
   echPrf: [['Ref', 'Temp', 'Pres', 'Vp', 'Bend_ang'], ['MSL_alt']],
   avnPrf: [['Ref', 'Temp', 'Pres', 'Vp'], ['MSL_alt']],
 };
@@ -56,7 +59,10 @@ function fitPair(product, fieldSel, verticalSel) {
     if (fieldSel === '#p-field') $('#p-logx').checked = false;
   }
   if (verticalSel && !verticals.includes($(verticalSel).value)) {
-    $(verticalSel).value = verticals[0];
+    // the first of the product's heights this control offers
+    const offered = [...$(verticalSel).options].map((o) => o.value);
+    const v = verticals.find((x) => offered.includes(x));
+    if (v) $(verticalSel).value = v;
   }
 }
 
@@ -85,7 +91,7 @@ function fitAxesToSearch() {
 function exportVertical() {
   const products = (state.lastSearch && state.lastSearch.products) || [];
   const axes = products.length === 1 && PRODUCT_AXES[products[0]];
-  return axes ? axes[1][0] : 'MSL_alt';
+  return (axes && axes[1].find((v) => VERTICAL_CHOICES.includes(v))) || 'MSL_alt';
 }
 
 export function labelled(names) {
@@ -95,7 +101,7 @@ export function labelled(names) {
 
 export function initProfileTab() {
   fillSelect($('#p-field'), labelled(FIELD_CHOICES), 'Temp');
-  fillSelect($('#p-vertical'), labelled(VERTICAL_CHOICES), 'MSL_alt');
+  fillSelect($('#p-vertical'), labelled(PROFILE_VERTICALS), 'MSL_alt');
   $('#btn-plot').addEventListener('click', (e) =>
       withBusy(e.target, 'Drawing...', drawProfiles));
   $('#btn-view-thermo').addEventListener('click', () => quickView('thermo'));
