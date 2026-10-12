@@ -18,7 +18,7 @@ Six COSMIC-2 satellites watch GPS and other navigation signals bend as they pass
 
 1. Download the app for your computer from the [Releases page](https://github.com/jovian-explorer/COSMIC2-Explorer/releases), unzip it and double-click `COSMIC2-Explorer` (details under [Install](#install)). No Python, no account.
 2. The first time it opens it shows the example files that come with it (real profiles of 19 July 2026): on the **Explore** tab tick a few rows of the table, then open **Profiles** and press **Draw**.
-3. To look at another day, open **Get data**, pick a date, press **Show what is available** and fetch a product (`wetPf2` is the friendliest: temperature and humidity). Every tab has a short explanation of what it shows; **Help** explains the science.
+3. To look at another day, open **Get data**, pick a date, press **Show what is available** and fetch a product (`wetPf2` is the friendliest: temperature and humidity). Every tab has a short explanation of what it shows, a word with a dotted underline explains itself when you point at it, and **Help** starts with a list of the words the screens use before it explains the science.
 
 ---
 
