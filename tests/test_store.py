@@ -103,3 +103,11 @@ def test_index_from_older_readers_is_reread_once(tmp_path, monkeypatch):
     finally:
         with conn:
             conn.execute("DELETE FROM granules WHERE stream='t-ver'")
+
+
+def test_cache_bytes_counts_every_file_below_the_folder(tmp_path):
+    (tmp_path / "a" / "b").mkdir(parents=True)
+    (tmp_path / "x.nc").write_bytes(b"1234")
+    (tmp_path / "a" / "b" / "y.nc").write_bytes(b"123456")
+    assert store.cache_bytes(tmp_path) == 10
+    assert store.cache_bytes(tmp_path / "missing") == 0

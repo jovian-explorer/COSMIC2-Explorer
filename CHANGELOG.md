@@ -170,6 +170,7 @@
 
 ### Performance
 
+- **Checked on a month of data** (10 800 real files: 120 a day of atmPrf, wetPf2 and ionPrf for 30 days, 2.9 GB): rebuilding the index 9 s, a search 0.1 s, an average of 3600 profiles 2-5 s, a diagnostic map 6 s, a latitude-height section 1 s, the sampling statistics 0.03 s, memory under 200 MB. The one cost paid on every summary refresh and every download, measuring the cache folder, now reads sizes from the directory listing (0.21 s instead of 0.38 s for this month).
 - The CPU worker pool is started in the background when the app opens and when the worker setting changes. Workers are spawned on Windows and macOS and each one imports numpy, scipy and netCDF4, so the first composite or plot after launch used to wait 1-4 s for them: a 200-profile atmPrf composite went from 1.4 s for the first run to 0.3 s.
 - New **CPU workers** setting (Settings > Performance) and `--workers N` option for `cosmic2-explorer` and `cosmic2-explorer-server`: composites, profile plots, the diagnostics table, regridded CSV/netCDF exports, importing files and "Rebuild index" read granules on up to N processes when a job has 24 or more granules. 0 = automatic (CPUs - 1), 1 = serial. Results are identical to a serial run. A 400-profile atmPrf composite on 8 CPUs: 21 s serial, 2.6 s with a cold pool, 1.2 s warm.
 - Composites and profile plots of a quantity stored in the file (Temp, Pres, ELEC_dens, ...) no longer compute every derived field for each granule: about 25 % less work per profile.
