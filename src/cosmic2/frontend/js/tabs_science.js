@@ -202,11 +202,16 @@ async function drawProfiles() {
       x: s.x, y: s.y,
       name: s.label + (isProcessed && !many ? ' (processed)' : ''),
       showlegend: !many,
-      hovertemplate: `${s.label}<br>%{x:.3f} \u00b7 %{y:.2f} km<extra></extra>`,
+      hovertemplate: `${s.label}<br>%{x:.3f} \u00b7 %{y:.2f} ${vocabInfo(req.vertical).units}<extra></extra>`,
       line: {width: many ? 1.2 : 2.2,
              color: many ? colourByLat(s.lat) : PALETTE[i % PALETTE.length]},
       opacity: many ? 0.78 : 1,
     };
+    if (s.colour_lat) {        // an in-situ day: points coloured by latitude
+      Object.assign(trace, {mode: 'markers', marker: {size: 3, color: s.colour_lat,
+        colorscale: 'RdBu', reversescale: true,
+        colorbar: {title: {text: 'Latitude [°N]', side: 'right'}, thickness: 12}}});
+    }
     if (s.uncertainty) {
       trace.error_x = {
         type: 'data',

@@ -277,5 +277,8 @@ def profile_series(task: tuple) -> dict:
             "lat": g.meta["lat"], "lon": g.meta["lon"],
             "local_time": g.meta["local_time"],
             "good": g.meta["good"],
+            # an in-situ day is drawn as points coloured by latitude
+            "colour_lat": (decimate(src["lat"][:n], mp)
+                           if g.product == "ivmL2m" and "lat" in src else None),
         },
     }

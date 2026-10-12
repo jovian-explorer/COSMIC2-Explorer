@@ -436,3 +436,4 @@ def test_ivm_day_can_be_drawn_against_time_along_the_orbit():
                                     "smooth_kwargs": {}, "uncert_method": "none",
                                     "uncert_kwargs": {}, "max_points": 500}))
     assert "series" in res and len(res["series"]["y"]) == 500
+    assert len(res["series"]["colour_lat"]) == 500      # points coloured by latitude
