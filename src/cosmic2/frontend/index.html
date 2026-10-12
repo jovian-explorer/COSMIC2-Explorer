@@ -837,14 +837,21 @@
       </div>
       <fieldset id="m-gw">
         <legend>Gravity-wave energy</legend>
+        <p class="hint">Gravity waves are ripples in temperature, a few kelvin high and a few
+          kilometres long, that carry energy upward. The app takes the temperature between
+          <em>Bottom</em> and <em>Top</em>, removes the smooth background, and turns what is
+          left into an energy per kilogram of air. The background can be a smooth curve
+          (polynomial: keeps the short waves) or a filter that keeps only waves shorter than
+          the cut-off wavelength. Use atmPrf: above about 30 km wetPf2 follows its weather-model
+          first guess.</p>
         <div class="row tight">
           <label>Bottom (km)<input type="number" id="m-zlo" value="20" min="0" step="any"></label>
           <label>Top (km)<input type="number" id="m-zhi" value="40" min="1" step="any"></label>
         </div>
         <label>Background
           <select id="m-method">
-            <option value="polynomial">4th-order polynomial over the layer</option>
-            <option value="highpass">high-pass (Butterworth), cut-off below</option>
+            <option value="polynomial" title="A smooth 4th-order curve through the layer is the background; waves up to about 10 km long keep most of their energy">4th-order polynomial over the layer</option>
+            <option value="highpass" title="Only waves shorter than the cut-off wavelength count (Tsuda et al. 2000 used 10 km over 20-30 km)">high-pass (Butterworth), cut-off below</option>
           </select>
         </label>
         <label>Cut-off wavelength (km)<input type="number" id="m-cut" value="10" min="1" step="any"></label>
