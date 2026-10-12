@@ -244,3 +244,12 @@ def test_profile_overlay_says_which_products_it_left_out():
     assert len(res["series"]) == 1
     (sk,) = res["skipped"]
     assert sk["product"] == "ionPrf" and "has no temperature (Temp)" in sk["why"]
+
+
+def test_averages_section_and_map_say_which_missions_they_pool():
+    post("/api/local/load-samples", {})
+    s = {"search": {"products": ["wetPf2"]}}
+    for path, extra in (("/api/composite", {"field": "Temp", "top_km": 10, "step_km": 1}),
+                        ("/api/climatology/section", {"field": "Temp", "top_km": 10, "step_km": 1}),
+                        ("/api/climatology/map", {"column": "tropopause.height_km"})):
+        assert post(path, dict(s, **extra))["missions"] == {"COSMIC-2": 2}, path

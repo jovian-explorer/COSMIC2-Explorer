@@ -111,6 +111,7 @@
 
 ### Interface
 
+- Averages, latitude-height sections and diagnostic maps say when they pool missions ("Selected: 743 COSMIC-2 and 171 PAZ profiles; ..."), as the tropopause and weather-model captions already did; found in a browser pass with a day of COSMIC-2 and PAZ wetPf2 and echPrf, where the section, map and averages pooled the two silently.
 - A profile plot of a mixed selection says which products it left out and why, product by product ("1 ionPrf profile not drawn (it has no temperature (Temp) against altitude above mean sea level)"), and what to do, instead of "81 skipped: no Temp on MSL_alt".
 - **Statistics captions on a real multi-product day** (found in a browser pass over every card with a day of atmPrf, wetPf2, echPrf, avnPrf and ionPrf): after an ionPrf search the diagnostic map, still set to gravity-wave energy, quietly mapped atmPrf profiles under the ionPrf search; it now switches to the searched product's diagnostic (foF2 for ionPrf, peak S4 for scnLv2, ion density for ivmL2m). The sampling caption no longer explains penetration depth and terrain heights for products that have neither.
 - Hover values on profile, average and scatter plots show four significant digits instead of a fixed number of decimals, which printed small quantities as zero (N^2 of 2e-4 s^-2 and a bending angle of 1e-5 rad both read "0.000").

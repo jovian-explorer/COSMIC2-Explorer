@@ -723,6 +723,7 @@ def make_composite(req: CompositeRequest) -> dict:
     for r in rows:
         products[r["product"]] = products.get(r["product"], 0) + 1
     out["products"] = products
+    out["missions"] = _missions_of(rows)
     return _clean(out)
 
 
@@ -969,6 +970,7 @@ def climatology_section(req: SectionRequest) -> dict:
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
     sec["selected"] = len(rows)
+    sec["missions"] = _missions_of([r for r in rows if r.get("good", True) or not req.good_only])
     return _clean(sec)
 
 
@@ -1012,6 +1014,7 @@ def climatology_map(req: MapRequest) -> dict:
         raise HTTPException(400, str(exc)) from exc
     res["selected"] = len(rows)
     res["title"] = vocab.column_title(req.column)
+    res["missions"] = _missions_of(rows)
     return _clean(res)
 
 

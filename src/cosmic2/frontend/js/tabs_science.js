@@ -577,6 +577,12 @@ async function drawComposite() {
     cap += ` Omitted for having fewer than ${res.min_count} profiles: ` +
            dropped.map(([k, v]) => `${k} (n=${v})`).join(', ') + '.';
   }
+  // say when the averages pool missions (unless the groups are satellites)
+  const missions = Object.entries(res.missions || {});
+  if (missions.length > 1 && $('#c-groupby').value !== 'satellite') {
+    cap += ` Pools ${missions.map(([m, n]) => `${n} ${m}`).join(' and ')} profiles; ` +
+           'group by satellite, or use the Explore satellite filter, to keep them apart.';
+  }
   $('#composite-caption').textContent = cap;
   $('#composite-title').textContent =
     `Average ${bareLabel(res.field_label)} by ` +

@@ -244,7 +244,7 @@ async function drawSection() {
                 std: 'Spread of', sem: 'Standard error of the mean of',
                 count: 'Profiles behind'}[show];
   $('#section-title').textContent = `${kind} ${res.field_label.replace(/\s*\[[^\]]*\]$/, '')}`;
-  $('#section-caption').textContent =
+  $('#section-caption').textContent = missionNote(res.missions) +
     (res.screen_k ? `Outlier screen (k = ${res.screen_k}): ${res.screened_out} profile(s) left out. ` : '') +
     `${res.n_profiles} ${product ? product + ' ' : ''}profiles in ${res.lat_centres.length} bands of ${req.lat_step}° ` +
     `(${res.profiles_per_band.join(', ')} profiles from south to north), on a ` +
@@ -367,7 +367,7 @@ async function drawMap() {
   ], axesLayout('Latitude [°N] (band centre)', cleanPlotlyMath(res.title)), PLOT_CONFIG);
   const gw = res.gw;
   $('#mapgrid-title').textContent = `${res.title}: mean in each cell`;
-  $('#mapgrid-caption').textContent =
+  $('#mapgrid-caption').textContent = missionNote(res.missions) +
     `${res.n} of ${res.selected} profiles have a value; overall mean ` +
     `${fmt(res.overall.mean, 3)}, median ${fmt(res.overall.median, 3)}. ` +
     `Cells of ${req.lat_step}° × ${req.lon_step}° with fewer than ` +
