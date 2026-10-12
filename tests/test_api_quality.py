@@ -216,10 +216,10 @@ def test_file_unit_strings_read_unambiguously():
 
 
 def test_unexpected_error_is_explained_not_a_bare_500(monkeypatch):
-    from fastapi.testclient import TestClient
-    from cosmic2 import api, store
-    monkeypatch.setattr(store, "summary", lambda: 1 / 0)
-    r = TestClient(api.app, raise_server_exceptions=False).get("/api/local/summary")
-    assert r.status_code == 500
-    msg = r.json()["detail"]
+    from cosmic2 import store
+    monkeypatch.setattr(store, "summary", lambda: 1 / 0)    # the test server shares this process
+    with pytest.raises(urllib.error.HTTPError) as err:
+        urllib.request.urlopen(os.environ["COSMIC2_TEST_BASE"] + "/api/local/summary", timeout=60)
+    assert err.value.code == 500
+    msg = json.loads(err.value.read())["detail"]
     assert "ZeroDivisionError" in msg and "errors.log" in msg
