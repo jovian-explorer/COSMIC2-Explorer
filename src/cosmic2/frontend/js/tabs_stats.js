@@ -119,9 +119,12 @@ async function drawStats() {
                `${fmt(atm.archive_check.max_abs_diff_km * 1000, 3)} m (n=${atm.archive_check.n}).`);
   }
   notes.push('Flagged profiles are counted here even when the Explore search ' +
-             'shows good ones only; penetration uses good profiles.');
-  notes.push('"Ground" uses the terrain height in the matching wetPf2 file, so it ' +
-             'needs both products of the same day on disk.');
+             'shows good ones only.');
+  // penetration exists for the neutral products only
+  if (products.some((p) => res.products[p].penetration)) {
+    notes.push('Penetration uses good profiles; "ground" uses the terrain height in ' +
+               'the matching wetPf2 file, so it needs both products of the same day on disk.');
+  }
   $('#st-caption').textContent = notes.join(' ');
 
   const centres = (edges) => edges.slice(0, -1).map((v, i) => (v + edges[i + 1]) / 2);
@@ -279,7 +282,28 @@ export function mapLatitudeLimit(res) {
     ? 90 : 60;
 }
 
+// The diagnostic a product's map starts from when the chosen one belongs to
+// another product (an ionPrf search left on gravity-wave energy mapped
+// atmPrf profiles instead, under the ionPrf search)
+const MAP_DEFAULT = {ionPrf: 'ionosphere.foF2_MHz', scnLv2: 'scintillation.s4_max',
+                     ivmL2m: 'insitu.ion_dens_median_Ncc'};
+
+function mapFamily(column) {
+  return column.startsWith('ionosphere.') ? ['ionPrf']
+       : column.startsWith('scintillation.') ? ['scnLv2']
+       : column.startsWith('insitu.') ? ['ivmL2m']
+       : column.startsWith('boundary_layer.') ? ['atmPrf'] : ['atmPrf', 'wetPf2'];
+}
+
 async function drawMap() {
+  const searched = (state.lastSearch && state.lastSearch.products) || [];
+  if (searched.length === 1 && !mapFamily($('#m-col').value).includes(searched[0])) {
+    const col = MAP_DEFAULT[searched[0]] || EP;
+    if ([...$('#m-col').options].some((o) => o.value === col)) {
+      $('#m-col').value = col;
+      $('#m-col').dispatchEvent(new Event('change'));
+    }
+  }
   const column = $('#m-col').value;
   const req = Object.assign({
     column,
@@ -295,10 +319,7 @@ async function drawMap() {
     req.search.good_only = true;
     req.search.limit = req.max_profiles = 5000;
     // Each diagnostic belongs to one family of products.
-    const family = column.startsWith('ionosphere.') ? ['ionPrf']
-                 : column.startsWith('scintillation.') ? ['scnLv2']
-                 : column.startsWith('insitu.') ? ['ivmL2m']
-                 : column.startsWith('boundary_layer.') ? ['atmPrf'] : ['atmPrf', 'wetPf2'];
+    const family = mapFamily(column);
     const wanted = (req.search.products || []).filter((p) => family.includes(p));
     req.search.products = wanted.length ? wanted : [family[0]];
   }

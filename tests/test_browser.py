@@ -176,3 +176,18 @@ def test_dropdown_labels_fit_at_1366(page):
         page.wait_for_timeout(150)
         assert page.evaluate(_LONGEST_OPTION_FITS) == [], tab
     page.set_viewport_size({"width": 1400, "height": 900})
+
+
+def test_map_and_stats_follow_an_ionprf_search(page):
+    page.goto(BASE + "/")
+    page.wait_for_selector("#version-tag:not(:empty)")
+    page.click("button[data-tab=explore]")
+    page.select_option("#f-product", "ionPrf")
+    _press(page, "#btn-search")
+    page.click("button[data-tab=stats]")
+    page.select_option("#m-col", "gravity_waves.ep_J_per_kg")
+    _press(page, "#btn-map")
+    # an ionPrf search maps an ionospheric diagnostic, not atmPrf profiles
+    assert page.eval_on_selector("#m-col", "e => e.value") == "ionosphere.foF2_MHz"
+    _press(page, "#btn-stats")
+    assert "terrain" not in page.inner_text("#st-caption")

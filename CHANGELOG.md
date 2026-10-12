@@ -110,6 +110,7 @@
 
 ### Interface
 
+- **Statistics captions on a real multi-product day** (found in a browser pass over every card with a day of atmPrf, wetPf2, echPrf, avnPrf and ionPrf): after an ionPrf search the diagnostic map, still set to gravity-wave energy, quietly mapped atmPrf profiles under the ionPrf search; it now switches to the searched product's diagnostic (foF2 for ionPrf, peak S4 for scnLv2, ion density for ivmL2m). The sampling caption no longer explains penetration depth and terrain heights for products that have neither.
 - Hover values on profile, average and scatter plots show four significant digits instead of a fixed number of decimals, which printed small quantities as zero (N^2 of 2e-4 s^-2 and a bending angle of 1e-5 rad both read "0.000").
 - Messages speak of files rather than "granules" (the archive's word): "Loaded 12 example files", "Delete 120 files of wetPf2", "The archive marked this file as a failed retrieval". The Get data tab says which day the example files are, and its stream control carries the glossary tooltip.
 - The hover text of a profile plot gave the height in km whatever the vertical axis was; it now uses the axis's own unit (h for time, ° for latitude).
