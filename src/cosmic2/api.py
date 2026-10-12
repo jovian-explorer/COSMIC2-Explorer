@@ -68,6 +68,27 @@ app.add_middleware(
 ARCHIVE = Archive(SETTINGS)
 
 
+@app.exception_handler(Exception)
+async def _unexpected(request: Request, exc: Exception) -> JSONResponse:
+    """An error nobody anticipated: say what failed in words the page can
+    show (it showed "500 Internal Server Error") and keep the traceback in
+    the log folder."""
+    import logging
+    import traceback
+    from .config import LOG_DIR
+    logging.getLogger(__name__).exception("%s failed", request.url.path)
+    try:
+        LOG_DIR.mkdir(parents=True, exist_ok=True)
+        with (LOG_DIR / "errors.log").open("a", encoding="utf-8") as fh:
+            fh.write(f"{dt.datetime.now().isoformat()} {request.method} {request.url.path}\n"
+                     + "".join(traceback.format_exception(exc)) + "\n")
+    except OSError:
+        pass
+    return JSONResponse(status_code=500, content={"detail": (
+        f"Something went wrong while doing that ({type(exc).__name__}: {exc}). "
+        f"The details are in {LOG_DIR / 'errors.log'}; please include them if you report it.")})
+
+
 # ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------
@@ -1114,7 +1135,6 @@ def export_data(req: ExportRequest) -> dict:
                 {"granules": rows, "provenance": exporters.provenance(rows, extra_prov)},
                 basename=req.basename)
     except ValueError as exc:
-        print(f"ValueError in export_data: {exc}")
         raise HTTPException(400, str(exc)) from exc
     except RuntimeError as exc:
         raise HTTPException(500, str(exc)) from exc

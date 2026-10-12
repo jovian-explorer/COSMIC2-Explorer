@@ -20,8 +20,11 @@ async function call(path, {method = 'GET', body = null} = {}) {
   }
   if (!res.ok) {
     const detail = data && (data.detail || data.error);
+    // a rejected value (422) lists which field and why
+    const listed = Array.isArray(detail) && detail.map((d) =>
+      `${(d.loc || []).slice(-1)[0] || 'value'}: ${d.msg}`).join('; ');
     throw new Error(typeof detail === 'string' ? detail
-                    : `${res.status} ${res.statusText}`);
+                    : listed ? `Not accepted: ${listed}` : `${res.status} ${res.statusText}`);
   }
   return data;
 }

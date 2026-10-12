@@ -213,3 +213,13 @@ def test_file_unit_strings_read_unambiguously():
     assert vocab.axis_title("s4_L1", "unitless") == "S4 index, L1"
     assert vocab.axis_title("ion_dens", "N/cc") == "Ion density (in-situ) [ions/cm³]"
     assert vocab.normalise_units("seconds since 1980-1-6 00:00:00") == "s of GPS time since 1980-01-06"
+
+
+def test_unexpected_error_is_explained_not_a_bare_500(monkeypatch):
+    from fastapi.testclient import TestClient
+    from cosmic2 import api, store
+    monkeypatch.setattr(store, "summary", lambda: 1 / 0)
+    r = TestClient(api.app, raise_server_exceptions=False).get("/api/local/summary")
+    assert r.status_code == 500
+    msg = r.json()["detail"]
+    assert "ZeroDivisionError" in msg and "errors.log" in msg
