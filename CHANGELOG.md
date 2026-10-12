@@ -16,6 +16,7 @@
 
 ### Documentation and references
 
+- Help opens with a short note on how to read it (the word list, then what each numbered section explains, and that the formulas are optional), and its mission section says COSMIC-2 tracks Galileo as well as GPS and GLONASS (Galileo profiles carry PRNs starting with E).
 - echPrf's `Bend_ang` was labelled "Bending angle (ionosphere-corrected)", the observation's name; it is the bending angle CDAAC simulates from the ECMWF refractivity, with no ionosphere involved. It now has its own entry, "Bending angle, simulated (ECMWF)".
 - The gravity-wave help and the diagnostic's text say that wetPf2's temperature follows its ECMWF first guess where the observation weighs little: on 187 COSMIC-2 occultations of 2026-09-27, wetPf2 minus ECMWF temperature had a standard deviation of 0.9-1.0 K from 20 to 30 km and 1.4-2.0 K at 35-40 km, against 1.6-2.7 K and 3.8-4.2 K for atmPrf. Its waves are not an independent measurement above about 30 km; atmPrf is the product for gravity waves.
 - IVM `ap_pot` is labelled as its file names it, the aperture-plane potential (it was called the spacecraft potential, which the file does not say).
