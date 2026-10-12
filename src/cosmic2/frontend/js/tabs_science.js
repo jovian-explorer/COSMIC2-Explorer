@@ -202,7 +202,7 @@ async function drawProfiles() {
       x: s.x, y: s.y,
       name: s.label + (isProcessed && !many ? ' (processed)' : ''),
       showlegend: !many,
-      hovertemplate: `${s.label}<br>%{x:.3f} \u00b7 %{y:.2f} ${vocabInfo(req.vertical).units}<extra></extra>`,
+      hovertemplate: `${s.label}<br>%{x:.4~g} \u00b7 %{y:.2f} ${vocabInfo(req.vertical).units}<extra></extra>`,
       line: {width: many ? 1.2 : 2.2,
              color: many ? colourByLat(s.lat) : PALETTE[i % PALETTE.length]},
       opacity: many ? 0.78 : 1,
@@ -531,7 +531,7 @@ async function drawComposite() {
       type: 'scatter', mode: 'lines', x: g.mean, y: res.grid,
       name: `${name} (n=${g.n})`, legendgroup: name,
       line: {color: colour, width: 2.5},
-      hovertemplate: `${name}<br>%{x:.2f} \u00b7 %{y:.1f} km<extra></extra>`,
+      hovertemplate: `${name}<br>%{x:.4~g} \u00b7 %{y:.1f} km<extra></extra>`,
     });
   });
   const fontScale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--font-scale') || '1.0');
@@ -601,7 +601,7 @@ async function drawScatter() {
     type: 'scattergl', mode: 'markers',
     x: rows.map((r) => r[xf]), y: rows.map((r) => r[yf]),
     text: rows.map((r) => `${r.file_name}<br>${(r.time_utc || '').slice(0, 19)}Z`),
-    hovertemplate: '%{text}<br>%{x:.3f}, %{y:.3f}<extra></extra>',
+    hovertemplate: '%{text}<br>%{x:.4~g}, %{y:.4~g}<extra></extra>',
     marker: {
       size: 8, line: {width: 0.8, color: 'rgba(255, 255, 255, 0.85)'},
       opacity: 0.88,
