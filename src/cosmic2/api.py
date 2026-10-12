@@ -985,12 +985,16 @@ class MapRequest(BaseModel):
     gw_poly_order: int = Field(default=4, ge=1, le=8)
     gw_cutoff_km: float = Field(default=10.0, gt=0.5)
     max_profiles: int = Field(default=5000, ge=1)
+    good_only: bool = True
 
 
 @app.post("/api/climatology/map")
 def climatology_map(req: MapRequest) -> dict:
     """Latitude-longitude map and zonal mean of a per-profile diagnostic."""
     rows = _resolve_selection(req.granule_ids, req.search, req.max_profiles)
+    # like the section and the tables: profiles CDAAC flagged bad stay out
+    # (a selection could hold them; the search path already left them out)
+    rows = [r for r in rows if r.get("good", True) or not req.good_only]
     if not rows:
         raise HTTPException(400, "No local profiles match that selection")
     gw = None

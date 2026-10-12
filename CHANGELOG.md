@@ -70,6 +70,7 @@
 
 ### Science fixes (results change)
 
+- The diagnostic map of "selected profiles only" included profiles CDAAC flagged bad (the search path left them out): on a real day of atmPrf, 196 profiles went into the tropopause map against the 187 good ones of the section and the tables. It now leaves them out like every other card (`good_only`, on by default).
 - Averages and latitude-height sections of fields derived from temperature (potential temperature and its gradient, lapse rate, N^2, buoyancy period, density, scale height, speed of sound) pooled atmPrf, where they come from the dry temperature and pressure, with wetPf2, where they come from the real ones, and counted occultations with both files twice. They are now separate groups ("Potential temperature (from dry temperature)"), and a section refuses the mix, as for `Temp` itself.
 - The diagnostic map counted an occultation twice when both its atmPrf and its wetPf2 were selected (tropopause, cold point, gravity-wave energy are computed from both). Each occultation now counts once, by its wetPf2's value when it has one, else its atmPrf's (the boundary-layer top is atmPrf-only).
 - The radiosonde comparison of "selected profiles only" pooled atmPrf and wetPf2 when both were selected, so the temperature differences mixed the dry temperature (tens of kelvin from the real one in the moist lower troposphere) with the real one, and counted occultations twice. The comparison now uses the product chosen on the card, and the API refuses a selection holding both unless a product is named.

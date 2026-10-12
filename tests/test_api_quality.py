@@ -223,3 +223,14 @@ def test_unexpected_error_is_explained_not_a_bare_500(monkeypatch):
     assert err.value.code == 500
     msg = json.loads(err.value.read())["detail"]
     assert "ZeroDivisionError" in msg and "errors.log" in msg
+
+
+def test_map_leaves_out_flagged_profiles_of_a_selection(monkeypatch):
+    from cosmic2 import api, climatology
+    seen = {}
+    monkeypatch.setattr(api, "_resolve_selection", lambda ids, search, n: [
+        {"id": "a", "good": True}, {"id": "b", "good": False}])
+    monkeypatch.setattr(climatology, "diagnostic_map",
+                        lambda rows, *a, **k: seen.setdefault("rows", rows) and {"n": len(rows)})
+    post("/api/climatology/map", {"granule_ids": ["a", "b"], "column": "x"})
+    assert [r["id"] for r in seen["rows"]] == ["a"]
