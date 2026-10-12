@@ -213,6 +213,7 @@ def test_file_unit_strings_read_unambiguously():
     assert vocab.axis_title("s4_L1", "unitless") == "S4 index, L1"
     assert vocab.axis_title("ion_dens", "N/cc") == "Ion density (in-situ) [ions/cm³]"
     assert vocab.normalise_units("seconds since 1980-1-6 00:00:00") == "s of GPS time since 1980-01-06"
+    assert vocab.column_title("ducting.min_gradient") == "Steepest refractivity gradient [N-units/km]"
 
 
 def test_unexpected_error_is_explained_not_a_bare_500(monkeypatch):

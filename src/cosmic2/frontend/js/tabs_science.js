@@ -321,7 +321,7 @@ const DIAG_SPECS = [
   ['gravity_waves.ep_J_per_kg', 'Gravity-wave energy', 'J/kg',
    'Energy carried by buoyancy waves rippling through the stratosphere. On wetPf2 it partly ' +
    'reflects the ECMWF first guess of the retrieval, above 30 km especially (help, section F).'],
-  ['ducting.min_gradient', 'Steepest refractivity gradient', 'N/km',
+  ['ducting.min_gradient', 'Steepest refractivity gradient', 'N-units/km',
    'Below -157 the atmosphere traps radio waves, but a retrieved RO profile never shows that: under ' +
    'a duct its refractivity is too low instead (see the ducting views of the weather-model card).'],
   ['ionosphere.NmF2_el_cm3', 'Peak electron density', 'el/cm\u00b3',
