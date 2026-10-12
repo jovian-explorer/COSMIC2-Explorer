@@ -344,3 +344,15 @@ def test_ap_pot_is_named_as_the_file_names_it():
     assert f.variables["ap_pot"].long_name == b"Aperture plane potential"
     f.close()
     assert vocab.VAR_INFO["ap_pot"]["label"] == "Aperture-plane potential"
+
+
+def test_podtc2_and_scn1c2_get_satellite_and_position_from_their_attributes(tmp_path):
+    attrs = dict(year=2026, month=9, day=27, hour=0, minute=2, second=36.0, leo_id=2,
+                 prn_id=10, conid="G", lat_start=-11.663, lon_start=23.304)
+    v = {"occheight": (np.array([100.0, 200.0]), {"units": "km"})}
+    m = readers.load(_write(tmp_path / "podTc2_C2E2.2026.270.00.02.0027.G10.01_0001.0001_nc",
+                            attrs, v)).meta
+    assert (m["sat"], m["occ_prn"]) == ("C2E2", "G10")
+    assert (m["lat"], m["lon"]) == pytest.approx((-11.663, 23.304))
+    assert m["local_time"] == pytest.approx(readers._local_time(23.304, m["epoch"]))
+    assert readers.parse_filename("scn1c2_2026.270.002.01.02.G06.OS006_0001.0001_nc")["sat"] == "C2E2"

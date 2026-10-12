@@ -41,7 +41,7 @@ BULK_VAR_RE = re.compile(r"^(OL_vec\d*|OL_par|OL_ipar|ies|hes|wes)$")
 _NAME_RE = re.compile(r"^(?P<product>[A-Za-z0-9]+)_(?P<stamp>.+?)_(?P<v1>\d{4})\.(?P<v2>\d{4})(?:_nc|\.nc)?$")
 _RO_STAMP = re.compile(r"^(?P<sat>C2E\d|[A-Z0-9]{4})\.(?P<year>\d{4})\.(?P<doy>\d{3})\.(?P<hh>\d{2})\.(?P<mm>\d{2})\.(?P<prn>[A-Z]\d{2})$")
 _IVM_STAMP = re.compile(r"^(?P<sat>C2E\d)\.(?P<year>\d{4})\.(?P<doy>\d{3})\.(?P<seq>\d{2})$")
-_SCN_STAMP = re.compile(r"^(?P<year>\d{4})\.(?P<doy>\d{3})\.(?P<leo>\d{3})\.(?P<a>\d{2})\.(?P<b>\d{2})\.(?P<prn>[A-Z]\d{2})\.(?P<ant>SC\d+)$")
+_SCN_STAMP = re.compile(r"^(?P<year>\d{4})\.(?P<doy>\d{3})\.(?P<leo>\d{3})\.(?P<a>\d{2})\.(?P<b>\d{2})\.(?P<prn>[A-Z]\d{2})\.(?P<ant>(?:SC|OS)\d+)$")
 
 
 # ---------------------------------------------------------------------------
@@ -757,7 +757,7 @@ def _read_avnprf(path: str) -> Granule:
 # Raised whenever a reader change alters what is indexed (position, local
 # time, quality, extras); an index written by an older version is then
 # re-read once at start-up (see store.index_outdated).
-INDEX_VERSION = 6
+INDEX_VERSION = 7
 
 READERS = {
     "atmPrf": _read_atmprf,
@@ -778,6 +778,15 @@ def _read_generic(path: str, product: str) -> Granule:
     iso, epoch = _iso(attrs.get("year"), attrs.get("month"), attrs.get("day"),
                       attrs.get("hour", 0), attrs.get("minute", 0), attrs.get("second", 0))
     meta.update(time_utc=iso, epoch=epoch, lat=attrs.get("lat"), lon=attrs.get("lon"))
+    # podTc2 and scn1c2 name their satellite and GNSS transmitter in
+    # attributes, and give the satellite's position at the start of the arc
+    if not meta["sat"] and scrub(attrs.get("leo_id")) is not None:
+        meta["sat"] = f"C2E{int(attrs['leo_id'])}"
+    if not meta["occ_prn"] and attrs.get("conid") and scrub(attrs.get("prn_id")) is not None:
+        meta["occ_prn"] = f"{_to_str(attrs['conid'])}{int(attrs['prn_id']):02d}"
+    if meta["lat"] is None and scrub(attrs.get("lat_start")) is not None:
+        meta.update(lat=attrs["lat_start"], lon=attrs.get("lon_start"))
+    meta["local_time"] = _local_time(scrub(meta["lon"]), epoch)
     vertical = next((c for c in ("MSL_alt", "alt", "gph", "occheight") if c in data), "")
     g = Granule(product, path, meta, attrs, desc, data, units,
                 vertical=vertical, independent=vertical or next(iter(data), ""))

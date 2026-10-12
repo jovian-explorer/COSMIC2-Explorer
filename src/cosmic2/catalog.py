@@ -263,8 +263,10 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
     ),
     Product(
         "leoOrb", "LEO orbit solution", "orbit", "",
-        "Spacecraft position and velocity.",
-        "Where each satellite was, second by second.",
+        "Spacecraft position and velocity, as SP3 orbit text files. The app lists and "
+        "downloads them but does not read them: they are not netCDF profiles.",
+        "Where each satellite was, second by second (a file for orbit software, not for "
+        "this app's plots).",
         "medium",
         reference="Weiss, J.-P., et al. (2022), COSMIC-2 mission summary at three years in orbit, Atmosphere, 13, 1409",
         doi="10.3390/atmos13091409",
