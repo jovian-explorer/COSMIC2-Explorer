@@ -779,6 +779,12 @@ async function boot() {
   updateProfileCounter(summary ? summary.n_granules : 0);
   if (summary && summary.n_granules) {
     await runSearch().catch(() => {});
+  } else if (firstStart()) {
+    // Something real to look at straight away: the bundled example day
+    await loadSamples().catch(() => {});
+    banner('Showing the example files that come with the app (real COSMIC-2 ' +
+           'profiles of 19 July 2026). Pick a profile on the map or in the table, or ' +
+           'download any other day on the "Get data" tab.');
   } else {
     banner('No profiles on this computer yet. Pick a date and fetch some on the ' +
            '"Get data" tab, or load the bundled examples to try things out.');
@@ -788,6 +794,16 @@ async function boot() {
     banner('The local cache is nearly at its quota. Delete a dataset or raise ' +
            'the quota before downloading more.', 'bad');
   }
+}
+
+/** True only the first time the app opens on this computer (the examples
+ *  are loaded once, not again after the user has cleared the data). */
+function firstStart() {
+  try {
+    if (localStorage.getItem('cosmic2-started')) return false;
+    localStorage.setItem('cosmic2-started', '1');
+  } catch (err) { /* no storage: treat as a first start */ }
+  return true;
 }
 
 boot();

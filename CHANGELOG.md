@@ -109,6 +109,7 @@
 
 ### Interface
 
+- **Something to see on the first start.** The first time the app opens on a computer with no profiles, it loads the example files that come with it (real COSMIC-2 profiles of 19 July 2026) and says so, instead of an empty map; it does not reload them after the user clears the data. The guide's opening paragraph explains in plain words what the satellites measure and what the app does with it, and its button reads "Show me the example day".
 - **An in-situ IVM day as a time series.** The Profiles tab draws ivmL2m against the time since the file's first sample (new derived `elapsed_h`, now its default), local solar time, latitude or magnetic latitude as well as altitude, and offers the O+ and H+ fractions beside density and temperature. Drawn against altitude, a day of samples at about 575 km was a shapeless cloud.
 - Unit strings from the files read unambiguously in titles and CSV headers: refractivity's `N` (which reads as newton) and wetPf2's `N-unit` are "N-units", scnLv2's `unitless` is dropped instead of printed ("S4 index, L1 [unitless]"), and ivmL2m's `N/cc` is "ions/cm³" and its `time` (GPS seconds since 1980-01-06, which the file's own unit string does not say) is "s of GPS time since 1980-01-06".
 - A profile overlay holding atmPrf and wetPf2 `Temp` together was titled "Temperature", although the atmPrf lines are the dry temperature. The title now names each: "Dry temperature (atmPrf); Temperature (wetPf2) [°C]" (found by a browser sweep over real files of every product).
