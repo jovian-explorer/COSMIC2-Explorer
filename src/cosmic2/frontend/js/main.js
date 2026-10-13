@@ -487,7 +487,7 @@ function aboutBody() {
 
     <h3>1. Mission Overview</h3>
     <p><strong>FORMOSAT-7 / COSMIC-2</strong> is a joint collaborative satellite program between Taiwan Space Agency (TASA / NSPO) and the United States (NOAA, USAF). The six satellites fly in low Earth orbits inclined at 24 degrees (~550 km altitude) and sample the atmosphere and ionosphere between about 45°S and 45°N, most densely in the tropics.</p>
-    <p>Using the TriG GNSS Radio Occultation System (TGRS), which tracks GPS and GLONASS signals, the constellation yields several thousand neutral-atmosphere profiles a day. UCAR CDAAC turns the measurements into the profiles this app reads; COSMIC-2 Explorer computes its diagnostics from those profiles.</p>
+    <p>Using the TriG GNSS Radio Occultation System (TGRS), which tracks GPS, GLONASS and Galileo signals, the constellation yields several thousand neutral-atmosphere profiles a day. UCAR CDAAC turns the measurements into the profiles this app reads; COSMIC-2 Explorer computes its diagnostics from those profiles.</p>
 
     <div style="margin: 8px 0; display: flex; gap: 8px; flex-wrap: wrap;">
       <a href="https://www.tasa.org.tw/en-US/mission/formosat-7" target="_blank" rel="noopener" class="link">🌐 TASA FORMOSAT-7 Mission Page ↗</a>
