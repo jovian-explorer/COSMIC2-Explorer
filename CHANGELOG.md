@@ -2,9 +2,9 @@
 
 ## Unreleased
 
-## 0.1.0 (pre-release)
+## 0.1.0 (2026-10-13)
 
-First public pre-release since 0.0.1, and the first to be archived on Zenodo with a DOI. In short:
+First public release since 0.0.1, and the first archived on Zenodo with a DOI. In short:
 
 - **Science fixes**: CDAAC's files are read as the format defines them (times in UTC rather than GPS time, setting and rising occultations, fill values, dry atmPrf temperatures kept apart from wetPf2, log-space interpolation of refractivity and bending angle, ionospheric TEC and peaks); references and DOIs corrected.
 - **New analyses**: comparisons with the colocated ECMWF and NCEP profiles, IGRA radiosondes and the PAZ and KOMPSAT-5 missions; tropopause and boundary-layer tops by latitude; latitude-height sections, diagnostic maps and gravity-wave energy; averages with standard errors and 95 % intervals; scintillation and in-situ ion density files.

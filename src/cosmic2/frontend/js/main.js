@@ -612,7 +612,7 @@ function dataPolicyBody() {
     <h3>1. Data Availability Statement</h3>
     <p style="font-size: calc(12px * var(--font-scale, 1.0));">Authors using COSMIC-2 Explorer for academic research or publications may adapt the following Data Availability Statement:</p>
     <blockquote style="background: var(--bg); border-left: 4px solid var(--accent); margin: 6px 0; padding: 8px 12px; font-size: calc(12px * var(--font-scale, 1.0));">
-      "The COSMIC-2 radio occultation soundings analyzed in this study are publicly available from the University Corporation for Atmospheric Research (UCAR) COSMIC Data Analysis and Archive Center (CDAAC) at https://data.cosmic.ucar.edu/ and the NOAA National Centers for Environmental Information (NCEI) at https://www.ncei.noaa.gov/data/gps-radio-occultation/. The profile analysis was conducted using COSMIC-2 Explorer (Version ${state.meta.app.version}), https://github.com/jovian-explorer/COSMIC2-Explorer."
+      "The COSMIC-2 radio occultation soundings analyzed in this study are publicly available from the University Corporation for Atmospheric Research (UCAR) COSMIC Data Analysis and Archive Center (CDAAC) at https://data.cosmic.ucar.edu/ and the NOAA National Centers for Environmental Information (NCEI) at https://www.ncei.noaa.gov/data/gps-radio-occultation/. The profile analysis was conducted using COSMIC-2 Explorer (Version ${state.meta.app.version}), https://doi.org/10.5281/zenodo.23329841."
     </blockquote>
 
     <hr/>
@@ -648,7 +648,8 @@ function dataPolicyBody() {
   version      = {${state.meta.app.version}},
   institution  = {Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO},
   address      = {Thiruvananthapuram, Kerala, India},
-  url          = {https://github.com/jovian-explorer/COSMIC2-Explorer}
+  doi          = {10.5281/zenodo.23329841},
+  url          = {https://doi.org/10.5281/zenodo.23329841}
 }</pre>
     </div>
 

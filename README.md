@@ -1,10 +1,12 @@
 # COSMIC-2 Explorer
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23329841.svg)](https://doi.org/10.5281/zenodo.23329841)
+
 A desktop GUI and analysis environment for the FORMOSAT-7 / COSMIC-2 radio occultation profiles published by UCAR CDAAC: find and download them, plot and compare them, compute diagnostics, and export data and figures. Everything except downloading works offline once the data are on your computer.
 
 The retrievals themselves (bending angle, refractivity, temperature, humidity, electron density) are CDAAC's; the app reads those files and computes its diagnostics from them.
 
-> **COSMIC-2 Explorer is public and in pre-release** (version 0.1.0). It is ready for use and for testing; results can still change between versions. Please report problems, wrong results and suggestions through **Feedback** in the app or on the [issue tracker](https://github.com/jovian-explorer/COSMIC2-Explorer/issues/new/choose). To cite COSMIC-2 Explorer, see [CITATION.cff](CITATION.cff).
+> **COSMIC-2 Explorer is public** (version 0.1.0). It is ready for use and for testing; results can still change between versions. Please report problems, wrong results and suggestions through **Feedback** in the app or on the [issue tracker](https://github.com/jovian-explorer/COSMIC2-Explorer/issues/new/choose). To cite COSMIC-2 Explorer, use the DOI [10.5281/zenodo.23329841](https://doi.org/10.5281/zenodo.23329841) (all versions; see [CITATION.cff](CITATION.cff)).
 
 ### In plain words
 

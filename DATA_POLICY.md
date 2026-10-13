@@ -38,7 +38,7 @@ All data COSMIC-2 Explorer downloads come from the UCAR CDAAC archive. Files fro
 When publishing scientific findings, atmospheric figures, or derived geophysical datasets produced using COSMIC-2 Explorer, authors should include a Data Availability Statement structured as follows:
 
 > **Data Availability Statement**:
-> The COSMIC-2 radio occultation soundings analyzed in this study are publicly available from the University Corporation for Atmospheric Research (UCAR) COSMIC Data Analysis and Archive Center (CDAAC) at https://data.cosmic.ucar.edu/ and the NOAA National Centers for Environmental Information (NCEI) at https://www.ncei.noaa.gov/data/gps-radio-occultation/. The profile analysis was conducted using COSMIC-2 Explorer (Version 0.1.0), available open-source at https://github.com/jovian-explorer/COSMIC2-Explorer.
+> The COSMIC-2 radio occultation soundings analyzed in this study are publicly available from the University Corporation for Atmospheric Research (UCAR) COSMIC Data Analysis and Archive Center (CDAAC) at https://data.cosmic.ucar.edu/ and the NOAA National Centers for Environmental Information (NCEI) at https://www.ncei.noaa.gov/data/gps-radio-occultation/. The profile analysis was conducted using COSMIC-2 Explorer (Version 0.1.0), https://doi.org/10.5281/zenodo.23329841, available open-source at https://github.com/jovian-explorer/COSMIC2-Explorer.
 
 ---
 
@@ -50,7 +50,7 @@ Please cite the data set as UCAR asks and, if you used this software, COSMIC-2 E
 * UCAR COSMIC Program, 2019: COSMIC-2 Data Products [Data set]. UCAR/NCAR - COSMIC, Access date [insert date], https://doi.org/10.5065/T353-C093 (the form suggested on https://www.cosmic.ucar.edu/what-we-do/cosmic-2/data).
 
 ### Citation 2: COSMIC-2 Explorer Software
-* Aggarwal, Keshav (2026). COSMIC-2 Explorer: High-Resolution Radio Occultation Processing, Visualisation, and Atmospheric Profiling System (Version 0.1.0) [Computer software]. Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO, Thiruvananthapuram, Kerala, India.
+* Aggarwal, Keshav (2026). COSMIC-2 Explorer: High-Resolution Radio Occultation Processing, Visualisation, and Atmospheric Profiling System (Version 0.1.0) [Computer software]. Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO, Thiruvananthapuram, Kerala, India. https://doi.org/10.5281/zenodo.23329841
 
 ```bibtex
 @software{Aggarwal_COSMIC2_Explorer_2026,
@@ -58,6 +58,7 @@ Please cite the data set as UCAR asks and, if you used this software, COSMIC-2 E
   title = {{COSMIC-2 Explorer: High-Resolution Radio Occultation Processing, Visualisation, and Atmospheric Profiling System}},
   year = {2026},
   version = {0.1.0},
+  doi = {10.5281/zenodo.23329841},
   institution = {Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO},
   address = {Thiruvananthapuram, Kerala, India},
   url = {https://github.com/jovian-explorer/COSMIC2-Explorer}

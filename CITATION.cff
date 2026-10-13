@@ -7,6 +7,16 @@ authors:
     given-names: Keshav
     email: keshavaggarwal2310@gmail.com
 version: 0.1.0
+# Concept DOI on Zenodo: all versions, always resolves to the newest release
+doi: 10.5281/zenodo.23329841
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.23329841
+    description: "Concept DOI (all versions; resolves to the newest release)"
+  - type: doi
+    value: 10.5281/zenodo.23329842
+    description: "Version DOI of release v0.1.0"
+date-released: 2026-10-13
 license: MIT
 abstract: >-
   COSMIC-2 Explorer is a desktop application for the FORMOSAT-7 / COSMIC-2 radio
