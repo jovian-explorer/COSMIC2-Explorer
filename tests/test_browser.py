@@ -35,6 +35,7 @@ def _press(page, sel, timeout=120000):
 def test_every_tab_and_main_action_without_script_errors(page):
     page.goto(BASE + "/")
     page.wait_for_selector("#version-tag:not(:empty)")
+    page.click("button[data-tab=get]")   # a first start opens Explore
     page.click("#btn-samples")
     page.wait_for_function("document.querySelectorAll('#f-product option').length >= 5")
     assert {"atmPrf", "ionPrf", "ivmL2m", "scnLv2", "wetPf2"} <= set(
