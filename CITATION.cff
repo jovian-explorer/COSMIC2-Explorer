@@ -1,0 +1,35 @@
+cff-version: 1.2.0
+message: "If you use COSMIC-2 Explorer in your work, please cite it, together with the UCAR COSMIC-2 data set (doi:10.5065/T353-C093) as UCAR asks."
+title: "COSMIC-2 Explorer: High-Resolution Radio Occultation Processing, Visualisation, and Atmospheric Profiling System"
+type: software
+authors:
+  - family-names: Aggarwal
+    given-names: Keshav
+    email: keshavaggarwal2310@gmail.com
+version: 0.1.0
+license: MIT
+abstract: >-
+  COSMIC-2 Explorer is a desktop application for the FORMOSAT-7 / COSMIC-2 radio
+  occultation profiles published by UCAR CDAAC. It finds and downloads them, reads the
+  CDAAC products (bending angle, refractivity, temperature, humidity, electron density,
+  scintillation and in-situ ion density), plots and compares profiles, computes
+  diagnostics such as the tropopause, boundary-layer top, ionospheric peak and
+  gravity-wave energy, averages them by latitude, season or local time with standard
+  errors and confidence intervals, compares them with the colocated ECMWF and NCEP
+  profiles, IGRA radiosondes and the PAZ and KOMPSAT-5 missions, and exports data
+  (CSV, netCDF) and figures. Builds for Windows, macOS and Linux.
+repository-code: "https://github.com/jovian-explorer/COSMIC2-Explorer"
+references:
+  - type: dataset
+    title: "COSMIC-2 Data Products"
+    authors:
+      - name: "UCAR COSMIC Program"
+    doi: 10.5065/T353-C093
+    year: 2019
+keywords:
+  - radio occultation
+  - COSMIC-2
+  - FORMOSAT-7
+  - GNSS
+  - atmospheric profiles
+  - ionosphere

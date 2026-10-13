@@ -1,0 +1,33 @@
+name: Problem or wrong result
+description: Something does not work, crashes, or gives a result you think is wrong
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for testing COSMIC-2 Explorer. The more exact the steps, the faster it can be fixed.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Tab, product (e.g. wetPf2, atmPrf, ionPrf), date, file names, settings, buttons pressed.
+      placeholder: "1. Get data, 2026-07-19, wetPf2\n2. Profiles tab, ..."
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: COSMIC-2 Explorer version and how you run it
+      placeholder: "0.1.0 (About shows it), Windows app (or pip install, macOS, Linux)"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log
+      description: Attach the newest log file from the app's logs folder (an error message in the app names it).

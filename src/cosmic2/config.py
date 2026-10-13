@@ -21,7 +21,7 @@ from pathlib import Path
 
 APP_NAME = "COSMIC2Explorer"
 APP_TITLE = "COSMIC-2 Explorer"
-APP_VERSION = "0.0.1"
+APP_VERSION = "0.1.0"
 
 # Lead Researcher and Maintainer Attribution
 LEAD_RESEARCHER = (

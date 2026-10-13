@@ -327,6 +327,15 @@ button.ghost:hover:not(:disabled) {
   color: var(--focal);
 }
 
+/* Feedback link in the top bar, drawn like the ghost buttons next to it */
+a.btn-feedback {
+  display: inline-flex; align-items: center; text-decoration: none; white-space: nowrap;
+  border-radius: var(--radius-sm); padding: 7px 14px; border: 1px solid transparent;
+  color: var(--ink); font-size: calc(13px * var(--font-scale, 1.0)); font-weight: 600;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+a.btn-feedback:hover { background: var(--focal-soft); border-color: var(--line-highlight); color: var(--focal); }
+
 button.danger {
   color: var(--accent);
   border-color: rgba(244, 63, 94, 0.35);

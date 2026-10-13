@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 0.1.0 (pre-release)
+
+First public pre-release since 0.0.1, and the first to be archived on Zenodo with a DOI. In short:
+
+- **Science fixes**: CDAAC's files are read as the format defines them (times in UTC rather than GPS time, setting and rising occultations, fill values, dry atmPrf temperatures kept apart from wetPf2, log-space interpolation of refractivity and bending angle, ionospheric TEC and peaks); references and DOIs corrected.
+- **New analyses**: comparisons with the colocated ECMWF and NCEP profiles, IGRA radiosondes and the PAZ and KOMPSAT-5 missions; tropopause and boundary-layer tops by latitude; latitude-height sections, diagnostic maps and gravity-wave energy; averages with standard errors and 95 % intervals; scintillation and in-situ ion density files.
+- **Exports**: CSV and netCDF with units and provenance for every column, full precision, publication figures that follow the plot settings.
+- **Interface**: plain-language explanations, tooltips and a word list in Help, clearer error messages, bundled example day, a Feedback button and issue forms for reports.
+- **Installation**: one-folder standalone builds for Windows, macOS and Linux with a weekly automatic update.
+
+The detailed list follows.
+
 ### Updates and releases
 
 - **One-folder build on Windows and Linux** (`COSMIC2-Explorer/COSMIC2-Explorer.exe` beside `_internal/`, as the release archive's folder already was). The one-file build unpacked itself (240 MB) into a new `%TEMP%\_MEI*` folder at every start and left it there whenever the app was killed (Task Manager, `taskkill /F`, a crash): the 2026-10-02 one-file build, hard-killed with `taskkill /F /T` after it answered, left its 240 MB folder behind. The one-folder build runs in place and writes nothing to `%TEMP%` (started in about a second, nothing in `%TEMP%` while running or after the same kill). The automatic update is unchanged: it already replaces the whole installation folder, and the executable keeps its path in it. `scripts/build_exe.py --archive` packs the whole folder; the Explorer launch test now points at `dist/COSMIC2-Explorer/COSMIC2-Explorer.exe` and checks that its six hard-killed launches leave no `_MEI*` folder (none did).

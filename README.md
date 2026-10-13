@@ -4,6 +4,8 @@ A desktop GUI and analysis environment for the FORMOSAT-7 / COSMIC-2 radio occul
 
 The retrievals themselves (bending angle, refractivity, temperature, humidity, electron density) are CDAAC's; the app reads those files and computes its diagnostics from them.
 
+> **COSMIC-2 Explorer is public and in pre-release** (version 0.1.0). It is ready for use and for testing; results can still change between versions. Please report problems, wrong results and suggestions through **Feedback** in the app or on the [issue tracker](https://github.com/jovian-explorer/COSMIC2-Explorer/issues/new/choose). To cite COSMIC-2 Explorer, see [CITATION.cff](CITATION.cff).
+
 ### In plain words
 
 Six COSMIC-2 satellites watch GPS and other navigation signals bend as they pass through the air on their way to the satellite. How much a signal bends tells how dense the air is along its path, and from that comes a vertical profile of temperature, humidity and pressure up to about 40-60 km, and higher up of the free electrons of the ionosphere. Thousands of such profiles are measured every day between about 45 S and 45 N, and anyone can download them from UCAR. With this app you can:
