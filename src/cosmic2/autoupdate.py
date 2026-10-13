@@ -383,14 +383,20 @@ def extract(archive: Path, dest: Path) -> Path:
     dest.mkdir(parents=True)
     root = dest.resolve()
     name = archive.name.removesuffix(".part")
+    if name.endswith(".zip"):
+        with zipfile.ZipFile(archive) as zf:
+            infos = zf.infolist()
+        # every name is checked before anything is written, on every OS:
+        # ditto (macOS) was given the archive unchecked
+        for info in infos:
+            if not _inside((dest / info.filename).resolve(), root):
+                raise ValueError(f"{info.filename} would be written outside the update folder")
     if name.endswith(".zip") and sys.platform == "darwin":
         subprocess.run(["ditto", "-x", "-k", str(archive), str(dest)], check=True)
     elif name.endswith(".zip"):
         with zipfile.ZipFile(archive) as zf:
             for info in zf.infolist():
                 target = (dest / info.filename).resolve()
-                if not _inside(target, root):
-                    raise ValueError(f"{info.filename} would be written outside the update folder")
                 zf.extract(info, dest)
                 mode = (info.external_attr >> 16) & 0o777
                 if mode and os.name != "nt":

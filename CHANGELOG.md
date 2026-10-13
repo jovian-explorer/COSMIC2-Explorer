@@ -218,6 +218,7 @@ The detailed list follows.
 
 ### Robustness and security
 
+- **The update archive's names are checked on macOS too.** On macOS the update was unpacked with `ditto`, which was given the archive without the check that keeps every file inside the update folder (a name like `../evil.txt` was not refused; CI on macos-latest caught it). Every name is now checked before anything is written, on every OS, and only then is the archive unpacked.
 - The tropopause table and the diagnostic map count each occultation once through one shared rule (`climatology.once_per_occultation`: the wetPf2's value, else the atmPrf's).
 - One `analysis.column_stats` (mean, median, spread, count and 95 % interval by level) replaces four identical copies in the weather-model, mission and atmPrf-wetPf2 comparisons; unused imports removed.
 - Removed code nothing used: `selectionRequest` in the frontend's api.js, `Granule.to_columns`, `Granule.series`, `DownloadManager.active_count`, and `analysis.solar_local_time`, which duplicated the readers' local-time helper.
