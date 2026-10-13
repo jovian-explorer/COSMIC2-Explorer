@@ -225,6 +225,7 @@ The detailed list follows.
 
 ### Robustness and security
 
+- A test renders a figure whose titles hold °, ³, ², ⁻ and · to PDF and SVG and fails on any "glyph missing from font" warning, and checks that the PDF embeds its TrueType font; CI runs it on Windows, macOS and Linux, where the bundled DejaVu Sans has every glyph.
 - **The update archive's names are checked on macOS too.** On macOS the update was unpacked with `ditto`, which was given the archive without the check that keeps every file inside the update folder (a name like `../evil.txt` was not refused; CI on macos-latest caught it). Every name is now checked before anything is written, on every OS, and only then is the archive unpacked.
 - The tropopause table and the diagnostic map count each occultation once through one shared rule (`climatology.once_per_occultation`: the wetPf2's value, else the atmPrf's).
 - One `analysis.column_stats` (mean, median, spread, count and 95 % interval by level) replaces four identical copies in the weather-model, mission and atmPrf-wetPf2 comparisons; unused imports removed.

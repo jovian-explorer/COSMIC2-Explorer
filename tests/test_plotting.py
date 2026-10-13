@@ -121,3 +121,20 @@ def test_composite_figure_of_no_group_says_so():
     with pytest.raises(ValueError, match="nothing to draw"):
         plotting.composite_figure({"grid": [0.0, 1.0], "groups": {}, "min_count": 3,
                                    "field": "Temp", "vertical": "MSL_alt"})
+
+
+def test_vector_figures_have_every_glyph_the_titles_use():
+    # degree, superscripts and a middle dot in the titles: a font without them
+    # would print empty boxes (matplotlib warns "Glyph ... missing from font")
+    import warnings
+    items = [{"x": [1.0, 2.0], "y": [0.0, 1.0], "label": "a"}]
+    fig = plotting.profile_figure(items, "ion_dens", "lat", dpi=72,
+                                  x_label="Ion density [ions/cm³] · N² [s⁻²] · T [°C]")
+    for fmt in ("pdf", "svg"):
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            data = plotting.render(fig, fmt, 72)
+        missing = [str(w.message) for w in caught if "missing" in str(w.message).lower()]
+        assert not missing, (fmt, missing)
+        if fmt == "pdf":
+            assert b"/FontFile2" in data           # TrueType embedded, text stays editable
