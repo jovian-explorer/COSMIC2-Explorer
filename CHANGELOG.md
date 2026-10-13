@@ -171,7 +171,7 @@ The detailed list follows.
 
 ### Exports and figures
 
-- The coverage figure counts the selected products only; it counted every file indexed, so an occultation with its atmPrf, wetPf2, ECMWF and NCEP files was four profiles in its cell. Its axes read °N and °E like the rest of the app.
+- The coverage figure counts the selected products only; it counted every file indexed, so an occultation with its atmPrf, wetPf2, ECMWF and NCEP files was four profiles in its cell. Its axes read °N and °E like the rest of the app, as do every latitude, longitude and angle title ("deg N" was printed elsewhere), and the colour bar of the location map names its quantity ("Local solar time [h]", not "local_time").
 - Exported figures, checked kind by kind on the bundled files: a profile figure's height axis carries its units again ("Altitude above mean sea level [km]", "Time since the first sample [h]"; they were dropped), long quantity titles wrap instead of running off the figure, and an average with no group of enough profiles is refused with a reason instead of being drawn as an empty frame.
 - The radiosonde comparison CSV names its height column `geopotential_height_km` (it was `bin_centre_km`): the comparison bins are on geopotential height, not altitude.
 - In a profile CSV of scintillation files, the `# Units:` line listed one "seconds since <date>" per file for `time`, which counts from each file's own start; it now says that once.

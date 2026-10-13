@@ -214,7 +214,7 @@ def profile_figure(series: Sequence[dict], x_var: str, y_var: str,
                 ax.plot(s["x"], s["y"], color=c, alpha=0.75, linewidth=0.8)
             sm = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
             cb = fig.colorbar(sm, ax=ax, pad=0.02, fraction=0.05)
-            cb.set_label(vocab.axis_title(color_by), fontsize=SIZES[1])
+            cb.set_label(vocab.column_title(color_by), fontsize=SIZES[1])
             cb.ax.tick_params(labelsize=SIZES[2])
         else:
             for i, s in enumerate(series):
@@ -335,7 +335,7 @@ def map_figure(points: Sequence[dict], color_by: str | None = None,
             sc = ax.scatter(lon, lat, c=val, cmap="viridis", s=9, linewidths=0,
                             zorder=3)
             cb = fig.colorbar(sc, ax=ax, pad=0.015, fraction=0.025)
-            cb.set_label(vocab.axis_title(color_by), fontsize=SIZES[1])
+            cb.set_label(vocab.column_title(color_by), fontsize=SIZES[1])
             cb.ax.tick_params(labelsize=SIZES[2])
         else:
             ax.scatter(lon, lat, s=9, color=FOCAL, linewidths=0, zorder=3)
