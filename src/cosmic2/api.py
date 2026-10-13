@@ -126,7 +126,7 @@ def _decimate(a: np.ndarray, max_points: int) -> np.ndarray:
 def _granule_or_404(gid: str) -> dict:
     row = store.get_granule(gid)
     if row is None:
-        raise HTTPException(404, f"Unknown granule id {gid!r}")
+        raise HTTPException(404, f"No profile with id {gid!r}")
     if not os.path.exists(row["path"]):
         raise HTTPException(410, f"{row['file_name']} is indexed but missing from "
                                  f"the cache. Run 'Rebuild index' to clean up.")
@@ -457,7 +457,7 @@ def import_files(req: ImportRequest) -> dict:
         elif p.is_file():
             found.append(str(p))
     if not found:
-        raise HTTPException(400, "No netCDF granules found at the given paths")
+        raise HTTPException(400, "No netCDF files (.nc or _nc) found at the given paths")
     return _clean(fetch.import_local_files(found, req.product))
 
 

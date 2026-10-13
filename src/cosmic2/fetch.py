@@ -246,7 +246,7 @@ class DownloadManager:
             job.result = res
             job.indexed = res["indexed"]
             job.state, job.phase = "completed", "done"
-            job.message = f"Indexed {res['indexed']} granules ({res['failed']} unreadable)"
+            job.message = f"Indexed {res['indexed']} files ({res['failed']} unreadable)"
         except Exception as exc:  # noqa: BLE001 - surfaced to the UI
             job.state, job.error = "failed", f"{type(exc).__name__}: {exc}"
         finally:
@@ -298,13 +298,13 @@ class DownloadManager:
             job.state = "cancelled" if job.stopped() else "completed"
             job.phase = "done"
             n_bytes = job.result.get("bytes", 0)
-            job.message = (f"{job.extracted} granules ready "
+            job.message = (f"{job.extracted} files ready "
                            f"({n_bytes / 1024 ** 2:.1f} MB on disk"
                            + (f", {job.bytes_done / 1024 ** 2:.1f} MB transferred)"
                               if job.bytes_done else ")"))
         except Cancelled:
             job.state, job.phase = "cancelled", "done"
-            job.message = (f"Cancelled after {job.extracted} granules"
+            job.message = (f"Cancelled after {job.extracted} files"
                            + (" (kept and indexed)" if job.indexed else ""))
         except requests.RequestException as exc:
             job.state, job.phase = "failed", "done"
@@ -317,7 +317,7 @@ class DownloadManager:
 
     @staticmethod
     def _kept_note(job: Job) -> str:
-        return (f" ({job.indexed} granules received before the error were kept "
+        return (f" ({job.indexed} files received before the error were kept "
                 f"and indexed)") if job.indexed else ""
 
     def _index(self, job: Job, url: str, dest: Path, metas: list[dict],
@@ -439,7 +439,7 @@ class DownloadManager:
                     job.extracted += 1
                     if job.extracted % 10 == 0 or job.extracted <= 3:
                         job.message = (
-                            f"{job.extracted} granules"
+                            f"{job.extracted} files"
                             + (f" of {target}" if target else "")
                             + f" - {job.bytes_done / 1024 ** 2:.0f} MB transferred")
                     if target and job.extracted >= target:

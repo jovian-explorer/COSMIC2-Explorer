@@ -91,8 +91,9 @@ function renderManifest(date, res) {
   clear(list);
   if (!manifest.length) {
     $('#manifest-note').textContent =
-      `Nothing published for ${date}. Near-real-time data appears within hours; ` +
-      `post-processed streams lag by months.`;
+      `Nothing published for ${date} in this stream. Near-real-time files appear within ` +
+      `hours of observation; for COSMIC-2 the post-processed stream holds only in-situ ` +
+      `(IVM) files of 2019-2022.`;
     return;
   }
   $('#manifest-note').textContent =
