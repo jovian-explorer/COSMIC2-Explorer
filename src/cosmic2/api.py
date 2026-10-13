@@ -1202,7 +1202,10 @@ def _latlon(meta: dict) -> str:
 
 def _build_figure(req: FigureRequest, rows: list[dict]):
     if req.kind == "coverage":
-        return plotting.coverage_figure(store.coverage(), title=req.title)
+        # the selection's products (it showed every file indexed, so one
+        # occultation counted four times with its atmPrf, wetPf2 and models)
+        return plotting.coverage_figure(
+            store.coverage(products=sorted({r["product"] for r in rows})), title=req.title)
     if req.kind == "map":
         return plotting.map_figure(rows, req.color_field, title=req.title,
                                    caption=req.caption)

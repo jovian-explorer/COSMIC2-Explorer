@@ -169,8 +169,8 @@ def _draw_basemap(ax, resolution: str = "110m") -> None:
     ax.set_ylim(-90, 90)
     ax.set_xticks(range(-180, 181, 60))
     ax.set_yticks(range(-90, 91, 30))
-    ax.set_xlabel("Longitude [deg E]")
-    ax.set_ylabel("Latitude [deg N]")
+    ax.set_xlabel("Longitude [°E]")
+    ax.set_ylabel("Latitude [°N]")
     ax.set_aspect("equal", adjustable="box")
     ax.grid(alpha=0.15, linewidth=0.4)
 
@@ -365,7 +365,7 @@ def coverage_figure(cov: dict, title: str = "", dpi: int | None = None) -> Figur
             sc = ax0.scatter(lon, lat, c=n, cmap="magma_r", s=(b * 2.2) ** 2 / 6,
                              marker="s", linewidths=0, zorder=3)
             cb = fig.colorbar(sc, ax=ax0, pad=0.015, fraction=0.025)
-            cb.set_label(f"profiles per {b:g}x{b:g} deg cell", fontsize=SIZES[1])
+            cb.set_label(f"profiles per {b:g}° × {b:g}° cell", fontsize=SIZES[1])
             cb.ax.tick_params(labelsize=SIZES[2])
         ax0.set_title(safe_mathtext(title or "Where the profiles are"), fontsize=SIZES[0])
 
@@ -375,7 +375,7 @@ def coverage_figure(cov: dict, title: str = "", dpi: int | None = None) -> Figur
             ax1.barh([r["lat"] for r in lh], [r["n"] for r in lh], height=4.4,
                      color=FOCAL, linewidth=0)
         ax1.set_xlabel("Profiles")
-        ax1.set_ylabel("Latitude [deg N]")
+        ax1.set_ylabel("Latitude [°N]")
         ax1.set_title("Latitude sampling", fontsize=SIZES[0])
 
         ax2 = fig.add_subplot(gs[1, 1])

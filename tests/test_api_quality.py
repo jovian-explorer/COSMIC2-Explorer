@@ -254,3 +254,13 @@ def test_averages_section_and_map_say_which_missions_they_pool():
                         ("/api/climatology/section", {"field": "Temp", "top_km": 10, "step_km": 1}),
                         ("/api/climatology/map", {"column": "tropopause.height_km"})):
         assert post(path, dict(s, **extra))["missions"] == {"COSMIC-2": 2}, path
+
+
+def test_coverage_figure_counts_the_selected_products_only(monkeypatch):
+    from cosmic2 import plotting, store
+    seen = {}
+    real = store.coverage
+    monkeypatch.setattr(store, "coverage", lambda **k: seen.setdefault("k", k) and real(**k))
+    post("/api/local/load-samples", {})
+    post("/api/export/figure", {"kind": "coverage", "search": {"products": ["wetPf2"]}})
+    assert seen["k"]["products"] == ["wetPf2"]
