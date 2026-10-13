@@ -106,3 +106,18 @@ def test_scatter_figure_titles_name_the_diagnostics():
                  if isinstance(v, (int, float)) and not isinstance(v, bool)}
     cols -= {"good", "ducting.critical_gradient"}   # a constant, not offered
     assert cols and cols <= set(vocab.DIAG_COLUMNS), cols - set(vocab.DIAG_COLUMNS)
+
+
+def test_profile_figure_gives_the_height_its_units():
+    items = [{"x": [1.0, 2.0], "y": [0.0, 1.0], "label": "a"}]
+    fig = plotting.profile_figure(items, "Temp", "MSL_alt", dpi=72)
+    assert fig.axes[0].get_ylabel() == "Altitude above mean sea level [km]"
+    fig = plotting.profile_figure(items, "ion_dens", "elapsed_h", dpi=72)
+    assert fig.axes[0].get_ylabel() == "Time since the first sample [h]"
+
+
+def test_composite_figure_of_no_group_says_so():
+    import pytest
+    with pytest.raises(ValueError, match="nothing to draw"):
+        plotting.composite_figure({"grid": [0.0, 1.0], "groups": {}, "min_count": 3,
+                                   "field": "Temp", "vertical": "MSL_alt"})

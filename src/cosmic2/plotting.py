@@ -180,7 +180,7 @@ def _draw_basemap(ax, resolution: str = "110m") -> None:
 # ---------------------------------------------------------------------------
 
 def profile_figure(series: Sequence[dict], x_var: str, y_var: str,
-                   title: str = "", x_units: str = "", y_units: str = "",
+                   title: str = "", x_units: str = "", y_units: str | None = None,
                    color_by: str | None = None, logx: bool = False,
                    invert_y: bool = False, caption: str = "",
                    figsize: tuple[float, float] = (3.6, 4.4),
@@ -234,7 +234,8 @@ def profile_figure(series: Sequence[dict], x_var: str, y_var: str,
             if len(series) > 1:
                 _series_key(ax, labels, colors)
 
-        ax.set_xlabel(x_label or vocab.axis_title(x_var, x_units))
+        # the height's units from the vocabulary unless given; long titles wrap
+        ax.set_xlabel(x_label or vocab.axis_title(x_var, x_units), wrap=True)
         ax.set_ylabel(vocab.axis_title(y_var, y_units))
         if logx:
             _log_x(ax)
@@ -260,6 +261,11 @@ def composite_figure(comp: dict, show: str = "mean", spread: str = "std",
     ``"std"`` (mean +/- 1 sigma), ``"p10p90"`` (10th-90th percentile) or
     ``"ci95"`` (95 % confidence interval of the mean).
     """
+    if not comp["groups"]:
+        # an empty frame with a caption about dropped groups was all it drew
+        raise ValueError(f"no group has {comp.get('min_count', 3)} or more profiles at any "
+                         "height, so there is nothing to draw; select more profiles or "
+                         "group them differently")
     with _styled(dpi):
         fig, ax = plt.subplots(figsize=figsize)
         grid = np.array(comp["grid"], dtype="float64")
