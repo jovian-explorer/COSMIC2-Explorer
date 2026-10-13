@@ -516,8 +516,12 @@ function drawMap() {
       coastlinewidth: 0.8,
       showcountries: true,
       countrycolor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#cbd5e1',
-      lataxis: {showgrid: true, gridcolor: isDark ? 'rgba(255, 255, 255, 0.06)' : '#e2e8f0', dtick: 30},
-      lonaxis: {showgrid: true, gridcolor: isDark ? 'rgba(255, 255, 255, 0.06)' : '#e2e8f0', dtick: 60},
+      // the whole globe, so a handful of profiles (the first-start examples)
+      // are seen in place rather than zoomed onto a patch of ocean
+      lataxis: {showgrid: true, gridcolor: isDark ? 'rgba(255, 255, 255, 0.06)' : '#e2e8f0', dtick: 30,
+                range: [-90, 90]},
+      lonaxis: {showgrid: true, gridcolor: isDark ? 'rgba(255, 255, 255, 0.06)' : '#e2e8f0', dtick: 60,
+                range: [-180, 180]},
       bgcolor: isDark ? '#0b0f17' : '#ffffff',
     },
   });
