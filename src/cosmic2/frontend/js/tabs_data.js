@@ -55,8 +55,9 @@ function updateSamplingHint() {
     ? 'The whole day will be transferred. For atmPrf that is over 2 GB.'
     : spread
       ? 'Fills an even quota for each UTC hour, so the sample spans the whole ' +
-        'day. The archive is read through to the end, so more is transferred ' +
-        'than is kept.'
+        'day. The archive keeps each day as one compressed file, so the whole ' +
+        'file is read (for atmPrf about 2 GB, wetPf2 about 180 MB) and only the ' +
+        'sample is kept.'
       : 'Takes profiles in archive order and stops as soon as the quota is met. ' +
         'Cheapest option, but covers only the start of the UTC day.';
 }
@@ -143,10 +144,18 @@ async function startDownload(f, button) {
     good_only: $('#get-goodonly').checked,
   };
   if (days > 1) req.date_end = end;
-  if (raw === 0 && (f.size_bytes || 0) * days > 400 * 1024 ** 2 &&
-      !confirm(`A whole day of ${f.label} is ${bytes(f.size_bytes)}` +
+  // A spread sample reads the whole day file too (the archive offers only one
+  // compressed file per day, which cannot be read in the middle): a sample
+  // of 120 atmPrf transferred over 2 GB without a word.
+  const whole = raw === 0 || $('#get-sampling').value === 'spread';
+  if (whole && (f.size_bytes || 0) * days > 400 * 1024 ** 2 &&
+      !confirm((raw === 0 ? `A whole day of ${f.label} is ${bytes(f.size_bytes)}`
+                          : `To spread ${raw} profiles over the day, the whole day file of ` +
+                            `${f.label} (${bytes(f.size_bytes)}) is read`) +
                (days > 1 ? `; ${days} days are about ${bytes(f.size_bytes * days)}` : '') +
-               '. Download all of it?')) return;
+               (raw === 0 ? '. Download all of it?'
+                          : '. Go ahead? (Cancel, then choose "First profiles of the day", to ' +
+                            'transfer only a few MB.)'))) return;
   await withBusy(button, 'Queued', async () => {
     await api.download(req);
     toast(days > 1 ? `Fetching ${f.label} for ${days} days, ${f.date} to ${end}.`
