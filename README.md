@@ -78,8 +78,6 @@ pip install "git+https://github.com/jovian-explorer/COSMIC2-Explorer.git"
 cosmic2-explorer                 # native window, or your browser as a fallback
 ```
 
-The repository is private, so pip needs GitHub access (for example a logged-in `gh` or a credential helper).
-
 ### Option 3: development setup
 
 ```bash
