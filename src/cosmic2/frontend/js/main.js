@@ -135,7 +135,7 @@ const SETTING_LABELS = {
   default_stream: 'Default stream', default_product: 'Default product',
   qc_require_good: 'Search only profiles the archive marked good', grid_top_km: 'Export grid top (km)',
   grid_step_km: 'Export grid step (km)', analysis_workers: 'CPU workers (0 = automatic)',
-  plot_dpi: 'Plot DPI (export)', plot_theme: 'Plot theme', ui_theme: 'Interface theme',
+  plot_dpi: 'Resolution of exported figures (DPI)', plot_theme: 'Plot theme', ui_theme: 'Interface theme',
   ui_font_size: 'Base font size (px)', ui_mode: 'Interface mode', units_temperature: 'Temperature units',
   explain_mode: 'Plain-language captions', auto_update: 'Update automatically (weekly)',
 };
@@ -376,7 +376,7 @@ function settingsBody() {
     el('label', {}, 'Base Font Size (px) ',
       el('input', {type: 'number', id: 's-font', value: state.meta.settings.ui_font_size || 14, min: 10, max: 24})
     ),
-    el('label', {}, 'Universal UI Zoom / Scale ',
+    el('label', {title: 'Makes text and controls bigger or smaller everywhere in the app.'}, 'Size of everything on screen ',
       el('select', {id: 's-font-scale', onchange: (e) => applyFontScale(parseFloat(e.target.value))},
         el('option', {value: '0.85', selected: Math.round(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--font-scale') || '1') * 100) === 85}, 'Compact (85%)'),
         el('option', {value: '0.92', selected: Math.round(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--font-scale') || '1') * 100) === 92}, 'Small (92%)'),
@@ -387,7 +387,7 @@ function settingsBody() {
         el('option', {value: '1.45', selected: Math.round(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--font-scale') || '1') * 100) === 145}, 'Maximum Accessibility (145%)')
       )
     ),
-    el('label', {}, 'Interface Mode ',
+    el('label', {title: 'Educational shows the explanations under each control; Research hides them to save space.'}, 'Interface Mode ',
       el('select', {id: 's-mode'},
         el('option', {value: 'educational', selected: state.meta.settings.ui_mode !== 'research'}, 'Educational (More explanations)'),
         el('option', {value: 'research', selected: state.meta.settings.ui_mode === 'research'}, 'Research (Compact interface)')
@@ -401,12 +401,12 @@ function settingsBody() {
         el('option', {value: 'dark', selected: state.meta.settings.plot_theme === 'dark'}, 'Dark')
       )
     ),
-    el('label', {}, 'Plot DPI (Export) ',
+    el('label', {title: 'Dots per inch of exported images: 300 is print quality, 150 is enough for a screen.'}, 'Resolution of exported figures (DPI) ',
       el('input', {type: 'number', id: 's-plot-dpi', value: state.meta.settings.plot_dpi || 300, min: 50, max: 1200, step: 10})
     ),
     el('hr'),
     el('h3', {}, 'Science Defaults'),
-    el('label', {}, 'Default Stream ',
+    el('label', {title: 'Which archive stream the Get data tab starts on: near-real-time has the most recent days.'}, 'Default Stream ',
       // Built from the archive's own stream list ('postcal' was offered
       // here before, which is not a CDAAC stream).
       el('select', {id: 's-stream'},
@@ -425,11 +425,11 @@ function settingsBody() {
       el('input', {type: 'checkbox', id: 's-qc', checked: state.meta.settings.qc_require_good}),
       ' Search only profiles the archive marked good (QC)'
     ),
-    el('label', {}, 'Export grid top (km) ',
+    el('label', {title: 'Regridded exports put every profile on the same heights, from 0 up to this top.'}, 'Export grid top (km) ',
       el('input', {type: 'number', id: 's-grid-top', min: 5, step: 5,
                    value: state.meta.settings.grid_top_km || 60})
     ),
-    el('label', {}, 'Export grid step (km) ',
+    el('label', {title: 'The spacing of those common heights: 0.2 km keeps most detail of the neutral profiles.'}, 'Export grid step (km) ',
       el('input', {type: 'number', id: 's-grid-step', min: 0.01, step: 'any',
                    value: state.meta.settings.grid_step_km || 0.2})
     ),
@@ -442,7 +442,7 @@ function settingsBody() {
     ),
     el('p', {class: 'hint'},
       'Composites, the diagnostics table, regridded exports and indexing read ' +
-      'granules on this many processes when the selection is large (24 or more ' +
+      'files on this many processes when the selection is large (24 or more ' +
       'profiles). 1 runs everything in the main process.'),
     el('hr'),
     el('h3', {}, 'Updates'),

@@ -124,6 +124,7 @@ The detailed list follows.
 
 ### Interface
 
+- Settings speak plainly: "Size of everything on screen" (was "Universal UI Zoom / Scale"), "Resolution of exported figures (DPI)" (was "Plot DPI (Export)"), and every setting whose purpose was not obvious (interface mode, default stream, export grid top and step) explains itself in a tooltip.
 - The Explore map always shows the whole globe; with only a few profiles (the example files on a first start) it zoomed onto a patch of ocean where the dots could not be placed.
 - The mission card says, for KOMPSAT-5 and the wetPf2 quantities, that every rising KOMPSAT-5 occultation of the days checked (2026-09-26 and 27) failed CDAAC's wetPf2 retrieval, so the comparison covers setting occultations only.
 - Download progress and errors say files rather than granules ("24 files ready", "No netCDF files (.nc or _nc) found at the given paths", "No profile with id ..."), and an empty archive day no longer says post-processed streams lag by months (COSMIC-2's postProc holds only IVM files of 2019-2022).
