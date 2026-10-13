@@ -659,8 +659,19 @@ def plot_profiles(req: PlotRequest) -> dict:
         "field": req.field, "vertical": req.vertical, "units": units,
         "field_label": _overlay_title(req.field, products, units),
         "vertical_label": vocab.axis_title(req.vertical),
-        "series": out, "skipped": skipped,
+        "series": out, "skipped": skipped, "products": sorted(products),
     })
+
+
+def _what_is_drawn(rows: list[dict], n: int) -> str:
+    """'2 COSMIC-2 profiles.', '3 COSMIC-2 and 1 PAZ profiles.', or for an
+    in-situ file '1 day of in-situ samples (ivmL2m).'"""
+    if rows and all(r["product"] == "ivmL2m" for r in rows):
+        return f"{n} day{'s' if n != 1 else ''} of in-situ samples (ivmL2m)."
+    missions = _missions_of(rows)
+    if len(missions) > 1:
+        return " and ".join(f"{k} {m}" for m, k in missions.items()) + " profiles."
+    return f"{n} {next(iter(missions), '')} profile{'s' if n != 1 else ''}.".replace("  ", " ")
 
 
 def _overlay_title(field: str, products: set[str], units: str) -> str:
@@ -1262,7 +1273,9 @@ def _build_figure(req: FigureRequest, rows: list[dict]):
         items, req.field, req.vertical, title=req.title,
         x_units=series["units"], x_label=series["field_label"],
         color_by="Lat", logx=req.logx,
-        caption=req.caption or f"{len(items)} COSMIC-2 profiles.")
+        caption=req.caption or _what_is_drawn(
+            [r for r in rows if r["file_name"] in {s["file_name"] for s in series["series"]}],
+            len(items)))
 
 
 @app.get("/api/exports")

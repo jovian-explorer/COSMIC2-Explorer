@@ -246,7 +246,10 @@ async function drawProfiles() {
   });
   Plotly.react('profile-plot', traces, layout, PLOT_CONFIG);
   $('#profile-count').textContent = `${res.series.length} profiles`;
-  const parts = [`${res.series.length} profile(s).`];
+  const n = res.series.length;
+  const parts = [(res.products || []).join() === 'ivmL2m'
+    ? `${n} day${n === 1 ? '' : 's'} of in-situ samples (ivmL2m), one point per second along the orbit.`
+    : `${n} profile${n === 1 ? '' : 's'}.`];
   if (many) parts.push('Line colour runs from blue at the south to red at the north.');
   if (res.skipped.length) {
     // say which products were left out and why, so a mixed selection is clear
@@ -256,7 +259,7 @@ async function drawProfiles() {
       `${whys.length} ${p} profile${whys.length > 1 ? 's' : ''} not drawn (${whys[0]})`)
       .join('; ') + '. Choose a quantity and height those products carry, or select one product.');
   }
-  if (res.series[0] && res.series[0].x.length >= 900) {
+  if (res.series[0] && res.series[0].x.length >= 900 && (res.products || []).join() !== 'ivmL2m') {
     parts.push('Displayed at reduced vertical resolution; exports use every level.');
   }
   if (res.series[0] && res.series[0].provenance && res.series[0].provenance.length > 0) {

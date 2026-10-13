@@ -265,3 +265,12 @@ def test_coverage_figure_counts_the_selected_products_only(monkeypatch):
     post("/api/local/load-samples", {})
     post("/api/export/figure", {"kind": "coverage", "search": {"products": ["wetPf2"]}})
     assert seen["k"]["products"] == ["wetPf2"]
+
+
+def test_figure_captions_say_what_is_drawn():
+    from cosmic2 import api
+    assert api._what_is_drawn([{"product": "ivmL2m", "sat": "C2E1"}], 1) == \
+        "1 day of in-situ samples (ivmL2m)."
+    assert api._what_is_drawn([{"product": "wetPf2", "sat": "C2E1"}] * 2, 2) == "2 COSMIC-2 profiles."
+    assert api._what_is_drawn([{"product": "wetPf2", "sat": "C2E1"},
+                               {"product": "wetPf2", "sat": "PAZ1"}], 2) == "1 COSMIC-2 and 1 PAZ profiles."

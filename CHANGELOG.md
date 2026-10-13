@@ -124,6 +124,7 @@ The detailed list follows.
 
 ### Interface
 
+- Captions say what is drawn: an IVM day is "1 day of in-situ samples (ivmL2m)" rather than "1 profile(s)" (and no longer mentions a reduced vertical resolution), and an exported profile figure counts its profiles by mission ("3 COSMIC-2 and 1 PAZ profiles") instead of calling every profile COSMIC-2.
 - Settings speak plainly: "Size of everything on screen" (was "Universal UI Zoom / Scale"), "Resolution of exported figures (DPI)" (was "Plot DPI (Export)"), and every setting whose purpose was not obvious (interface mode, default stream, export grid top and step) explains itself in a tooltip.
 - The Explore map always shows the whole globe; with only a few profiles (the example files on a first start) it zoomed onto a patch of ocean where the dots could not be placed.
 - The mission card says, for KOMPSAT-5 and the wetPf2 quantities, that every rising KOMPSAT-5 occultation of the days checked (2026-09-26 and 27) failed CDAAC's wetPf2 retrieval, so the comparison covers setting occultations only.
