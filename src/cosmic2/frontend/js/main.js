@@ -783,10 +783,12 @@ async function boot() {
   if (summary && summary.n_granules) {
     await runSearch().catch(() => {});
   } else if (firstStart() && await loadSamples().then(() => true, () => false)) {
-    // Something real to look at straight away: the bundled example day
+    // Something real to look at straight away: the bundled example day, on
+    // the tab that shows it (the app opens on Get data)
+    $('button[data-tab=explore]').click();
     banner('Showing the example files that come with the app (real COSMIC-2 ' +
-           'profiles of 19 July 2026). Pick a profile on the map or in the table, or ' +
-           'download any other day on the "Get data" tab.');
+           'profiles of 19 July 2026). Tick a row in the table below, then open ' +
+           'Profiles and press Draw; download any other day on the "Get data" tab.');
   } else {
     banner('No profiles on this computer yet. Pick a date and fetch some on the ' +
            '"Get data" tab, or load the bundled examples to try things out.');

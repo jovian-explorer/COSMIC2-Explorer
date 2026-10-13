@@ -124,6 +124,7 @@ The detailed list follows.
 
 ### Interface
 
+- First start, walked through with the release build in a fresh data folder: the example files were loaded but the app stayed on the Get data tab while its banner said to pick a profile "on the map or in the table". It now opens the Explore tab and the banner says the three steps (tick a row, open Profiles, press Draw). The hint under Draw no longer says to select profiles when some are already selected.
 - The gravity-wave settings of the diagnostic map explain themselves in plain words: what a gravity wave is, what the layer and the background do, how the two background choices differ (with a tooltip on each), and that atmPrf is the product to use.
 - Averages, latitude-height sections and diagnostic maps say when they pool missions ("Selected: 743 COSMIC-2 and 171 PAZ profiles; ..."), as the tropopause and weather-model captions already did; found in a browser pass with a day of COSMIC-2 and PAZ wetPf2 and echPrf, where the section, map and averages pooled the two silently.
 - A profile plot of a mixed selection says which products it left out and why, product by product ("1 ionPrf profile not drawn (it has no temperature (Temp) against altitude above mean sea level)"), and what to do, instead of "81 skipped: no Temp on MSL_alt".
