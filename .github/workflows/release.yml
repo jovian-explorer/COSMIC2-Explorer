@@ -83,8 +83,12 @@ jobs:
           sha256sum *.zip *.tar.gz > SHA256SUMS.txt
           cat SHA256SUMS.txt
       - name: Write the release notes
+        id: notes
         shell: bash
         run: |
+          # Release title "COSMIC-2 Explorer 0.1.0" (or "... 0.1.0 build 3" for v0.1.0-build.3)
+          ver="${GITHUB_REF_NAME#v}"
+          echo "title=COSMIC-2 Explorer ${ver/-build./ build }" >> "$GITHUB_OUTPUT"
           # The changes since the previous tag, one line per commit; the app shows
           # these as "What's new" after it has updated itself.
           prev=$(git describe --tags --abbrev=0 --match 'v[0-9]*' "${GITHUB_REF_NAME}^" 2>/dev/null || true)
@@ -110,6 +114,7 @@ jobs:
             artifacts/*.zip
             artifacts/*.tar.gz
             artifacts/SHA256SUMS.txt
+          name: ${{ steps.notes.outputs.title }}
           body_path: release-notes.md
           # Until the public 1.0.0 release, every build is a pre-release (version 0.x);
           # the updater reads the release list, so it sees pre-releases too.
