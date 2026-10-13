@@ -133,7 +133,7 @@ const SETTING_LABELS = {
   request_timeout_s: 'Download timeout (s)', listing_cache_hours: 'Keep archive listings for (hours)',
   cache_quota_gb: 'Cache quota (GB)', warn_download_mb: 'Warn before downloads larger than (MB)',
   default_stream: 'Default stream', default_product: 'Default product',
-  qc_require_good: 'Require Good QC by default', grid_top_km: 'Export grid top (km)',
+  qc_require_good: 'Search only profiles the archive marked good', grid_top_km: 'Export grid top (km)',
   grid_step_km: 'Export grid step (km)', analysis_workers: 'CPU workers (0 = automatic)',
   plot_dpi: 'Plot DPI (export)', plot_theme: 'Plot theme', ui_theme: 'Interface theme',
   ui_font_size: 'Base font size (px)', ui_mode: 'Interface mode', units_temperature: 'Temperature units',
@@ -423,7 +423,7 @@ function settingsBody() {
     ),
     el('label', {class: 'check'},
       el('input', {type: 'checkbox', id: 's-qc', checked: state.meta.settings.qc_require_good}),
-      ' Require Good QC by default'
+      ' Search only profiles the archive marked good (QC)'
     ),
     el('label', {}, 'Export grid top (km) ',
       el('input', {type: 'number', id: 's-grid-top', min: 5, step: 5,
