@@ -482,3 +482,27 @@ def test_ecmwf_bending_angle_is_not_called_ionosphere_corrected():
     assert analysis.quantity_label("Bend_ang", "echPrf") == "Bending angle, simulated (ECMWF)"
     assert "ionosphere" not in vocab.info("Bend_ang", "echPrf")["label"]
     assert vocab.VAR_INFO["Bend_ang_model"]["formula"].startswith(r"\alpha(a)")
+
+
+def test_headless_example_runs_on_the_bundled_samples(tmp_path):
+    import subprocess
+    import sys
+    root = Path(__file__).resolve().parents[1]
+    env = dict(os.environ, COSMIC2_EXPLORER_HOME=str(tmp_path),
+               PYTHONPATH=str(root / "src"))
+    out = subprocess.run([sys.executable, str(root / "examples" / "headless.py")],
+                         env=env, capture_output=True, text=True, timeout=120)
+    assert out.returncode == 0, out.stderr
+    assert "wetPf2" in out.stdout and "tropopause 12.1 km" in out.stdout
+    assert list((tmp_path / "exports").glob("headless_example_*.csv"))
+
+
+def test_readme_python_snippet_runs(tmp_path, monkeypatch):
+    import re
+    from cosmic2 import exporters
+    monkeypatch.setattr(exporters, "EXPORT_DIR", tmp_path)
+    readme = (Path(__file__).resolve().parents[1] / "README.md").read_text(encoding="utf-8")
+    code = re.search(r"## Using it from Python.*?```python\n(.*?)```", readme, re.S).group(1)
+    scope: dict = {}
+    exec(code, scope)
+    assert scope["d"]["tropopause"]["found"] and list(tmp_path.glob("*.csv"))

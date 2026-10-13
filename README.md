@@ -144,6 +144,35 @@ Work that reads many granules (composites, profile plots, the diagnostics table,
 
 ---
 
+## Using it from Python
+
+The readers and diagnostics behind the app are ordinary Python functions, so a script or notebook can use them without opening the window (install with Option 2 or 3 above). [`examples/headless.py`](examples/headless.py) runs on the bundled example files, or on a folder of your own CDAAC files: `python examples/headless.py path/to/folder`.
+
+```python
+from cosmic2 import analysis, exporters, readers
+from cosmic2.config import sampledata_dir
+
+path = str(next(sampledata_dir().glob("wetPf2_*")))
+meta = readers.quick_meta(path)            # time (UTC), lat, lon, setting/rising, quality ...
+g = readers.load(path)                     # g.data: variables as numpy arrays, g.units
+d = analysis.diagnostics(g)                # tropopause, cold point, gravity waves, ducting ...
+extra = analysis.derived_fields(g)         # potential temperature, N^2, density ...
+comp = analysis.composite([(path, meta)], "Temp", top_km=30, min_count=1)
+exporters.export_profiles_csv([meta])      # CSV with provenance in the exports folder
+```
+
+| Module | What it gives you |
+|---|---|
+| `cosmic2.readers` | `load(path)` reads any supported product into a `Granule`; `quick_meta(path)` the one-line summary the index stores |
+| `cosmic2.analysis` | `diagnostics(granule)`, `derived_fields(granule)`, `composite(...)` and the single-profile functions (`tropopause_wmo`, `cold_point`, `ionosphere_peak`, ...) |
+| `cosmic2.climatology` | `cross_section`, `diagnostic_map`, `tropopause_table`, `pair_rows` / `product_differences` |
+| `cosmic2.exporters` | `export_profiles_csv`, `export_grid_csv`, `export_netcdf`, `export_metadata_csv` |
+| `cosmic2.fetch`, `cosmic2.store` | downloading from CDAAC and the local index the app searches |
+
+Exports go to the app's data folder (`exports/`); set `COSMIC2_EXPLORER_HOME` to use another. These are the app's own functions, not a separate stable API: names can change between releases, and the CHANGELOG says when they do.
+
+---
+
 ## Building the standalone app
 
 ```bash
@@ -177,6 +206,7 @@ COSMIC2-Explorer/
 │   ├── config.py             Paths, settings, citation
 │   ├── frontend/             Static HTML/CSS/JS (no build step), bundled Plotly, TopoJSON, KaTeX
 │   └── sampledata/           12 real CDAAC granules (7 products) for offline use
+├── examples/headless.py      Using the readers and diagnostics from a script
 ├── tests/                    Pytest suite: science, API, exports, frontend, compliance, EXE launch
 ├── packaging/                PyInstaller spec (Windows, macOS, Linux) and launcher
 ├── scripts/build_exe.py      Cross-platform build script
