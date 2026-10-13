@@ -408,6 +408,16 @@ class TestAPI:
         assert "indexed" in res
         assert res["indexed"] >= 1
 
+    def test_upload_truncated_file_reports_reason_and_is_not_kept(self):
+        sample = next(p for p in sampledata_dir().iterdir() if p.name.endswith("_nc"))
+        req = urllib.request.Request(
+            BASE + "/api/local/upload-file?filename=cut_upload.nc",
+            data=sample.read_bytes()[:2000], method="POST",
+            headers={"Content-Type": "application/octet-stream"})
+        res = json.loads(urllib.request.urlopen(req, timeout=10).read())
+        assert res["indexed"] == 0 and res["failed"][0]["error"]
+        assert not os.path.exists(res["saved_path"])
+
 
 
 # ---------------------------------------------------------------------------

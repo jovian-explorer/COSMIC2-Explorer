@@ -480,6 +480,9 @@ async def upload_file(request: Request, filename: str = Query(...)) -> dict:
         f.write(content)
 
     res = fetch.import_local_files([str(target_path)])
+    if res["failed"]:
+        # an unreadable file (cut off, not a profile) is not kept in the cache
+        target_path.unlink(missing_ok=True)
     return _clean({"saved_path": str(target_path), **res})
 
 

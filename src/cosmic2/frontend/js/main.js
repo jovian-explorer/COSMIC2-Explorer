@@ -722,8 +722,11 @@ function wireDragAndDrop() {
     const allFiles = Array.from(dt.files);
     const ncFiles = allFiles.filter((f) => f.name.endsWith('.nc') || f.name.endsWith('_nc'));
 
+    const others = allFiles.length - ncFiles.length;
     if (!ncFiles.length) {
-      toast('Please drop valid NetCDF files (*.nc or *_nc).', 'bad');
+      toast('Only netCDF profile files (*.nc or *_nc) can be added; ' +
+            (allFiles.some((f) => f.name.endsWith('.sp3') || f.name.endsWith('_sp3'))
+              ? 'leoOrb orbit files (SP3) are not read by this app.' : 'nothing was added.'), 'bad');
       return;
     }
 
@@ -732,19 +735,29 @@ function wireDragAndDrop() {
     try {
       const paths = ncFiles.map((f) => f.path).filter(Boolean);
       let indexedTotal = 0;
+      const failed = [];
       if (paths.length === ncFiles.length) {
         const res = await api.importFiles(paths);
         indexedTotal = res.indexed || 0;
+        failed.push(...(res.failed || []));
       } else {
         for (const file of ncFiles) {
           const res = await api.uploadFile(file);
           if (res && res.indexed) {
             indexedTotal += res.indexed;
           }
+          failed.push(...((res && res.failed) || []));
         }
       }
 
-      toast(`Added ${indexedTotal} ${indexedTotal === 1 ? 'file' : 'files'}.`, 'good');
+      // say what was left out and why, not only how many were added
+      const notes = [];
+      if (failed.length) {
+        notes.push(`${failed.length} could not be read (${failed[0].error})`);
+      }
+      if (others) notes.push(`${others} not netCDF, skipped`);
+      toast(`Added ${indexedTotal} ${indexedTotal === 1 ? 'file' : 'files'}` +
+            (notes.length ? `; ${notes.join('; ')}.` : '.'), failed.length ? 'bad' : 'good');
       await refreshLocal();
       await refreshFacets();
       await runSearch();

@@ -192,3 +192,26 @@ def test_map_and_stats_follow_an_ionprf_search(page):
     assert page.eval_on_selector("#m-col", "e => e.value") == "ionosphere.foF2_MHz"
     _press(page, "#btn-stats")
     assert "terrain" not in page.inner_text("#st-caption")
+
+
+def test_drop_mixed_files_says_what_was_added_and_what_was_not(page):
+    import base64
+
+    from cosmic2.config import sampledata_dir
+    good = next(sampledata_dir().glob("echPrf_*_nc"))
+    data = base64.b64encode(good.read_bytes()).decode()
+    page.goto(BASE + "/")
+    page.wait_for_selector("#version-tag:not(:empty)")
+    page.evaluate("""([name, b64]) => {
+        const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+        const dt = new DataTransfer();
+        dt.items.add(new File([bytes], name));
+        dt.items.add(new File([bytes.slice(0, 2000)], 'cut_' + name));
+        dt.items.add(new File(['orbit'], 'leoOrb_C2E1.2026.200.sp3'));
+        window.dispatchEvent(new DragEvent('drop', {dataTransfer: dt}));
+    }""", [good.name, data])
+    page.wait_for_selector("#toasts .toast:has-text('Added')")
+    msg = page.inner_text("#toasts .toast:has-text('Added')")
+    assert "Added 1 file" in msg and "1 could not be read" in msg
+    assert "1 not netCDF" in msg
+    assert not page.errors
