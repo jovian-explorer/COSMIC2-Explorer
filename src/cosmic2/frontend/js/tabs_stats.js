@@ -526,6 +526,10 @@ async function drawMissions() {
         'COSMIC-2\'s GPS, GLONASS and Galileo occultations. Differences between RO records are smallest ' +
         'from 8 to 25 km and grow above, mainly through retrieval choices (Steiner et al. 2020, ' +
         'https://doi.org/10.5194/amt-13-2547-2020). ' : '') +
+    (res.other === 'kompsat5' && !['refractivity'].includes(res.quantity)
+      ? 'KOMPSAT-5 records rising occultations as well as setting ones, but on the days checked ' +
+        '(2026-09-26 and 27) every rising one failed CDAAC\'s wetPf2 retrieval, so its good wetPf2 ' +
+        'profiles, and this comparison, are of setting occultations only. ' : '') +
     'Collocation weights after Rieckh et al. (2021), https://doi.org/10.1175/JTECH-D-20-0209.1';
 }
 
