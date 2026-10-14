@@ -352,8 +352,8 @@ def archive_latest(stream: str = "nrt", level: str = "level2",
                    product: str | None = None, search_days: int = 14) -> dict:
     res = ARCHIVE.latest_available(stream, level, product, search_days)
     if res is None:
-        raise HTTPException(404, f"Nothing published in {stream}/{level} in the "
-                                 f"last {search_days} days")
+        raise HTTPException(404, f"Nothing published in {stream}/{level} in its "
+                                 f"{search_days} newest days")
     return res
 
 
@@ -930,7 +930,7 @@ def climatology_tropopause(req: TropopauseRequest) -> dict:
 class MissionCompareRequest(BaseModel):
     granule_ids: list[str] | None = None
     search: SearchRequest | None = None
-    other: Literal["paz", "kompsat5"] = "paz"
+    other: Literal["paz", "kompsat5", "metopb", "metopc", "cosmic1"] = "paz"
     quantity: Literal["temperature", "refractivity_1dvar", "refractivity"] = "temperature"
     max_km: float = Field(default=300.0, gt=0, le=2000)
     max_hours: float = Field(default=3.0, gt=0, le=24)

@@ -78,10 +78,38 @@ STREAMS: dict[str, dict] = {
         "levels": ["level2"],
         "mission": "kompsat5",
     },
+    "metopb-postProc": {
+        "label": "Metop-B post-processed (another mission)",
+        "blurb": "Profiles from the European weather satellite Metop-B (polar orbit, "
+                 "setting and rising occultations), processed by CDAAC into the same "
+                 "atmPrf, wetPf2 and echPrf files. Post-processed only: days appear about "
+                 "four months late (2016 onwards); a day's wetPf2 is about 12 MB.",
+        "levels": ["level2"],
+        "mission": "metopb",
+    },
+    "metopc-postProc": {
+        "label": "Metop-C post-processed (another mission)",
+        "blurb": "Profiles from the European weather satellite Metop-C (polar orbit), "
+                 "processed by CDAAC into the same atmPrf, wetPf2 and echPrf files. "
+                 "Post-processed only: days appear about four months late (2019 "
+                 "onwards); a day's wetPf2 is about 13 MB.",
+        "levels": ["level2"],
+        "mission": "metopc",
+    },
+    "cosmic1-repro2021": {
+        "label": "COSMIC-1 2021 reprocessing (2006-2019, the earlier mission)",
+        "blurb": "The six COSMIC-1 (FORMOSAT-3) satellites, COSMIC-2's predecessor, "
+                 "reprocessed by CDAAC in 2021 as one consistent record from 2006 to 2019: "
+                 "atmPrf, wetPf2 and ionPrf in the same formats. Busy early years are "
+                 "large (a 2008 day's wetPf2 is 65 MB, its atmPrf 440 MB).",
+        "levels": ["level2"],
+        "mission": "cosmic1",
+    },
 }
 
 # Satellite codes of the missions above, as in the file names (C2E1-C2E6 for COSMIC-2)
-MISSION_SATS = {"paz": ("PAZ1",), "kompsat5": ("KOM5",)}
+MISSION_SATS = {"paz": ("PAZ1",), "kompsat5": ("KOM5",), "metopb": ("MTPB",),
+                "metopc": ("MTPC",), "cosmic1": tuple(f"C00{i}" for i in range(1, 7))}
 
 
 def mission_of(stream: str) -> str:
@@ -100,6 +128,9 @@ COLLECTIONS: list[tuple[str, str]] = [
     ("provisional", "spaceWeather/level2"),
     ("paz-nrt", "level2"),
     ("kompsat5-nrt", "level2"),
+    ("metopb-postProc", "level2"),
+    ("metopc-postProc", "level2"),
+    ("cosmic1-repro2021", "level2"),
 ]
 
 # --------------------------------------------------------------------------
@@ -464,18 +495,23 @@ class Archive:
     def latest_available(self, stream: str = "nrt", level: str = "level2",
                          product: str | None = None, search_days: int = 14
                          ) -> dict | None:
-        """Walk backwards from today for the most recent day that has data."""
-        today = dt.datetime.now(dt.timezone.utc).date()
-        for back in range(search_days):
-            d = today - dt.timedelta(days=back)
-            year, doy = date_to_doy(d)
-            try:
-                found = self.files(stream, level, year, doy)
-            except requests.RequestException:
-                continue
-            if product:
-                found = [f for f in found if f.product == product]
-            if found:
-                return {"date": d.isoformat(), "year": year, "doy": doy,
-                        "products": sorted({f.product for f in found})}
+        """The newest day in the archive listing that has data (of ``product``),
+        trying at most ``search_days`` days.  The listing, not today's date, is
+        the start: post-processed and reprocessed streams end months or years
+        back."""
+        tried = 0
+        for year in reversed(self.years(stream, level)):
+            for doy in reversed(self.doys(stream, level, year)):
+                if tried >= search_days:
+                    return None
+                tried += 1
+                try:
+                    found = self.files(stream, level, year, doy)
+                except requests.RequestException:
+                    continue
+                if product:
+                    found = [f for f in found if f.product == product]
+                if found:
+                    return {"date": doy_to_date(year, doy).isoformat(), "year": year,
+                            "doy": doy, "products": sorted({f.product for f in found})}
         return None

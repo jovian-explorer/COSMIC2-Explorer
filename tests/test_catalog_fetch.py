@@ -240,9 +240,26 @@ def test_other_missions_have_their_own_archive_paths_and_streams():
     assert catalog.day_url("paz-nrt", "level2", 2026, 171).endswith("/gnss-ro/paz/nrt/level2/2026/171")
     assert catalog.day_url("kompsat5-nrt", "level2", 2026, 5).endswith("/gnss-ro/kompsat5/nrt/level2/2026/005")
     assert catalog.mission_of("rapid") == "cosmic2" and catalog.mission_of("paz-nrt") == "paz"
+    assert catalog.day_url("metopc-postProc", "level2", 2026, 151).endswith(
+        "/gnss-ro/metopc/postProc/level2/2026/151")
+    assert catalog.collection_url("cosmic1-repro2021", "level2").endswith(
+        "/gnss-ro/cosmic1/repro2021/level2")
     # the stream code is also the cache folder: it must be a valid folder name everywhere
     for s in catalog.STREAMS:
         assert all(c.isalnum() or c in "-_" for c in s), s
+
+
+def test_latest_day_comes_from_the_listing_not_from_today(monkeypatch):
+    """Post-processed streams end months back; empty newest days are skipped."""
+    arc = _archive()
+    tree = {"": ["2019/", "2020/", "README"], "/2020": ["001/", "002/"], "/2019": ["365/"]}
+    base = catalog.collection_url("metopc-postProc", "level2")
+    monkeypatch.setattr(arc, "list_dir", lambda url: tree.get(url[len(base):], []))
+    from types import SimpleNamespace
+    files = {(2020, 2): [], (2020, 1): [SimpleNamespace(product="wetPf2")]}
+    monkeypatch.setattr(arc, "files", lambda s, l, y, d: files.get((y, d), []))
+    assert arc.latest_available("metopc-postProc")["date"] == "2020-01-01"
+    assert arc.latest_available("metopc-postProc", search_days=1) is None
 
 
 def test_day_scan_lists_other_missions_only_when_asked(monkeypatch):

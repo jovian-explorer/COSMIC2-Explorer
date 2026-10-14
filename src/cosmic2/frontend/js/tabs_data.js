@@ -295,7 +295,9 @@ export async function refreshLocal() {
   }
 }
 
-const OTHER_MISSIONS = {PAZ1: 'PAZ', KOM5: 'KOMPSAT-5'};
+const OTHER_MISSIONS = {PAZ1: 'PAZ', KOM5: 'KOMPSAT-5', MTPB: 'Metop-B', MTPC: 'Metop-C',
+  C001: 'COSMIC-1', C002: 'COSMIC-1', C003: 'COSMIC-1', C004: 'COSMIC-1', C005: 'COSMIC-1',
+  C006: 'COSMIC-1'};
 
 /** Satellite filter choices: once another mission's files are on disk,
  *  COSMIC-2 as a whole too, so every statistic can leave the other mission

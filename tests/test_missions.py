@@ -22,6 +22,7 @@ def test_missions_are_told_apart_by_satellite_code():
     assert missions.mission_of_sat("C2E3") == "cosmic2"
     assert missions.mission_of_sat("PAZ1") == "paz"
     assert missions.mission_of_sat("KOM5") == "kompsat5"
+    assert missions.mission_of_sat("MTPC") == "metopc" and missions.mission_of_sat("C006") == "cosmic1"
     assert missions.mission_of_sat("G25") is None and missions.mission_of_sat(None) is None
 
 
