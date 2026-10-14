@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Metop-A (2016-2021) and TanDEM-X** streams as well, with their CDAAC data sets cited in exports; the mission card says when the two missions share no day, and notes Metop-A's 0.2-0.5 % low refractivity against ECMWF in October 2021. The data policy explains why NOAA's purchased commercial profiles (Spire, PlanetiQ, GeoOptics) are not offered.
+- **F2 peak**: a single-level spike is no longer taken for the peak, and the peak fit uses adjacent levels only. A COSMIC-1 profile had given NmF2 7.9e7 el/cm3 at 610 km; of 690 COSMIC-2 ionPrf, one peak moved (by 7 km).
+- **Search**: an end date without a time takes in the whole day.
 - **More missions**: Metop-B and Metop-C (post-processed, about four months behind) and the COSMIC-1 2021 reprocessing (2006-2019) can be downloaded through their own streams, filtered by satellite and, for Metop, compared with COSMIC-2 on the Statistics tab. Exports cite the CDAAC data set of every mission they hold.
 - **"Use most recent available" works for every stream**: it starts from the archive listing instead of walking back from today, so streams that end in the past (COSMIC-2 `postProc`, Metop, COSMIC-1) find their newest day.
 - **Using it from Python**: a README section and `examples/headless.py` show how to read, diagnose, average, export and download profiles from a script or notebook with the app's own functions; both are run by the tests.
