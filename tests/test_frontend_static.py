@@ -299,3 +299,23 @@ def test_every_data_term_on_the_page_is_in_the_glossary():
     keys = set(re.findall(r"^\s*'?([\w\- ]+?)'?\s*:", block, re.M))
     used = set(re.findall(r'data-term="([^"]+)"', (fe / "index.html").read_text(encoding="utf-8")))
     assert used and not used - keys, used - keys
+
+
+def test_every_module_parses(tmp_path):
+    """``node --check x.js`` passes a .js module with a syntax error (an
+    unescaped quote in a caption once stopped the page from loading); checked
+    as .mjs it is parsed as the browser parses it."""
+    import shutil
+    import subprocess
+    node = shutil.which("node")
+    if not node:
+        import pytest
+        pytest.skip("node is not installed")
+    bad = []
+    for path in (FRONTEND / "js").glob("*.js"):
+        copy = tmp_path / (path.stem + ".mjs")
+        copy.write_text(_read(path), encoding="utf-8")
+        out = subprocess.run([node, "--check", str(copy)], capture_output=True, text=True)
+        if out.returncode:
+            bad.append(f"{path.name}: {out.stderr.strip().splitlines()[-1]}")
+    assert not bad, bad
