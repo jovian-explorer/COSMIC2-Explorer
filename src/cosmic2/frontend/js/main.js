@@ -720,11 +720,11 @@ function wireDragAndDrop() {
     if (!dt || !dt.files || !dt.files.length) return;
 
     const allFiles = Array.from(dt.files);
-    const ncFiles = allFiles.filter((f) => f.name.endsWith('.nc') || f.name.endsWith('_nc'));
+    const ncFiles = allFiles.filter((f) => /(\.nc|_nc|\.tar\.gz)$/.test(f.name));
 
     const others = allFiles.length - ncFiles.length;
     if (!ncFiles.length) {
-      toast('Only netCDF profile files (*.nc or *_nc) can be added; ' +
+      toast('Only netCDF profile files (*.nc or *_nc) and CDAAC day tarballs (*.tar.gz) can be added; ' +
             (allFiles.some((f) => f.name.endsWith('.sp3') || f.name.endsWith('_sp3'))
               ? 'leoOrb orbit files (SP3) are not read by this app.' : 'nothing was added.'), 'bad');
       return;

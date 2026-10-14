@@ -458,6 +458,23 @@ def manager() -> DownloadManager:
     return MANAGER
 
 
+def unpack_tarball(path: str) -> list[str]:
+    """The files of a CDAAC day tarball (``atmPrf_nrt_2026_151.tar.gz``),
+    unpacked into the cache's ``imported`` folder; their paths.  Member names
+    are reduced to the file name, so nothing lands outside that folder."""
+    dest = CACHE_DIR / "imported" / os.path.basename(path).removesuffix(".tar.gz")
+    dest.mkdir(parents=True, exist_ok=True)
+    out = []
+    with tarfile.open(path, "r:gz") as tf:
+        for member in tf:
+            fh = tf.extractfile(member) if member.isfile() else None
+            if fh is not None:
+                target = dest / os.path.basename(member.name)
+                target.write_bytes(fh.read())
+                out.append(str(target))
+    return out
+
+
 def import_local_files(paths: list[str], product: str | None = None) -> dict:
     """Index granules the user already has (e.g. from a manual CDAAC pull)."""
     from .parallel import pmap

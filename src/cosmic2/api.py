@@ -10,6 +10,7 @@ from __future__ import annotations
 import datetime as dt
 import math
 import os
+import tarfile
 from pathlib import Path
 from typing import Any, Literal
 
@@ -452,37 +453,55 @@ def import_files(req: ImportRequest) -> dict:
     for raw in req.paths:
         p = Path(raw).expanduser()
         if p.is_dir():
-            found += [str(q) for q in p.rglob("*")
-                      if q.is_file() and (q.name.endswith("_nc") or q.suffix == ".nc")]
-        elif p.is_file():
-            found.append(str(p))
+            files = [q for q in p.rglob("*")
+                     if q.is_file() and q.name.endswith(("_nc", ".nc", ".tar.gz"))]
+        else:
+            files = [p] if p.is_file() else []
+        for q in files:
+            if q.name.endswith(".tar.gz"):
+                found += fetch.unpack_tarball(str(q))
+            else:
+                found.append(str(q))
     if not found:
-        raise HTTPException(400, "No netCDF files (.nc or _nc) found at the given paths")
+        raise HTTPException(400, "No netCDF files (.nc or _nc) or CDAAC day tarballs "
+                                 "(.tar.gz) found at the given paths")
     return _clean(fetch.import_local_files(found, req.product))
 
 
 @app.post("/api/local/upload-file")
 async def upload_file(request: Request, filename: str = Query(...)) -> dict:
-    """Accept a raw NetCDF file stream via drag-and-drop and index it locally."""
+    """Accept a netCDF file or a CDAAC day tarball dropped on the window and
+    index it locally."""
     clean_name = os.path.basename(filename)
-    if not (clean_name.endswith("_nc") or clean_name.endswith(".nc")):
-        raise HTTPException(400, "File must be a netCDF file (*.nc or *_nc)")
+    if not clean_name.endswith(("_nc", ".nc", ".tar.gz")):
+        raise HTTPException(400, "File must be a netCDF file (*.nc or *_nc) "
+                                 "or a CDAAC day tarball (*.tar.gz)")
 
     target_dir = CACHE_DIR / "imported"
     target_dir.mkdir(parents=True, exist_ok=True)
     target_path = target_dir / clean_name
 
-    content = await request.body()
-    if not content:
+    # written as it arrives: a day's atmPrf tarball is 1-2 GB
+    with open(target_path, "wb") as f:
+        async for chunk in request.stream():
+            f.write(chunk)
+    if not target_path.stat().st_size:
+        target_path.unlink()
         raise HTTPException(400, "File content is empty")
 
-    with open(target_path, "wb") as f:
-        f.write(content)
-
-    res = fetch.import_local_files([str(target_path)])
-    if res["failed"]:
-        # an unreadable file (cut off, not a profile) is not kept in the cache
-        target_path.unlink(missing_ok=True)
+    if clean_name.endswith(".tar.gz"):
+        try:
+            paths = fetch.unpack_tarball(str(target_path))
+        except (OSError, tarfile.TarError, EOFError) as exc:
+            target_path.unlink()
+            raise HTTPException(400, f"{clean_name} is not a readable .tar.gz ({exc})") from exc
+        target_path.unlink()
+    else:
+        paths = [str(target_path)]
+    res = fetch.import_local_files(paths)
+    # an unreadable file (cut off, not a profile) is not kept in the cache
+    for bad in res["failed"]:
+        Path(bad["path"]).unlink(missing_ok=True)
     return _clean({"saved_path": str(target_path), **res})
 
 

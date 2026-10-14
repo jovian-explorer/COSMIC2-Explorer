@@ -418,6 +418,23 @@ class TestAPI:
         assert res["indexed"] == 0 and res["failed"][0]["error"]
         assert not os.path.exists(res["saved_path"])
 
+    def test_upload_cdaac_day_tarball_unpacks_and_indexes_its_profiles(self):
+        import io
+        import tarfile
+        buf = io.BytesIO()
+        with tarfile.open(fileobj=buf, mode="w:gz") as tf:
+            for i, p in enumerate(sorted(sampledata_dir().glob("echPrf_*_nc"))[:2]):
+                # a member path that climbs out of the folder lands inside it
+                tf.add(p, arcname=("../" if i else "echPrf_test_2026_200/") + p.name)
+        req = urllib.request.Request(
+            BASE + "/api/local/upload-file?filename=echPrf_test_2026_200.tar.gz",
+            data=buf.getvalue(), method="POST",
+            headers={"Content-Type": "application/octet-stream"})
+        res = json.loads(urllib.request.urlopen(req, timeout=30).read())
+        assert res["indexed"] == 2 and not res["failed"]
+        folder = Path(res["saved_path"]).parent / "echPrf_test_2026_200"
+        assert len(list(folder.iterdir())) == 2 and not os.path.exists(res["saved_path"])
+
 
 
 # ---------------------------------------------------------------------------
