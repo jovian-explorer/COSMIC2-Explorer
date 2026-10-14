@@ -48,3 +48,19 @@ def test_archive_listing_and_download():
 
     found = _post("/api/profiles/search", {"limit": 10, "good_only": False})
     assert found["total"] >= 1
+
+
+def test_readme_download_snippet_runs(tmp_path):
+    """The README's download example, in a fresh data folder."""
+    import re
+    import subprocess
+    import sys
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1]
+    readme = (root / "README.md").read_text(encoding="utf-8")
+    code = re.findall(r"```python\n(.*?)```", readme, re.S)[1]
+    code += "\nassert job.state == 'completed', job.error\nassert rows\n"
+    env = dict(os.environ, COSMIC2_EXPLORER_HOME=str(tmp_path), PYTHONPATH=str(root / "src"))
+    out = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True,
+                         text=True, timeout=900)
+    assert out.returncode == 0, out.stderr

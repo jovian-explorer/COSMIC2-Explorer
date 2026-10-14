@@ -159,6 +159,19 @@ comp = analysis.composite([(path, meta)], "Temp", top_km=30, min_count=1)
 exporters.export_profiles_csv([meta])      # CSV with provenance in the exports folder
 ```
 
+Downloading works the same way, through the app's own download queue; the files and the index are the app's, so they show up in the window too:
+
+```python
+import time
+from cosmic2 import fetch, store
+
+job = fetch.manager().submit_download(stream="metopc-postProc", level="level2",
+                                      product="wetPf2", date="2026-05-31", max_profiles=50)
+while job.state in ("queued", "running"):
+    time.sleep(1)
+rows = store.query_granules(products=["wetPf2"], sats=["MTPC"], limit=1000)["granules"]
+```
+
 | Module | What it gives you |
 |---|---|
 | `cosmic2.readers` | `load(path)` reads any supported product into a `Granule`; `quick_meta(path)` the one-line summary the index stores |
