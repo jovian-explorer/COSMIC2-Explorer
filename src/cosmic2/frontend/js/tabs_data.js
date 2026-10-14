@@ -295,7 +295,7 @@ export async function refreshLocal() {
   }
 }
 
-const OTHER_MISSIONS = {PAZ1: 'PAZ', KOM5: 'KOMPSAT-5', MTPB: 'Metop-B', MTPC: 'Metop-C',
+const OTHER_MISSIONS = {PAZ1: 'PAZ', KOM5: 'KOMPSAT-5', MTPA: 'Metop-A', MTPB: 'Metop-B', MTPC: 'Metop-C', TDMX: 'TanDEM-X',
   C001: 'COSMIC-1', C002: 'COSMIC-1', C003: 'COSMIC-1', C004: 'COSMIC-1', C005: 'COSMIC-1',
   C006: 'COSMIC-1'};
 

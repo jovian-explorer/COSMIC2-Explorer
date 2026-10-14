@@ -78,6 +78,15 @@ STREAMS: dict[str, dict] = {
         "levels": ["level2"],
         "mission": "kompsat5",
     },
+    "metopa-postProc": {
+        "label": "Metop-A post-processed (another mission, 2016-2021)",
+        "blurb": "Profiles from the first European Metop weather satellite (polar orbit), "
+                 "processed by CDAAC into the same atmPrf, wetPf2 and echPrf files, from "
+                 "2016 until the satellite ended in November 2021; a day's wetPf2 is about "
+                 "14 MB.",
+        "levels": ["level2"],
+        "mission": "metopa",
+    },
     "metopb-postProc": {
         "label": "Metop-B post-processed (another mission)",
         "blurb": "Profiles from the European weather satellite Metop-B (polar orbit, "
@@ -96,6 +105,15 @@ STREAMS: dict[str, dict] = {
         "levels": ["level2"],
         "mission": "metopc",
     },
+    "tdx-postProc": {
+        "label": "TanDEM-X post-processed (another mission)",
+        "blurb": "Profiles from the German TanDEM-X radar satellite (polar orbit), processed "
+                 "by CDAAC into the same atmPrf, wetPf2 and echPrf files. Post-processed "
+                 "only: days appear about four months late (2016 onwards); about 170 "
+                 "profiles and 4 MB of wetPf2 a day.",
+        "levels": ["level2"],
+        "mission": "tdx",
+    },
     "cosmic1-repro2021": {
         "label": "COSMIC-1 2021 reprocessing (2006-2019, the earlier mission)",
         "blurb": "The six COSMIC-1 (FORMOSAT-3) satellites, COSMIC-2's predecessor, "
@@ -108,8 +126,8 @@ STREAMS: dict[str, dict] = {
 }
 
 # Satellite codes of the missions above, as in the file names (C2E1-C2E6 for COSMIC-2)
-MISSION_SATS = {"paz": ("PAZ1",), "kompsat5": ("KOM5",), "metopb": ("MTPB",),
-                "metopc": ("MTPC",), "cosmic1": tuple(f"C00{i}" for i in range(1, 7))}
+MISSION_SATS = {"paz": ("PAZ1",), "kompsat5": ("KOM5",), "metopa": ("MTPA",), "metopb": ("MTPB",),
+                "metopc": ("MTPC",), "tdx": ("TDMX",), "cosmic1": tuple(f"C00{i}" for i in range(1, 7))}
 
 
 def mission_of(stream: str) -> str:
@@ -128,8 +146,10 @@ COLLECTIONS: list[tuple[str, str]] = [
     ("provisional", "spaceWeather/level2"),
     ("paz-nrt", "level2"),
     ("kompsat5-nrt", "level2"),
+    ("metopa-postProc", "level2"),
     ("metopb-postProc", "level2"),
     ("metopc-postProc", "level2"),
+    ("tdx-postProc", "level2"),
     ("cosmic1-repro2021", "level2"),
 ]
 

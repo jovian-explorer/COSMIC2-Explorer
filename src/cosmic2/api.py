@@ -949,7 +949,7 @@ def climatology_tropopause(req: TropopauseRequest) -> dict:
 class MissionCompareRequest(BaseModel):
     granule_ids: list[str] | None = None
     search: SearchRequest | None = None
-    other: Literal["paz", "kompsat5", "metopb", "metopc", "cosmic1"] = "paz"
+    other: Literal["paz", "kompsat5", "metopa", "metopb", "metopc", "tdx", "cosmic1"] = "paz"
     quantity: Literal["temperature", "refractivity_1dvar", "refractivity"] = "temperature"
     max_km: float = Field(default=300.0, gt=0, le=2000)
     max_hours: float = Field(default=3.0, gt=0, le=24)

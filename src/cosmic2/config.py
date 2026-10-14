@@ -118,8 +118,10 @@ MISSION_DATASETS = {
     "cosmic1": ("COSMIC-1 Data Products", 2006, "10.5065/ZD80-KD74"),
     "paz": ("PAZ Data Products", 2018, "10.5065/K9VG-T494"),
     "kompsat5": ("KOMPSAT5 Data Products", 2015, "10.5065/7M8G-JA33"),
+    "metopa": ("METOP-A Data Products", 2007, "10.5065/789W-M137"),
     "metopb": ("METOP-B Data Products", 2013, "10.5065/1K0W-2272"),
     "metopc": ("METOP-C Data Products", 2019, "10.5065/P8ES-MC74"),
+    "tdx": ("TDX Data Products", 2016, "10.5065/1TDC-0Z47"),
 }
 # Data citation, quoted in the form UCAR suggests on its COSMIC-2 data page
 # (https://www.cosmic.ucar.edu/what-we-do/cosmic-2/data). "{access_date}" is
@@ -198,8 +200,9 @@ SETTING_RULES: dict = {
     "cache_quota_gb": ("float", 0, 100000),
     "warn_download_mb": ("int", 0, 10_000_000),
     "default_stream": ("choice", ("nrt", "rapid", "postProc", "provisional",
-                                  "paz-nrt", "kompsat5-nrt", "metopb-postProc",
-                                  "metopc-postProc", "cosmic1-repro2021")),
+                                  "paz-nrt", "kompsat5-nrt", "metopa-postProc",
+                                  "metopb-postProc", "metopc-postProc", "tdx-postProc",
+                                  "cosmic1-repro2021")),
     "default_product": ("choice", ("atmPrf", "wetPf2", "ionPrf", "scnLv2", "ivmL2m", "avnPrf",
                                    "echPrf", "bfrPrf", "conPhs", "podTc2", "leoOrb")),
     "qc_require_good": ("bool",),

@@ -23,6 +23,7 @@ def test_missions_are_told_apart_by_satellite_code():
     assert missions.mission_of_sat("PAZ1") == "paz"
     assert missions.mission_of_sat("KOM5") == "kompsat5"
     assert missions.mission_of_sat("MTPC") == "metopc" and missions.mission_of_sat("C006") == "cosmic1"
+    assert missions.mission_of_sat("MTPA") == "metopa" and missions.mission_of_sat("TDMX") == "tdx"
     assert missions.mission_of_sat("G25") is None and missions.mission_of_sat(None) is None
 
 
@@ -163,3 +164,11 @@ def test_statistics_say_which_missions_they_mix():
                                      headers={"Content-Type": "application/json"})
         res = json.loads(urllib.request.urlopen(req, timeout=60).read())
         assert res["missions"] == {"COSMIC-2": 2}, path
+
+
+def test_every_other_mission_has_a_name_a_data_set_and_a_stream():
+    from cosmic2 import catalog, config
+    others = set(catalog.MISSION_SATS)
+    assert others == set(missions.MISSION_NAMES) - {"cosmic2"}
+    assert others | {"cosmic2"} == set(config.MISSION_DATASETS)
+    assert others == {s.get("mission") for s in catalog.STREAMS.values()} - {None}

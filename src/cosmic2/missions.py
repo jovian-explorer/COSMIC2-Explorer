@@ -39,7 +39,8 @@ import numpy as np
 from .catalog import MISSION_SATS
 
 MISSION_NAMES = {"cosmic2": "COSMIC-2", "paz": "PAZ", "kompsat5": "KOMPSAT-5",
-                 "metopb": "Metop-B", "metopc": "Metop-C", "cosmic1": "COSMIC-1"}
+                 "metopa": "Metop-A", "metopb": "Metop-B", "metopc": "Metop-C",
+                 "tdx": "TanDEM-X", "cosmic1": "COSMIC-1"}
 
 # quantity -> (product, variable, relative?, vertical, label, units, nwp quantity)
 QUANTITIES = {
