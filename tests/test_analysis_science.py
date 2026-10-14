@@ -92,6 +92,17 @@ def test_peak_refinement_on_uneven_levels():
     assert res["NmF2_el_cm3"] == pytest.approx(1e6, rel=1e-3)
 
 
+def test_a_single_level_spike_is_not_the_f2_peak():
+    """COSMIC-1 ionPrf of 2019-12-10 02:12 G20: 3.9e6 el/cm3 at 690 km between
+    -2.8e5 and 1.2e4 (and the peak fit through non-adjacent levels made it 7.9e7)."""
+    z = np.arange(150.0, 790.0, 3.0)
+    ne = _chapman(z, hm=250.0, nm=1e5)
+    k = int(np.argmin(abs(z - 690.0)))
+    ne[k - 1:k + 2] = [-2.8e5, 3.9e6, 1.2e4]
+    res = analysis.ionosphere_peak(z, ne)
+    assert res["hmF2_km"] == pytest.approx(250.0, abs=1) and res["NmF2_el_cm3"] < 1.01e5
+
+
 def test_monotonic_profile_has_no_f2_peak_or_e_layer():
     z = np.arange(90.0, 400.0, 2.0)
     ne = 1e3 * np.exp((z - 90.0) / 40.0)                # still rising at the top

@@ -474,8 +474,14 @@ def ionosphere_peak(z_km: np.ndarray, ne_cm3: np.ndarray,
     to ln(Ne) between 50 and 150 km above the peak (Chapman topside).
     """
     z, ne = _clean_pair(z_km, ne_cm3)
-    sel = (z >= z_min) & (ne > 0)
-    if sel.sum() < 5:
+    # A level more than twice both its neighbours is an inversion spike, not a
+    # layer: near COSMIC-1's orbit one of 3.9e6 el/cm3 sat between -2.8e5 and
+    # 1.2e4 (night-time NmF2 there was 1e5).  Negative levels are kept, so
+    # the levels around the maximum are adjacent ones.
+    spike = np.zeros(ne.size, bool)
+    spike[1:-1] = (ne[1:-1] > 2 * ne[:-2]) & (ne[1:-1] > 2 * ne[2:])
+    sel = (z >= z_min) & ~spike
+    if (sel & (ne > 0)).sum() < 5:
         return {"NmF2_el_cm3": None, "hmF2_km": None, "foF2_MHz": None,
                 "topside_scale_height_km": None, "found": False}
     zz, nn = z[sel], ne[sel]
@@ -484,7 +490,7 @@ def ionosphere_peak(z_km: np.ndarray, ne_cm3: np.ndarray,
     # A maximum on the first or last level is where the profile was cut, not
     # a layer peak (e.g. a profile that ends below the F2 peak).
     at_edge = i == 0 or i == zz.size - 1
-    if not at_edge:
+    if not at_edge and nn[i - 1] > 0 and nn[i + 1] > 0:
         # Vertex of the parabola through the three levels around the maximum,
         # valid for the uneven level spacing of ionPrf.
         x0, x1, x2 = zz[i - 1], zz[i], zz[i + 1]
