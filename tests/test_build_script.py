@@ -80,3 +80,11 @@ def test_release_workflow_keeps_the_two_newest_releases_and_all_tags():
     assert "gh release list --exclude-drafts" in step and "tail -n +3" in step
     assert "gh release delete" in step and "--cleanup-tag" not in wf
     assert "GH_TOKEN: ${{ github.token }}" in step
+
+
+def test_release_workflow_publishes_monthly_only_when_there_is_something_new_and_ci_passed():
+    wf = (ROOT / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
+    assert 'cron: "0 6 * * 1"' in wf and "MIN_DAYS: ${{ vars.RELEASE_MIN_DAYS || '30' }}" in wf
+    assert "ci.yml/runs?head_sha=" in wf and 'rev-list --count "${last}..HEAD"' in wf
+    # build and release run only when the decide job says so
+    assert wf.count("if: needs.decide.outputs.publish == 'true'") == 2

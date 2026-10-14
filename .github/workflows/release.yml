@@ -1,7 +1,13 @@
 name: Release
 
-# A pushed tag v<version> or v<version>-build.<n> (<version> as in pyproject.toml)
-# is built for Windows, macOS and Linux and published as a GitHub release with one
+# Commits go to main continuously (each one tested by the CI workflow), but a release
+# is published only about once a month: every Monday the "decide" job checks that main
+# has commits since the latest release, that the latest release is at least
+# RELEASE_MIN_DAYS old (repository variable, default 30) and that CI passed on main's
+# head, and only then publishes it as v<version> (<version> as in pyproject.toml) or,
+# when that tag exists, v<version>-build.<n+1>.  Running the workflow by hand publishes
+# main's head if CI passed on it; a pushed tag v<version> or v<version>-build.<n>
+# publishes that tag.  Each release is built for Windows, macOS and Linux with one
 # archive per platform:
 #
 #   COSMIC2-Explorer-<version>-windows-x64.zip
@@ -13,20 +19,95 @@ name: Release
 # app's weekly automatic update (src/cosmic2/autoupdate.py) orders releases and
 # picks the archive for its platform by the "-<os>-<arch>." part of the name; it
 # checks the download against the SHA-256 digest GitHub lists for the asset, or
-# against SHA256SUMS.txt.  A manual run (workflow_dispatch) builds unstamped
-# archives as workflow artifacts and publishes nothing.
+# against SHA256SUMS.txt.
 
 on:
+  schedule:
+    - cron: "0 6 * * 1"
   push:
     tags: ["v*"]
   workflow_dispatch:
 
 permissions:
   contents: write
+  actions: read                 # the CI result of the commit to publish
+
+concurrency:
+  group: release
+  cancel-in-progress: false     # never stop a release half-way: it is archived on publication
 
 jobs:
+  decide:
+    name: decide whether to publish
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.decide.outputs.publish }}
+      sha: ${{ steps.decide.outputs.sha }}
+      tag: ${{ steps.decide.outputs.tag }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      MIN_DAYS: ${{ vars.RELEASE_MIN_DAYS || '30' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'push' && github.sha || 'main' }}
+          fetch-depth: 0          # history and tags: the commits since the latest release
+      - id: decide
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha=$(git rev-parse HEAD)
+          ci_passed() {         # a successful CI run on exactly this commit
+            [ "$(gh api "repos/${GH_REPO}/actions/workflows/ci.yml/runs?head_sha=$1&status=success&per_page=1" --jq .total_count)" -gt 0 ]
+          }
+          # the next tag: v<version>, or v<version>-build.<n+1> once v<version> exists
+          version=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          if git rev-parse -q --verify "refs/tags/v${version}" >/dev/null; then
+            n=$(git tag -l "v${version}-build.*" | sed 's/.*-build[.]//' | sort -n | tail -1)
+            tag="v${version}-build.$(( ${n:-0} + 1 ))"
+          else
+            tag="v${version}"
+          fi
+          publish=false
+          case "${GITHUB_EVENT_NAME}" in
+            push)
+              publish=true; tag="${GITHUB_REF_NAME}"
+              echo "Tag ${tag}: publishing ${sha}." ;;
+            workflow_dispatch)
+              if ci_passed "$sha"; then publish=true; echo "Run by hand: publishing main at ${sha} as ${tag} (CI passed on it)."
+              else echo "Run by hand, but CI has not passed on main's head ${sha}: not publishing."; fi ;;
+            schedule)
+              # every release counts, pre-releases (0.x) included
+              latest=$(gh release list --exclude-drafts --limit 1 --json tagName,publishedAt \
+                         --jq '.[0] | .tagName + " " + .publishedAt' 2>/dev/null || true)
+              if [ -z "$latest" ]; then
+                last=""; age_days=999999; new=$(git rev-list --count HEAD)
+              else
+                last=${latest%% *}
+                age_days=$(( ( $(date -u +%s) - $(date -u -d "${latest#* }" +%s) ) / 86400 ))
+                if git rev-parse -q --verify "refs/tags/${last}" >/dev/null; then
+                  new=$(git rev-list --count "${last}..HEAD")
+                else
+                  new=1               # (the latest release's tag is not in this clone: assume changes)
+                fi
+              fi
+              echo "Latest release: ${last:-none}, ${age_days} days old; ${new} commits on main since; minimum gap ${MIN_DAYS} days."
+              if [ "$new" -eq 0 ]; then echo "No commits since the latest release: not publishing."
+              elif [ "$age_days" -lt "$MIN_DAYS" ]; then echo "The latest release is under ${MIN_DAYS} days old: not publishing."
+              elif ! ci_passed "$sha"; then echo "CI has not passed on main's head ${sha}: not publishing."
+              else publish=true; echo "Publishing main at ${sha} as ${tag}."; fi ;;
+            *)
+              echo "Event ${GITHUB_EVENT_NAME}: not publishing." ;;
+          esac
+          echo "publish=${publish}" >> "$GITHUB_OUTPUT"
+          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+
   build:
     name: build (${{ matrix.os }})
+    needs: decide
+    if: needs.decide.outputs.publish == 'true'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 40
     strategy:
@@ -35,6 +116,8 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.decide.outputs.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -43,13 +126,7 @@ jobs:
       - name: Install
         run: python -m pip install ".[build]"
       - name: Build
-        shell: bash
-        run: |
-          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
-            python scripts/build_exe.py --archive --tag "${GITHUB_REF_NAME}"
-          else
-            python scripts/build_exe.py --archive
-          fi
+        run: python scripts/build_exe.py --archive --tag "${{ needs.decide.outputs.tag }}"
       - uses: actions/upload-artifact@v4
         with:
           name: COSMIC2-Explorer-${{ matrix.os }}
@@ -59,12 +136,16 @@ jobs:
           if-no-files-found: error
 
   release:
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [decide, build]
+    if: needs.decide.outputs.publish == 'true'
     runs-on: ubuntu-latest
+    env:
+      TAG: ${{ needs.decide.outputs.tag }}
+      SHA: ${{ needs.decide.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ needs.decide.outputs.sha }}
           fetch-depth: 0          # history and tags, for the list of changes
       - uses: actions/download-artifact@v4
         with:
@@ -87,22 +168,22 @@ jobs:
         shell: bash
         run: |
           # Release title "COSMIC-2 Explorer 0.1.0" (or "... 0.1.0 build 3" for v0.1.0-build.3)
-          ver="${GITHUB_REF_NAME#v}"
+          ver="${TAG#v}"
           echo "title=COSMIC-2 Explorer ${ver/-build./ build }" >> "$GITHUB_OUTPUT"
           # The changes since the previous tag, one line per commit; the app shows
           # these as "What's new" after it has updated itself.
-          prev=$(git describe --tags --abbrev=0 --match 'v[0-9]*' "${GITHUB_REF_NAME}^" 2>/dev/null || true)
+          prev=$(git describe --tags --abbrev=0 --match 'v[0-9]*' "${SHA}^" 2>/dev/null || true)
           {
             echo "Unzip the archive for your computer and run COSMIC2-Explorer from the COSMIC2-Explorer folder (see [Install](https://github.com/${GITHUB_REPOSITORY}#install)). Your data, downloads and settings are kept in a separate folder; an installed copy updates itself once a week (Settings > Updates)."
             echo
             if [[ -n "$prev" ]]; then
               echo "### Changes since ${prev}"
               echo
-              git log --no-merges --format='- %s' "${prev}..${GITHUB_REF_NAME}"
+              git log --no-merges --format='- %s' "${prev}..${SHA}"
             else
               echo "### Latest changes"
               echo
-              git log --no-merges --format='- %s' -n 20 "${GITHUB_REF_NAME}"
+              git log --no-merges --format='- %s' -n 20 "${SHA}"
             fi
             echo
             echo "All changes, grouped by topic: [CHANGELOG.md](https://github.com/${GITHUB_REPOSITORY}/blob/main/CHANGELOG.md)."
@@ -114,11 +195,13 @@ jobs:
             artifacts/*.zip
             artifacts/*.tar.gz
             artifacts/SHA256SUMS.txt
+          tag_name: ${{ env.TAG }}
+          target_commitish: ${{ env.SHA }}
           name: ${{ steps.notes.outputs.title }}
           body_path: release-notes.md
           # Until the public 1.0.0 release, every build is a pre-release (version 0.x);
           # the updater reads the release list, so it sees pre-releases too.
-          prerelease: ${{ startsWith(github.ref_name, 'v0.') }}
+          prerelease: ${{ startsWith(env.TAG, 'v0.') }}
       - name: Keep the 2 newest releases
         # Runs only after the publish step succeeded. Release policy: only the two
         # newest published releases stay; drafts are neither counted nor touched.
