@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **More missions**: Metop-B and Metop-C (post-processed, about four months behind) and the COSMIC-1 2021 reprocessing (2006-2019) can be downloaded through their own streams, filtered by satellite and, for Metop, compared with COSMIC-2 on the Statistics tab. Exports cite the CDAAC data set of every mission they hold.
+- **"Use most recent available" works for every stream**: it starts from the archive listing instead of walking back from today, so streams that end in the past (COSMIC-2 `postProc`, Metop, COSMIC-1) find their newest day.
+- **Using it from Python**: a README section and `examples/headless.py` show how to read, diagnose, average, export and download profiles from a script or notebook with the app's own functions; both are run by the tests.
+- **Dropping files on the window**: a CDAAC day tarball (`.tar.gz`) is unpacked and its profiles added; the message says how many files were added, which could not be read and why, and which were skipped as not netCDF. An unreadable file is not kept, and uploads are written to disk as they arrive instead of held in memory.
+
 ## 0.1.0 (2026-10-13)
 
 First public release since 0.0.1, and the first archived on Zenodo with a DOI. In short:
