@@ -540,6 +540,11 @@ async function drawMissions() {
       ? 'KOMPSAT-5 records rising occultations as well as setting ones, but on the days checked ' +
         '(2026-09-26 and 27) every rising one failed CDAAC\'s wetPf2 retrieval, so its good wetPf2 ' +
         'profiles, and this comparison, are of setting occultations only. ' : '') +
+    (res.other === 'metopa'
+      ? 'Metop-A in October 2021: its atmPrf refractivity was 0.2-0.5 % below ECMWF\'s from 5 to ' +
+        '30 km on 2021-10-01, 10-15 and 10-27, against within 0.2 % on 06-15, 08-15, 09-15 and ' +
+        '11-10 (the first 130-160 good profiles of each day; COSMIC-2 within 0.2 % on 10-27), so ' +
+        'a comparison over that month shows Metop-A\'s offset as much as COSMIC-2\'s. ' : '') +
     'Collocation weights after Rieckh et al. (2021), https://doi.org/10.1175/JTECH-D-20-0209.1';
 }
 
