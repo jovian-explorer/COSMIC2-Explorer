@@ -105,6 +105,7 @@ TanDEM-X (2026-05-31) and COSMIC-1 (2019-12-10) from CDAAC.
 * **Problem**: an invented default. The effect is at most 0.5 % of the
   height (equator against pole), but there is no reason to guess.
 * **Fix**: skip a profile without a latitude.
+* **Status**: fixed.
 
 ### L5. scnLv2 tangent point on a straight ray
 * **Where**: `readers.py:331` (`scn_tangent_point`).

@@ -376,8 +376,10 @@ def _ro_profile(row: dict) -> dict | None:
     lat = g.meta.get("lat") if g.meta.get("lat") is not None else row.get("lat")
     if g.product == "wetPf2" and "gph" in d:
         z = d["gph"]
+    elif lat is None:
+        return None              # normal gravity needs the latitude; none is invented
     else:
-        z = geopotential_height_km(d["MSL_alt"], lat or 0.0)
+        z = geopotential_height_km(d["MSL_alt"], lat)
     out = {"gph_km": z, "temp_K": analysis.to_kelvin(d["Temp"], g.units.get("Temp", "C")),
            "ref_N": d.get("Ref", d.get("ref")), "product": g.product}
     if "sph" in d:

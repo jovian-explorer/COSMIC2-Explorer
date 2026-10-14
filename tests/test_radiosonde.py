@@ -238,3 +238,15 @@ def test_soundings_near_reads_the_next_year_at_new_year(monkeypatch):
     t = dt.datetime(2025, 12, 31, 23, 30, tzinfo=dt.timezone.utc)
     radiosonde.soundings_near("USM00072201", [t], 3.0, download=False)
     assert asked == [2025, 2026]
+
+
+def test_atmprf_without_a_latitude_is_not_given_one(monkeypatch):
+    """Geopotential needs normal gravity at the latitude: no equator is assumed."""
+    from cosmic2 import readers
+    from cosmic2.config import sampledata_dir
+    p = str(next(sampledata_dir().glob("atmPrf_*")))
+    g = readers.load(p)
+    g.meta["lat"] = None
+    monkeypatch.setattr(readers, "load", lambda *a, **k: g)
+    assert radiosonde._ro_profile({"path": p, "product": "atmPrf", "lat": None}) is None
+    assert radiosonde._ro_profile({"path": p, "product": "atmPrf", "lat": 30.0}) is not None
