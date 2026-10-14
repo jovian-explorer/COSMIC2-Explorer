@@ -123,3 +123,16 @@ def test_summary_counts_cache_bytes_from_the_index():
     finally:
         with store.connect() as conn:
             conn.execute("DELETE FROM granules WHERE stream='t-sum'")
+
+
+def test_a_bare_end_date_takes_in_the_whole_day(tmp_path):
+    store.upsert_granules([dict(path=str(tmp_path / "tend_0"), product="tend", stream="t-end",
+                                level="level2", date="2026-05-31",
+                                time_utc="2026-05-31T12:00:00Z", epoch=1780228800.0, good=True)])
+    try:
+        assert store.query_granules(products=["tend"], start="2026-05-31",
+                                    end="2026-05-31")["total"] == 1
+    finally:
+        conn = store.connect()
+        with conn:
+            conn.execute("DELETE FROM granules WHERE stream='t-end'")

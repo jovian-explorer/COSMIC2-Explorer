@@ -219,7 +219,10 @@ def query_granules(*, products: list[str] | None = None,
                    max_alt_below: float | None = None,
                    sort: str = "time", desc: bool = False,
                    limit: int = 200, offset: int = 0) -> dict:
-    """Filtered, paged granule search. ``start``/``end`` are ISO timestamps."""
+    """Filtered, paged granule search. ``start``/``end`` are ISO timestamps; an
+    ``end`` that is a bare date (2026-05-31) takes in the whole of that day."""
+    if end and len(end) == 10:
+        end += "T23:59:59.999Z"
     conn = connect()
     where: list[str] = []
     args: list[Any] = []
