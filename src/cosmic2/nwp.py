@@ -30,6 +30,7 @@ model profiles pair exactly.
 """
 from __future__ import annotations
 
+import re
 from typing import Sequence
 
 import numpy as np
@@ -103,6 +104,22 @@ def stamp_groups(selected: Sequence[dict], index_rows: Sequence[dict],
         seen.add(st)
         out.append(by_stamp[st])
     return out
+
+
+# CDAAC's post-processed echPrf of October 2021 were interpolated from ECMWF
+# analysis files (ecmAnc) whose refractivity is about 0.35 % above the
+# occultations', ERA5's and GFS's.  Metop-A/B/C minus echPrf, 10-30 km:
+# -0.30 to -0.38 % on 2021-10-01 to 10-31, within 0.06 % on 09-15 to 09-29
+# and 11-01 to 11-10; minus ERA5 (er5Prf) and GFS (gfsPrf) of the same
+# occultations within 0.1 % throughout.  The near-real-time echPrf use
+# forecast files (ecmFcc) and are not affected.
+_ECM_OCT_2021 = re.compile(r"ecmAnc_2021\.(27[4-9]|28\d|29\d|30[0-4])\.")
+
+
+def october_2021_echprf(groups: Sequence[dict[str, dict]]) -> int:
+    """How many occultations of ``groups`` have one of those echPrf."""
+    return sum(1 for g in groups if "echPrf" in g and _ECM_OCT_2021.match(
+        str((g["echPrf"].get("extras") or {}).get("model_file_1") or "")))
 
 
 def _columns(task: tuple):

@@ -83,8 +83,7 @@ STREAMS: dict[str, dict] = {
         "blurb": "Profiles from the first European Metop weather satellite (polar orbit), "
                  "processed by CDAAC into the same atmPrf, wetPf2 and echPrf files, from "
                  "2016 until the satellite ended in November 2021; a day's wetPf2 is about "
-                 "14 MB. In October 2021 its refractivity runs 0.2-0.5 % below ECMWF's "
-                 "(checked on 10-01, 10-15 and 10-27; within 0.2 % before and after).",
+                 "14 MB.",
         "levels": ["level2"],
         "mission": "metopa",
     },

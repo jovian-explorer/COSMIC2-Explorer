@@ -2,8 +2,9 @@
 
 ## Unreleased
 
+- **CDAAC's post-processed ECMWF profiles of October 2021 are about 0.35 % high in refractivity**, found on Metop-A, -B and -C against ERA5 and GFS profiles of the same occultations. The model and mission comparisons say when a selection uses them. (An earlier note blamed Metop-A for it.)
 - **Model audit** (`docs/MODEL_AUDIT.md`): every time, position, height and quantity the app computes rather than reads, ranked, with its basis and a check against real files. Fixed from it: an ivmL2m day no longer gets an invented median position and local time, and its map is drawn from the samples where they were taken; an ionPrf whose CDAAC maximum is an E-region value or a spike near the orbit is placed at its F2 peak; the radiosonde comparison no longer assumes the equator for a profile without a latitude; Help says that collocation distances hold at the reference tangent point only.
-- **Metop-A (2016-2021) and TanDEM-X** streams as well, with their CDAAC data sets cited in exports; the mission card says when the two missions share no day, and notes Metop-A's 0.2-0.5 % low refractivity against ECMWF in October 2021. The data policy explains why NOAA's purchased commercial profiles (Spire, PlanetiQ, GeoOptics) are not offered.
+- **Metop-A (2016-2021) and TanDEM-X** streams as well, with their CDAAC data sets cited in exports; the mission card says when the two missions share no day. The data policy explains why NOAA's purchased commercial profiles (Spire, PlanetiQ, GeoOptics) are not offered.
 - **F2 peak**: a single-level spike is no longer taken for the peak, and the peak fit uses adjacent levels only. A COSMIC-1 profile had given NmF2 7.9e7 el/cm3 at 610 km; of 690 COSMIC-2 ionPrf, one peak moved (by 7 km).
 - **Search**: an end date without a time takes in the whole day.
 - **More missions**: Metop-B and Metop-C (post-processed, about four months behind) and the COSMIC-1 2021 reprocessing (2006-2019) can be downloaded through their own streams, filtered by satellite and, for Metop, compared with COSMIC-2 on the Statistics tab. Exports cite the CDAAC data set of every mission they hold.

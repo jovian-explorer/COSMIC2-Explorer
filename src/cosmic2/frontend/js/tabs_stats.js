@@ -54,6 +54,17 @@ export function statsSelection(selectedOnly) {
 
 function pct(v) { return v === null || v === undefined ? '-' : `${fixed(100 * v, 1)} %`; }
 
+/** A caption sentence when the comparison uses CDAAC's post-processed ECMWF
+ *  profiles of October 2021, which are about 0.35 % high in refractivity. */
+function ecmwfNote(res) {
+  const n = res.echprf_oct2021 || 0;
+  return n ? `Caution: ${n} occultation${n === 1 ? '' : 's'} use CDAAC's post-processed ECMWF ` +
+    'profiles (echPrf) of October 2021, whose refractivity is about 0.35 % above the ' +
+    'occultations\', ERA5\'s and GFS\'s (Metop-A, -B and -C on 2021-10-01 to 10-31, against ' +
+    'within 0.1 % in September and November): differences from ECMWF are about 0.35 % too ' +
+    'low that month. ' : '';
+}
+
 /** A caption sentence when a statistic mixes missions (PAZ or KOMPSAT-5
  *  downloaded for the mission comparison count everywhere else too). */
 function missionNote(missions) {
@@ -517,7 +528,7 @@ async function drawMissions() {
   Plotly.react('ms-plot', traces, axesLayout(`${res.label}: COSMIC-2 minus ${name} [${res.units}]`,
     'Altitude above mean sea level [km]', {shapes: [{type: 'line', x0: 0, x1: 0, yref: 'paper',
       y0: 0, y1: 1, line: {color: '#94a3b8', width: 1, dash: 'dot'}}]}), PLOT_CONFIG);
-  $('#ms-caption').textContent = apart +
+  $('#ms-caption').textContent = apart + ecmwfNote(res) +
     `${res.n_cosmic2} COSMIC-2 and ${res.n_other} ${name} profiles. Collocated: each ${name} ` +
     `profile paired with the COSMIC-2 profile nearest in 0.75 |dt| / ${res.max_hours} h + 0.25 d / ` +
     `${res.max_km} km within ${res.max_km} km and ${res.max_hours} h, each used once` +
@@ -545,11 +556,6 @@ async function drawMissions() {
       ? 'KOMPSAT-5 records rising occultations as well as setting ones, but on the days checked ' +
         '(2026-09-26 and 27) every rising one failed CDAAC\'s wetPf2 retrieval, so its good wetPf2 ' +
         'profiles, and this comparison, are of setting occultations only. ' : '') +
-    (res.other === 'metopa'
-      ? 'Metop-A in October 2021: its atmPrf refractivity was 0.2-0.5 % below ECMWF\'s from 5 to ' +
-        '30 km on 2021-10-01, 10-15 and 10-27, against within 0.2 % on 06-15, 08-15, 09-15 and ' +
-        '11-10 (the first 130-160 good profiles of each day; COSMIC-2 within 0.2 % on 10-27), so ' +
-        'a comparison over that month shows Metop-A\'s offset as much as COSMIC-2\'s. ' : '') +
     'Collocation weights after Rieckh et al. (2021), https://doi.org/10.1175/JTECH-D-20-0209.1';
 }
 
@@ -673,7 +679,7 @@ async function drawModels() {
       'Altitude above mean sea level [km]'), PLOT_CONFIG);
     $('#nwp-caption').textContent =
       `${res.n_triplets} occultations with RO (atmPrf), ECMWF (echPrf) and NCEP (avnPrf) ` +
-      'refractivity. ' + missionNote(res.missions) + 'Values in percent of the mean of the three. ' +
+      'refractivity. ' + missionNote(res.missions) + ecmwfNote(res) + 'Values in percent of the mean of the three. ' +
       'Each error variance is ' +
       '(var(X - Y) + var(X - Z) - var(Y - Z)) / 2 (the three-cornered hat); the line is its square ' +
       `root, the shading the 95% interval from ${res.n_boot} bootstrap resamples of the ` +
@@ -713,7 +719,7 @@ async function drawModels() {
     $('#nwp-caption').textContent =
       `${res.n_profiles} occultations with their atmPrf and echPrf; ECMWF diagnoses a duct (echPrf ` +
       `ductid 1-3, elevated or at the surface) at ${res.n_duct} of them (${pctDuct}%). ` +
-      missionNote(res.missions) +
+      missionNote(res.missions) + ecmwfNote(res) +
       (res.around_duct ? 'Heights relative to the centre of ECMWF\'s super-refraction layer (echPrf ' +
         'zsr), duct cases only. ' : '') +
       'Differences in percent of the ECMWF value. Line: mean; light shading ± 1 standard deviation; ' +
@@ -728,7 +734,7 @@ async function drawModels() {
   }
   $('#nwp-caption').textContent =
     `${res.n_profiles} occultations of ${res.selected} selected profiles have model profiles. ` +
-    missionNote(res.missions) +
+    missionNote(res.missions) + ecmwfNote(res) +
     (res.relative ? 'Differences in percent of the model value. ' : '') +
     'Line: mean; light shading ± 1 standard deviation; dark shading the 95% confidence ' +
     'interval of the mean (Student\'s t, occultations taken as independent). The model ' +

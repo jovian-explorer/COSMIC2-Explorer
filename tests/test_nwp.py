@@ -144,3 +144,14 @@ def test_ducting_endpoint_on_bundled_samples():
                                            "step_km": 0.1, "search": {"products": ["atmPrf"]}})
         assert res["n_profiles"] == 2 and sum(res["duct_classes"].values()) == 2
         assert res["models"] and res["around_duct"] == (kind == "ducting_rel")
+
+
+def test_october_2021_postprocessed_echprf_are_flagged():
+    from cosmic2 import nwp
+
+    def group(model_file):
+        return {"atmPrf": {}, "echPrf": {"extras": {"model_file_1": model_file}}}
+    groups = [group("ecmAnc_2021.274.00.00.0360_nc"), group("ecmAnc_2021.304.18.00.0360_nc"),
+              group("ecmAnc_2021.273.18.00.0360_nc"), group("ecmAnc_2021.305.00.00.0360_nc"),
+              group("ecmFcc_2021.288.00.00.0180.12_nc"), {"atmPrf": {}}]
+    assert nwp.october_2021_echprf(groups) == 2

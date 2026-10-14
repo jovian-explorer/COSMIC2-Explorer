@@ -909,7 +909,7 @@ def compare_models(req: ModelCompareRequest) -> dict:
                                     min_count=req.min_count or 3)
     have = {p: sum(1 for g in groups if p in g) for p in ("atmPrf", "wetPf2", "echPrf", "avnPrf")}
     out.update(kind=req.kind, selected=len(rows), occultations=len(groups), products_found=have,
-               missions=_missions_of(rows))
+               missions=_missions_of(rows), echprf_oct2021=nwp.october_2021_echprf(groups))
     return _clean(out)
 
 
@@ -980,6 +980,8 @@ def compare_missions(req: MissionCompareRequest) -> dict:
                            step_km=req.step_km, bottom_km=req.bottom_km,
                            min_count=req.min_count)
     out["selected"] = len(rows)
+    from . import nwp
+    out["echprf_oct2021"] = nwp.october_2021_echprf(nwp.stamp_groups(rows, index))
     return _clean(out)
 
 
