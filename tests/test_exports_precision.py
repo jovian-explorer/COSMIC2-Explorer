@@ -167,3 +167,12 @@ def test_scintillation_time_units_are_one_entry_for_many_files():
     line = next(l for l in open(res["path"], encoding="utf-8") if l.startswith("# Units:"))
     assert "time s since the start of each file (its time_utc)" in line
     assert "2026-07-19" not in line
+
+
+def test_exports_cite_the_dataset_of_every_mission_used():
+    from cosmic2 import exporters
+    prov = exporters.provenance([{"sat": "MTPC"}, {"sat": "C2E3"}, {"sat": None}])
+    cite = prov["data_citation"]
+    assert cite.index("10.5065/T353-C093") < cite.index("10.5065/P8ES-MC74")
+    assert "COSMIC-1" not in cite
+    assert exporters.provenance([{"sat": "C006"}])["data_citation"].count("https://doi.org/") == 1

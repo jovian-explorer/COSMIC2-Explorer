@@ -53,6 +53,13 @@ def export_path(basename: str, ext: str) -> Path:
     return path
 
 
+def _missions(granules: Sequence[dict]) -> list[str]:
+    """The missions of the granules, COSMIC-2 first (and for unknown satellites)."""
+    from .missions import mission_of_sat
+    found = {mission_of_sat(g.get("sat")) or "cosmic2" for g in granules} or {"cosmic2"}
+    return sorted(found, key=lambda m: (m != "cosmic2", m))
+
+
 def provenance(granules: Sequence[dict], extra: dict | None = None) -> dict:
     products = sorted({g.get("product") for g in granules if g.get("product")})
     streams = sorted({g.get("stream") for g in granules if g.get("stream")})
@@ -62,7 +69,7 @@ def provenance(granules: Sequence[dict], extra: dict | None = None) -> dict:
         "generated_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
         "source": "UCAR COSMIC Data Analysis and Archive Center (CDAAC)",
         "source_root": CDAAC_BASE,
-        "data_citation": citation(),
+        "data_citation": citation(missions=_missions(granules)),
         "data_availability": DATA_AVAILABILITY_STATEMENT,
         "licenses": DATA_LICENSES,
         "lead_researcher": LEAD_RESEARCHER,

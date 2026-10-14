@@ -111,22 +111,34 @@ DATA_PORTALS = [
 
 # Public CDAAC archive root (no credentials required).
 CDAAC_BASE = "https://data.cosmic.ucar.edu/gnss-ro"
+# The dataset of each mission CDAAC processes (title, year and DOI as
+# registered with DataCite, creator "UCAR COSMIC Program").
+MISSION_DATASETS = {
+    "cosmic2": ("COSMIC-2 Data Products", 2019, "10.5065/T353-C093"),
+    "cosmic1": ("COSMIC-1 Data Products", 2006, "10.5065/ZD80-KD74"),
+    "paz": ("PAZ Data Products", 2018, "10.5065/K9VG-T494"),
+    "kompsat5": ("KOMPSAT5 Data Products", 2015, "10.5065/7M8G-JA33"),
+    "metopb": ("METOP-B Data Products", 2013, "10.5065/1K0W-2272"),
+    "metopc": ("METOP-C Data Products", 2019, "10.5065/P8ES-MC74"),
+}
 # Data citation, quoted in the form UCAR suggests on its COSMIC-2 data page
 # (https://www.cosmic.ucar.edu/what-we-do/cosmic-2/data). "{access_date}" is
 # filled in by the exporter with the date the user actually retrieved the data.
 CITATION_TEMPLATE = (
-    "UCAR COSMIC Program, 2019: COSMIC-2 Data Products [Data set]. "
+    "UCAR COSMIC Program, {year}: {title} [Data set]. "
     "UCAR/NCAR - COSMIC, Access date {access_date}, "
-    "https://doi.org/10.5065/T353-C093"
+    "https://doi.org/{doi}"
 )
 CITATION_SOURCE = "https://www.cosmic.ucar.edu/what-we-do/cosmic-2/data"
 
 
-def citation(access_date=None) -> str:
-    """Suggested data citation, with today's access date unless given."""
+def citation(access_date=None, missions=("cosmic2",)) -> str:
+    """Suggested data citation, with today's access date unless given: one
+    per mission whose data are used, in the form UCAR suggests."""
     import datetime as _dt
     d = access_date or _dt.date.today().isoformat()
-    return CITATION_TEMPLATE.format(access_date=d)
+    return "; ".join(CITATION_TEMPLATE.format(title=t, year=y, doi=doi, access_date=d)
+                    for t, y, doi in (MISSION_DATASETS[m] for m in missions))
 
 
 def _data_root() -> Path:

@@ -17,8 +17,8 @@ All data COSMIC-2 Explorer downloads come from the UCAR CDAAC archive. Files fro
 * **Sponsoring Agencies**: National Science Foundation (NSF), National Oceanic and Atmospheric Administration (NOAA), National Aeronautics and Space Administration (NASA), United States Space Force (USSF).
 * **Archive URL**: https://data.cosmic.ucar.edu/
 * **Mission Portal**: https://www.cosmic.ucar.edu/
-* **Coverage used by the app**: daily tarballs of the FORMOSAT-7 / COSMIC-2 streams `nrt`, `rapid`, `postProc` and `provisional`; the app reads atmPrf, wetPf2, ionPrf, scnLv2 and ivmL2m.
-* **Access Policy**: The data are downloadable over HTTPS without registration. UCAR publishes no licence text for them and asks users to cite the data set (doi:10.5065/T353-C093, see section 4).
+* **Coverage used by the app**: daily tarballs of the FORMOSAT-7 / COSMIC-2 streams `nrt`, `rapid`, `postProc` and `provisional`; the app reads atmPrf, wetPf2, ionPrf, scnLv2 and ivmL2m. For comparison it also downloads the same files of other missions CDAAC processes: PAZ and KOMPSAT-5 (`nrt`), Metop-B and Metop-C (`postProc`) and COSMIC-1 (`repro2021`).
+* **Access Policy**: The data are downloadable over HTTPS without registration. UCAR publishes no licence text for them and asks users to cite the data set (doi:10.5065/T353-C093, see section 4). Each other mission has its own data set, which an export cites when it holds that mission's profiles: COSMIC-1 Data Products (2006, doi:10.5065/ZD80-KD74), PAZ Data Products (2018, doi:10.5065/K9VG-T494), KOMPSAT5 Data Products (2015, doi:10.5065/7M8G-JA33), METOP-B Data Products (2013, doi:10.5065/1K0W-2272) and METOP-C Data Products (2019, doi:10.5065/P8ES-MC74), all by the UCAR COSMIC Program.
 
 ### B. NOAA NCEI (National Centers for Environmental Information)
 * **Operating Institution**: National Oceanic and Atmospheric Administration (NOAA), Department of Commerce, USA.
