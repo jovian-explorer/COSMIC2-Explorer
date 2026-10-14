@@ -120,14 +120,23 @@ def test_scnlv2_is_placed_at_the_tangent_point_of_the_s4_maximum():
                                ex["satellite_lon_s4max_L1"]) > 1500
 
 
-def test_ivm_local_time_is_solar_not_magnetic():
-    p = next(sampledata_dir().glob("ivmL2m_*"))
-    g = readers.load(str(p))
-    uts, lon = g.data["uts"], g.data["lon"]
-    i = int(np.nanargmin(uts))
-    expected = ((uts[i] % 86400) / 3600 + lon[i] / 15) % 24
-    assert g.meta["local_time"] == pytest.approx(expected)
+def test_ivm_day_has_no_single_position_or_local_time():
+    """A file is a whole day of the orbit: no median point stands for it."""
+    g = readers.load(str(next(sampledata_dir().glob("ivmL2m_*"))))
+    assert np.nanmax(g.data["uts"]) - np.nanmin(g.data["uts"]) > 23 * 3600
+    assert g.meta["lat"] is None and g.meta["lon"] is None and g.meta["local_time"] is None
+    assert g.meta["extras"]["lat_range"][0] < -20 < 20 < g.meta["extras"]["lat_range"][1]
     assert g.meta["extras"]["median_mlt_h"] == pytest.approx(float(np.nanmedian(g.data["mlt"])))
+
+
+def test_ivm_map_uses_the_samples_where_they_were_taken():
+    from cosmic2 import climatology
+    p = next(sampledata_dir().glob("ivmL2m_*"))
+    row = {"path": str(p), "product": "ivmL2m", "lat": None, "lon": None}
+    res = climatology.diagnostic_map([row], "insitu.ion_dens_median_Ncc", workers=1)
+    assert res["insitu_samples"] and 1300 < res["n"] <= 1441    # a sample a minute
+    filled = np.isfinite(np.asarray(res["mean"], float))
+    assert filled.sum() >= 30                                   # the orbit's cells, not one
 
 
 def test_ivm_derived_solar_local_time():

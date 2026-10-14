@@ -367,12 +367,17 @@ async function drawMap() {
   ], axesLayout('Latitude [°N] (band centre)', cleanPlotlyMath(res.title)), PLOT_CONFIG);
   const gw = res.gw;
   $('#mapgrid-title').textContent = `${res.title}: mean in each cell`;
+  const what = res.insitu_samples ? 'samples' : 'profiles';
   $('#mapgrid-caption').textContent = missionNote(res.missions) +
-    `${res.n} of ${res.selected} profiles have a value; overall mean ` +
+    (res.insitu_samples
+      ? `${res.n} in-situ samples, one a minute along the orbit, from the selected ivmL2m days; ` +
+        'each cell is the mean of the samples taken in it. Overall mean '
+      : `${res.n} of ${res.selected} profiles have a value; overall mean `) +
     `${fmt(res.overall.mean, 3)}, median ${fmt(res.overall.median, 3)}. ` +
     `Cells of ${req.lat_step}° × ${req.lon_step}° with fewer than ` +
-    `${res.min_count} profiles are blank. Zonal mean: thin bars ± 1 standard deviation, ` +
-    `thick bars the 95% confidence interval of the mean (Student's t, profiles taken as independent).` +
+    `${res.min_count} ${what} are blank. Zonal mean: thin bars ± 1 standard deviation, ` +
+    `thick bars the 95% confidence interval of the mean (Student's t, ${what} taken as independent` +
+    (res.insitu_samples ? ', which neighbouring samples are not: the interval is too narrow' : '') + ').' +
     (gw ? ` Gravity-wave energy over ${gw.z_lo}-${gw.z_hi} km, background: ` +
           (gw.method === 'highpass' ? `high-pass, ${gw.cutoff_km} km cut-off.`
                                     : `degree-${gw.poly_order} polynomial.`) : '');

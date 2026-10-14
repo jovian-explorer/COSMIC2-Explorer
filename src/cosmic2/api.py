@@ -1045,7 +1045,8 @@ def climatology_map(req: MapRequest) -> dict:
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
     res["selected"] = len(rows)
-    res["title"] = vocab.column_title(req.column)
+    res["title"] = (climatology.INSITU_MAP[req.column][1] if res.get("insitu_samples")
+                    else vocab.column_title(req.column))
     res["missions"] = _missions_of(rows)
     return _clean(res)
 

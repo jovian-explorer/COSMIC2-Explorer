@@ -672,23 +672,13 @@ def _read_ivml2m(path: str) -> Granule:
         epoch = float(np.nanmin(uts))
         iso = dt.datetime.fromtimestamp(epoch, dt.timezone.utc).isoformat().replace("+00:00", "Z")
     lat = data.get("lat")
-    lon = data.get("lon")
-    meta.update(
-        time_utc=iso, epoch=epoch,
-        lat=float(np.nanmedian(lat)) if lat is not None and np.isfinite(lat).any() else None,
-        lon=float(np.nanmedian(lon)) if lon is not None and np.isfinite(lon).any() else None,
-        mission="COSMIC-2 IVM",
-    )
-    # Local *solar* time of the first sample, the same instant as time_utc.
-    # (The file's "mlt" variable is magnetic local time, a different
-    # coordinate; using it here mislabelled day/night grouping and the
-    # local-time filter.  Its median is kept in extras.)
-    meta["local_time"] = None
-    if uts is not None and lon is not None:
-        ok = np.isfinite(uts) & np.isfinite(lon[:uts.size])
-        if ok.any():
-            i = int(np.flatnonzero(ok)[np.argmin(uts[ok])])
-            meta["local_time"] = _local_time(float(lon[i]), float(uts[i]))
+    # A file is a whole day of the orbit (every longitude, +-24 degrees): the
+    # record has no single position or local time.  The median position
+    # used to stand for it put the day at one point of the map and decided
+    # latitude, longitude and local-time filters for all of it.  Each
+    # sample's position and local time ("slt") are still in the data.
+    meta.update(time_utc=iso, epoch=epoch, lat=None, lon=None, local_time=None,
+                mission="COSMIC-2 IVM")
     # ion_dens is orig_ion_density rescaled against TGRS TEC (Space Weather
     # Data Release 4, UCAR 2021), which also takes about 7900 /cc off: where
     # the raw density was below that it goes negative (604 of 84520 samples
@@ -757,7 +747,7 @@ def _read_avnprf(path: str) -> Granule:
 # Raised whenever a reader change alters what is indexed (position, local
 # time, quality, extras); an index written by an older version is then
 # re-read once at start-up (see store.index_outdated).
-INDEX_VERSION = 7
+INDEX_VERSION = 8
 
 READERS = {
     "atmPrf": _read_atmprf,

@@ -360,6 +360,31 @@ def _map_point(row: dict, v) -> tuple | None:
     return float(row["lat"]), float(row["lon"]), float(v)
 
 
+# In-situ (ivmL2m) columns are mapped from the samples, not the day: a file
+# covers every longitude, so its daily median has no place on a map.
+# column -> (variable, title); one sample a minute is used.
+INSITU_MAP = {"insitu.ion_dens_median_Ncc": ("ion_dens", "Ion density at the spacecraft"),
+              "insitu.ion_temp_median_K": ("ion_temp", "Ion temperature at the spacecraft"),
+              "insitu.zonal_drift_median_ms": ("iv_zon", "Zonal ion drift at the spacecraft")}
+INSITU_STEP_S = 60.0
+
+
+def _insitu_points(task: tuple) -> list:
+    """``(lat, lon, value)`` of one ivmL2m file, a sample a minute."""
+    from . import readers
+    row, var = task
+    try:
+        d = readers.load(row["path"], "ivmL2m").data
+        n = min(d["uts"].size, d["lat"].size, d["lon"].size, d[var].size)
+        t, la, lo, v = (np.asarray(d[k][:n], float) for k in ("uts", "lat", "lon", var))
+    except Exception:  # noqa: BLE001
+        return []
+    ok = np.isfinite(t) & np.isfinite(la) & np.isfinite(lo) & np.isfinite(v)
+    t, la, lo, v = t[ok], la[ok], lo[ok], v[ok]
+    _, first = np.unique(np.floor((t - t.min()) / INSITU_STEP_S) if t.size else t, return_index=True)
+    return [(float(la[i]), float(lo[i]), float(v[i])) for i in first]
+
+
 def diagnostic_map(rows: Sequence[dict], column: str = EP_COLUMN,
                    lat_step: float = 10.0, lon_step: float = 20.0,
                    min_count: int = 1, gw: dict | None = None,
@@ -379,7 +404,12 @@ def diagnostic_map(rows: Sequence[dict], column: str = EP_COLUMN,
         raise ValueError("lat_step and lon_step must be > 0")
     if gw and gw.get("method", "polynomial") not in ("polynomial", "highpass"):
         raise ValueError("method must be polynomial or highpass")
-    if column == EP_COLUMN and gw:
+    if column in INSITU_MAP:
+        files = [r for r in rows if r.get("product") == "ivmL2m"]
+        found = [p for pts in pmap(_insitu_points, [(r, INSITU_MAP[column][0]) for r in files],
+                                   workers=workers) for p in pts]
+        rows = [{} for _ in found]       # samples, not occultations
+    elif column == EP_COLUMN and gw:
         found = pmap(_map_value, [(r, column, gw) for r in rows], workers=workers)
     else:
         # the per-profile diagnostics, computed once per file and kept
@@ -391,6 +421,7 @@ def diagnostic_map(rows: Sequence[dict], column: str = EP_COLUMN,
     lon_edges = np.arange(-180.0, 180.0 + lon_step / 2, lon_step)
     nlat, nlon = lat_edges.size - 1, lon_edges.size - 1
     out = {"column": column, "n": int(vals.shape[0]), "min_count": min_count,
+           "insitu_samples": column in INSITU_MAP,
            "gw": gw or None,
            "lat_edges": lat_edges.tolist(), "lon_edges": lon_edges.tolist(),
            "lat_centres": (0.5 * (lat_edges[:-1] + lat_edges[1:])).tolist(),
