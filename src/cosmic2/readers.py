@@ -553,17 +553,23 @@ def _read_ionprf(path: str) -> Granule:
     )
     # The profile is placed at its density peak (edmax).  CDAAC's edmax is
     # sometimes an E-region or bottomside maximum (5 of 690 ionPrf of
-    # 2026-09-18, at 40-93 km), whose tangent point is up to 1600 km from
-    # the F2 peak's: place those at the largest density above 150 km.
+    # 2026-09-18, at 40-93 km) or an inversion spike near the orbit (a
+    # COSMIC-1 profile of 2019-12-10: 778 km, its F2 peak at 222 km); the
+    # tangent point moves with height, up to 1600 km between the two.  When
+    # edmaxalt is more than 50 km from the F2 peak the app finds, the
+    # profile is placed at that peak's level instead.
     z, ne = data.get("MSL_alt"), data.get("ELEC_dens")
     hm = scrub(attrs.get("edmaxalt"))
-    if (hm is not None and hm < 150.0 and z is not None and ne is not None
+    if (hm is not None and z is not None and ne is not None
             and {"GEO_lat", "GEO_lon"} <= data.keys()):
-        f2 = np.flatnonzero((z > 150.0) & np.isfinite(ne))
-        if f2.size:
-            i = f2[np.argmax(ne[f2])]
-            meta.update(lat=float(data["GEO_lat"][i]), lon=float(data["GEO_lon"][i]))
-            meta["local_time"] = _local_time(meta["lon"], epoch)
+        from .analysis import ionosphere_peak
+        peak = ionosphere_peak(z, ne)["hmF2_km"]
+        if peak is not None and abs(peak - hm) > 50.0:
+            ok = np.isfinite(z) & np.isfinite(data["GEO_lat"]) & np.isfinite(data["GEO_lon"])
+            if ok.any():
+                i = np.flatnonzero(ok)[np.argmin(np.abs(z[ok] - peak))]
+                meta.update(lat=float(data["GEO_lat"][i]), lon=float(data["GEO_lon"][i]))
+                meta["local_time"] = _local_time(meta["lon"], epoch)
     nmf2 = attrs.get("edmax")
     meta["good"] = bool(nmf2 and nmf2 > 0)
     meta["bad_code"] = "0" if meta["good"] else "1"
@@ -747,7 +753,7 @@ def _read_avnprf(path: str) -> Granule:
 # Raised whenever a reader change alters what is indexed (position, local
 # time, quality, extras); an index written by an older version is then
 # re-read once at start-up (see store.index_outdated).
-INDEX_VERSION = 8
+INDEX_VERSION = 9
 
 READERS = {
     "atmPrf": _read_atmprf,

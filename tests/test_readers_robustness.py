@@ -246,21 +246,39 @@ def test_second_frequency_text_covers_galileo_e5a():
     assert "1176.45 MHz for Galileo E5a" in vocab.VAR_INFO["Bend_ang2"]["plain"]
 
 
-def test_ionprf_with_an_e_region_edmax_is_placed_at_the_f2_peak(tmp_path):
-    z = np.array([80.0, 120.0, 200.0, 300.0, 400.0])
+def test_ionprf_whose_edmax_is_not_the_f2_peak_is_placed_at_the_f2_peak(tmp_path):
+    """CDAAC's edmax can be an E-region maximum (5 of 690 COSMIC-2 ionPrf of
+    2026-09-18) or a spike near the orbit (COSMIC-1, 2019-12-10, 778 km)."""
+    z = np.arange(80.0, 800.0, 10.0)
+    y = (z - 300.0) / 50.0
+    ne = 1.5e5 * np.exp(0.5 * (1 - y - np.exp(-y)))
+    lat, lon = 10.0 - z / 100.0, -101.0 + z / 25.0          # the tangent point drifts
+    i300 = int(np.argmin(abs(z - 300.0)))
     attrs = dict(year=2026, month=9, day=18, hour=9, minute=3, second=0.0, setting=1,
-                 edmaxalt=80.0, edmaxlat=10.0, edmaxlon=-101.0, edmaxlct=2.0, edmax=2e5)
-    v = {"MSL_alt": (z, {}), "ELEC_dens": (np.array([2e5, 1e5, 1e5, 1.5e5, 1e5]), {}),
-         "GEO_lat": (np.array([10.0, 8.0, 4.0, 0.3, -3.0]), {}),
-         "GEO_lon": (np.array([-101.0, -99.0, -95.0, -91.0, -87.0]), {})}
+                 edmaxlct=2.0, edmax=2e5)
     p = tmp_path / "ionPrf_C2E4.2026.261.09.03.G06_0001.0001_nc"
-    m = readers.load(_write(p, attrs, v)).meta
-    assert (m["lat"], m["lon"]) == pytest.approx((0.3, -91.0))
-    assert m["local_time"] == pytest.approx((9.05 - 18 / 3600 - 91.0 / 15.0) % 24.0)
-    m = readers.load(_write(p, dict(attrs, edmaxalt=300.0, edmaxlat=0.3), v)).meta
-    assert (m["lat"], m["lon"]) == pytest.approx((0.3, -101.0))
-    # edmaxlct (2.0 here) is not used: local time of the UTC time at edmaxlon
-    assert m["local_time"] == pytest.approx((9.05 - 18 / 3600 - 101.0 / 15.0) % 24.0)
+
+    def place(hm, dens):
+        k = int(np.argmin(abs(z - hm)))
+        v = {"MSL_alt": (z, {}), "ELEC_dens": (dens, {}), "GEO_lat": (lat, {}),
+             "GEO_lon": (lon, {})}
+        return readers.load(_write(p, dict(attrs, edmaxalt=hm, edmaxlat=lat[k],
+                                           edmaxlon=lon[k]), v)).meta
+
+    e_region = ne.copy()
+    e_region[0] = 2e5
+    m = place(80.0, e_region)
+    assert (m["lat"], m["lon"]) == pytest.approx((lat[i300], lon[i300]))
+    assert m["local_time"] == pytest.approx((9.05 - 18 / 3600 + lon[i300] / 15.0) % 24.0)
+    spike = ne.copy()
+    k = int(np.argmin(abs(z - 780.0)))
+    spike[k - 1:k + 2] = [-2.8e5, 4.75e5, 1.2e4]
+    m = place(780.0, spike)
+    assert (m["lat"], m["lon"]) == pytest.approx((lat[i300], lon[i300]))
+    # an edmax at the F2 peak stays where CDAAC put it; edmaxlct is not used
+    m = place(300.0, ne)
+    assert (m["lat"], m["lon"]) == pytest.approx((lat[i300], lon[i300]))
+    assert m["local_time"] == pytest.approx((9.05 - 18 / 3600 + lon[i300] / 15.0) % 24.0)
 
 
 def test_cdaac_times_are_gps_time_and_read_as_utc():

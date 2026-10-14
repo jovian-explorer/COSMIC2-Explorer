@@ -28,6 +28,9 @@ TanDEM-X (2026-05-31) and COSMIC-1 (2019-12-10) from CDAAC.
 * **Fix**: no point position and no local time for a day-long ivmL2m record.
   The latitude range stays in `extras`, and the per-sample `lat`, `lon` and
   local time (`slt`) are still plotted from the file.
+* **Status**: fixed in 35d23d5. The diagnostic map now draws ivmL2m from its
+  samples, one a minute, where they were taken (1441 samples over the orbit's
+  cells for the bundled day, instead of one point).
 
 ### M2. ionPrf placed at CDAAC's `edmax` even when that is a spike near the orbit
 * **Where**: `src/cosmic2/readers.py:547-565` (`_read_ionprf`).
@@ -43,6 +46,8 @@ TanDEM-X (2026-05-31) and COSMIC-1 (2019-12-10) from CDAAC.
   the E-region case already handled; the COSMIC-1 one is the spike.
 * **Fix**: place the record at the app's F2 peak whenever it is more than
   50 km from `edmaxalt`, in either direction.
+* **Status**: fixed. Of the 713 real profiles, 6 move: the 5 E-region cases
+  as before (424-1598 km) and the COSMIC-1 spike (413 km).
 
 ### M3. One position per neutral profile, though the tangent point drifts
 * **Where**: `src/cosmic2/readers.py:461, 511, 734` (CDAAC's `lat`/`lon`
