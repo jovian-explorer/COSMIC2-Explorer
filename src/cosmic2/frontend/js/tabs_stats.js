@@ -462,6 +462,15 @@ async function drawMissions() {
     $('#ms-caption').textContent = '';
     return;
   }
+  // the two missions' days, when they share none (say, Metop-A of 2021 against
+  // COSMIC-2 of 2026): nothing can collocate, and the comparison through
+  // ECMWF sets different seasons or years against each other
+  const span = (d) => d.join(' to ');
+  const apart = res.common_days ? '' :
+    `The ${name} profiles are from ${span(res.days_other)} and the COSMIC-2 ones from ` +
+    `${span(res.days_cosmic2)}, with no day in common, so there are no collocated pairs and ` +
+    'the comparison through ECMWF sets different days against each other. Download both ' +
+    'missions for the same days for a like-for-like comparison. ';
   const y = res.grid;
   const traces = [];
   if (c.n_pairs) {
@@ -494,15 +503,16 @@ async function drawMissions() {
                  hovertemplate: '%{y} km: %{x:.3g}<extra></extra>'});
   }
   if (!traces.length) {
-    emptyPlot('ms-plot', `No COSMIC-2 profile lies within ${res.max_km} km and ${res.max_hours} h of a ` +
-      `${name} profile, and the ECMWF profiles (echPrf) of one of the missions are missing.`);
+    emptyPlot('ms-plot', apart || `No COSMIC-2 profile lies within ${res.max_km} km and ` +
+      `${res.max_hours} h of a ${name} profile, and the ECMWF profiles (echPrf) of one of the ` +
+      'missions are missing.');
     $('#ms-caption').textContent = '';
     return;
   }
   Plotly.react('ms-plot', traces, axesLayout(`${res.label}: COSMIC-2 minus ${name} [${res.units}]`,
     'Altitude above mean sea level [km]', {shapes: [{type: 'line', x0: 0, x1: 0, yref: 'paper',
       y0: 0, y1: 1, line: {color: '#94a3b8', width: 1, dash: 'dot'}}]}), PLOT_CONFIG);
-  $('#ms-caption').textContent =
+  $('#ms-caption').textContent = apart +
     `${res.n_cosmic2} COSMIC-2 and ${res.n_other} ${name} profiles. Collocated: each ${name} ` +
     `profile paired with the COSMIC-2 profile nearest in 0.75 |dt| / ${res.max_hours} h + 0.25 d / ` +
     `${res.max_km} km within ${res.max_km} km and ${res.max_hours} h, each used once` +

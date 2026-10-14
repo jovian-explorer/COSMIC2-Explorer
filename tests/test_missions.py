@@ -172,3 +172,12 @@ def test_every_other_mission_has_a_name_a_data_set_and_a_stream():
     assert others == set(missions.MISSION_NAMES) - {"cosmic2"}
     assert others | {"cosmic2"} == set(config.MISSION_DATASETS)
     assert others == {s.get("mission") for s in catalog.STREAMS.values()} - {None}
+
+
+def test_comparison_says_when_the_missions_share_no_day():
+    c2 = [dict(_row("C2E1", 0.0, 0.0, 0.0, "c"), time_utc="2026-05-31T00:00:00Z")]
+    other = [dict(_row("MTPA", 0.0, 0.5, 0.2, f"o{i}"), time_utc=f"2021-10-2{i}T00:00:00Z")
+             for i in (7, 8, 9)]
+    res = missions.compare(c2 + other, [], other="metopa", min_count=1, workers=1)
+    assert res["common_days"] == 0
+    assert res["days_other"] == ["2021-10-27", "2021-10-29"] and res["days_cosmic2"] == ["2026-05-31"]

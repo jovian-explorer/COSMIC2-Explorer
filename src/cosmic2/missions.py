@@ -160,6 +160,13 @@ def compare(rows: Sequence[dict], index_rows: Sequence[dict], other: str = "paz"
            "other": other, "other_name": MISSION_NAMES[other], "grid": grid.tolist(),
            "min_count": min_count, "max_km": max_km, "max_hours": max_hours,
            "n_cosmic2": len(ref_rows), "n_other": len(oth_rows)}
+    # the UTC days of each side: with none in common (Metop-A ended in 2021,
+    # COSMIC-1 in 2019, post-processed days lag months) nothing can collocate
+    days = [sorted({r["time_utc"][:10] for r in sel if r.get("time_utc")})
+            for sel in (ref_rows, oth_rows)]
+    first_last = [sorted({d[0], d[-1]}) if d else [] for d in days]
+    out.update(days_cosmic2=first_last[0], days_other=first_last[1],
+               common_days=len(set(days[0]) & set(days[1])))
     pairs = collocate(ref_rows, oth_rows, max_km, max_hours)
     ech = {r["stamp"]: r for r in index_rows
            if r.get("product") == "echPrf" and r.get("good", True) and r.get("stamp")}
