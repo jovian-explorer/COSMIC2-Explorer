@@ -84,9 +84,9 @@ TanDEM-X (2026-05-31) and COSMIC-1 (2019-12-10) from CDAAC.
 * **Check**: Metop-A, -B and -C minus echPrf from 10 to 30 km is -0.30 to
   -0.38 % on every day checked in October, and within 0.06 % from 09-15 to
   09-29 and 11-01 to 11-10. The same occultations minus ERA5 (`er5Prf`) and
-  GFS (`gfsPrf`) stay within 0.1 %. PAZ (10-05, 10-27) and KOMPSAT-5 (10-05)
-  post-processed files give -0.36 to -0.42 % against echPrf and -0.05 to
-  -0.09 % against ERA5. Bending angles show the same step. COSMIC-2's
+  GFS (`gfsPrf`) stay within 0.1 %. PAZ (10-05, 10-27) and KOMPSAT-5 (10-05,
+  10-15, 10-27) post-processed files give -0.28 to -0.42 % against echPrf
+  and -0.07 to +0.03 % against ERA5. Bending angles show the same step. COSMIC-2's
   near-real-time echPrf (ECMWF forecasts, `ecmFcc`) do not.
 * **Fix**: the files cannot be corrected here. `nwp.october_2021_echprf`
   counts the occultations of a selection whose echPrf come from those files,

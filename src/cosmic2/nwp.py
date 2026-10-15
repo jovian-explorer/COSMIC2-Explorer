@@ -112,8 +112,9 @@ def stamp_groups(selected: Sequence[dict], index_rows: Sequence[dict],
 # -0.30 to -0.38 % on 2021-10-01 to 10-31, within 0.06 % on 09-15 to 09-29
 # and 11-01 to 11-10; minus ERA5 (er5Prf) and GFS (gfsPrf) of the same
 # occultations within 0.1 % throughout.  PAZ and KOMPSAT-5 post-processed
-# files show the same (PAZ on 2021-10-05 and 10-27, KOMPSAT-5 on 10-05):
-# -0.36 to -0.42 % against echPrf, -0.05 to -0.09 % against ERA5.  The near-real-time echPrf use
+# files show the same (PAZ on 2021-10-05 and 10-27, KOMPSAT-5 on 10-05,
+# 10-15 and 10-27): -0.28 to -0.42 % against echPrf, -0.07 to +0.03 %
+# against ERA5.  The near-real-time echPrf use
 # forecast files (ecmFcc) and are not affected.
 _ECM_OCT_2021 = re.compile(r"ecmAnc_2021\.(27[4-9]|28\d|29\d|30[0-4])\.")
 
