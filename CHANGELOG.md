@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Explore says how many files were left out** as second copies of the same occultations.
+- **Help: near-real-time against post-processed** profiles of the same PAZ occultations (601 pairs).
 - **Comparisons from Python**: the README shows the model and mission comparisons as functions, tested on the bundled files.
 - **PAZ and KOMPSAT-5 post-processed streams** (from 2018 and 2015). An occultation held twice (downloaded from a near-real-time and a post-processed stream, or also imported from disk) counts once in every search and statistic.
 - **The numbers behind every plot**: a toolbar button on each plot saves what it draws (each line, band or map cell), with its title and caption, as a CSV in the exports folder.
