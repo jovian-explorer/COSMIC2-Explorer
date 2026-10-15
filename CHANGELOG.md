@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Mission comparison by level**: a collocated pair is used at each height only where the two profiles' own tangent points are within the distance limit (a quarter of the COSMIC-2 / Metop pairs of October 2021 drifted further apart at 20-30 km).
+- **Help: how the missions differ** (orbits, setting or rising occultations, profiles a day, quality, ionPrf tops, ECMWF files).
 - **CDAAC's post-processed ECMWF profiles of October 2021 are about 0.35 % high in refractivity**, found on Metop-A, -B and -C against ERA5 and GFS profiles of the same occultations. The model and mission comparisons say when a selection uses them. (An earlier note blamed Metop-A for it.)
 - **Model audit** (`docs/MODEL_AUDIT.md`): every time, position, height and quantity the app computes rather than reads, ranked, with its basis and a check against real files. Fixed from it: an ivmL2m day no longer gets an invented median position and local time, and its map is drawn from the samples where they were taken; an ionPrf whose CDAAC maximum is an E-region value or a spike near the orbit is placed at its F2 peak; the radiosonde comparison no longer assumes the equator for a profile without a latitude; Help says that collocation distances hold at the reference tangent point only.
 - **Metop-A (2016-2021) and TanDEM-X** streams as well, with their CDAAC data sets cited in exports; the mission card says when the two missions share no day. The data policy explains why NOAA's purchased commercial profiles (Spire, PlanetiQ, GeoOptics) are not offered.
