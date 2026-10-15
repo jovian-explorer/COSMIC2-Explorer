@@ -206,6 +206,11 @@ _SORTS = {
 }
 
 
+# which copy of an occultation held twice stands for it (lowest first)
+_RANK = ("(CASE WHEN {t}.stream LIKE '%postProc' THEN 0 "
+         "WHEN {t}.stream = 'local' THEN 2 ELSE 1 END)")
+
+
 def query_granules(*, products: list[str] | None = None,
                    streams: list[str] | None = None,
                    start: str | None = None, end: str | None = None,
@@ -260,12 +265,14 @@ def query_granules(*, products: list[str] | None = None,
     if good_only:
         where.append("good = 1")
     if not streams:
-        # The same occultation downloaded from a near-real-time and a
-        # post-processed stream (PAZ, KOMPSAT-5, COSMIC-2 ivmL2m) would count
-        # twice: the post-processed copy (final orbits) stands for it.
-        where.append("NOT (COALESCE(stream, '') NOT LIKE '%postProc' AND EXISTS ("
-                     "SELECT 1 FROM granules AS p WHERE p.product = granules.product "
-                     "AND p.stamp = granules.stamp AND p.stream LIKE '%postProc'))")
+        # The same occultation held twice (downloaded from a near-real-time
+        # and a post-processed stream, or also imported from disk) would
+        # count twice: one copy stands for it, post-processed (final orbits)
+        # first, then downloaded, then imported.
+        where.append(f"NOT EXISTS (SELECT 1 FROM granules AS p WHERE p.product = granules.product "
+                     f"AND p.stamp = granules.stamp AND p.id != granules.id AND "
+                     f"({_RANK.format(t='p')} < {_RANK.format(t='granules')} OR "
+                     f"({_RANK.format(t='p')} = {_RANK.format(t='granules')} AND p.id < granules.id)))")
 
     sql_where = (" WHERE " + " AND ".join(where)) if where else ""
     total = conn.execute(f"SELECT COUNT(*) FROM granules{sql_where}", args).fetchone()[0]
