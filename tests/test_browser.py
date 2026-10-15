@@ -42,6 +42,12 @@ def test_every_tab_and_main_action_without_script_errors(page):
         page.eval_on_selector_all("#f-product option", "o => o.map(x => x.value)"))
     page.click("button[data-tab=explore]")
     page.select_option("#f-product", "wetPf2")
+    streams = page.eval_on_selector_all("#f-stream option", "o => o.map(x => x.value)")
+    assert streams[0] == "" and len(streams) >= 2
+    page.select_option("#f-stream", streams[1])
+    _press(page, "#btn-search")
+    assert "profiles match" in page.inner_text("#search-note")
+    page.select_option("#f-stream", "")
     _press(page, "#btn-search")
     page.click("#btn-select-page")
     page.click("button[data-tab=profile]")

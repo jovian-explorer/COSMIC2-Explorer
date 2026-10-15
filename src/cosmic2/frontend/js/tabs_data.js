@@ -319,6 +319,10 @@ export async function refreshFacets() {
     const products = f.products.length ? f.products : ['wetPf2'];
     fillSelect($('#f-product'), products, products[0]);
     fillSelect($('#f-sat'), satelliteChoices(f.sats), '');
+    const named = {local: 'imported from disk'};
+    fillSelect($('#f-stream'), [{value: '', label: 'any'}].concat(f.streams.map((s) => ({
+      value: s, label: (state.meta.streams && state.meta.streams[s] && state.meta.streams[s].label)
+        || named[s] || s}))), '');
     if (f.date_min) $('#f-start').value = f.date_min;
     if (f.date_max) $('#f-end').value = f.date_max;
   } catch { /* empty index is fine */ }
@@ -336,6 +340,7 @@ export function initExploreTab() {
                       'f-ltmin', 'f-ltmax']) $(`#${id}`).value = '';
     $('#f-good').checked = state.meta.settings.qc_require_good !== false;
     $('#f-sat').value = '';
+    $('#f-stream').value = '';
     $$('.preset-btn').forEach((b) => b.classList.remove('active'));
     runSearch();
   });
@@ -387,6 +392,7 @@ function buildSearch(offset = 0) {
     lon_min: num('f-lonmin'), lon_max: num('f-lonmax'),
     local_time_min: num('f-ltmin'), local_time_max: num('f-ltmax'),
     sats: sat ? sat.split(',') : null,
+    streams: $('#f-stream').value ? [$('#f-stream').value] : null,
     good_only: $('#f-good').checked,
     sort: 'time', desc: false,
     limit: state.pageSize, offset,
