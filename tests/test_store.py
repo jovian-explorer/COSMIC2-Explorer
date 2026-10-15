@@ -146,6 +146,7 @@ def test_an_occultation_in_two_streams_counts_once(tmp_path):
     try:
         hits = store.query_granules(products=["tdup"])
         assert hits["total"] == 1 and hits["granules"][0]["stream"] == "paz-postProc"
+        assert hits["folded"] == 1
         assert store.query_granules(products=["tdup"], streams=["paz-nrt"])["total"] == 1
         # an imported copy of a downloaded file counts once too
         store.upsert_granules([dict(rows[0], path=str(tmp_path / "tdup_a"), stream="local",

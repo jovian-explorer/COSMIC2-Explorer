@@ -401,7 +401,10 @@ export async function runSearch(offset = 0) {
   state.total = res.total;
   state.offset = res.offset;
   $('#search-note').textContent =
-    `${res.total} profiles match. Showing ${res.granules.length}.`;
+    `${res.total} profiles match. Showing ${res.granules.length}.` +
+    (res.folded ? ` ${res.folded} more ${res.folded === 1 ? 'file is a second copy' : 'files are second copies'} ` +
+      'of the same occultations (from another stream, or imported) and ' +
+      `${res.folded === 1 ? 'is' : 'are'} not counted (the post-processed copy is used first).` : '');
   renderResults();
   drawMap();
   document.dispatchEvent(new CustomEvent('search-changed'));

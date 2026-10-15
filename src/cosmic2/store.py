@@ -264,6 +264,7 @@ def query_granules(*, products: list[str] | None = None,
             args.extend([local_time_min, local_time_max])
     if good_only:
         where.append("good = 1")
+    folded_where = list(where)
     if not streams:
         # The same occultation held twice (downloaded from a near-real-time
         # and a post-processed stream, or also imported from disk) would
@@ -276,12 +277,17 @@ def query_granules(*, products: list[str] | None = None,
 
     sql_where = (" WHERE " + " AND ".join(where)) if where else ""
     total = conn.execute(f"SELECT COUNT(*) FROM granules{sql_where}", args).fetchone()[0]
+    folded = 0
+    if len(folded_where) < len(where):
+        every = (" WHERE " + " AND ".join(folded_where)) if folded_where else ""
+        folded = conn.execute(f"SELECT COUNT(*) FROM granules{every}", args).fetchone()[0] - total
     order = _SORTS.get(sort, "epoch") + (" DESC" if desc else " ASC")
     rows = conn.execute(
         f"SELECT * FROM granules{sql_where} ORDER BY {order} LIMIT ? OFFSET ?",
         args + [int(limit), int(offset)],
     ).fetchall()
-    return {"total": total, "count": len(rows), "offset": offset,
+    # "folded": second copies of an occultation left out (see above)
+    return {"total": total, "count": len(rows), "offset": offset, "folded": folded,
             "granules": [_row_to_dict(r) for r in rows]}
 
 
