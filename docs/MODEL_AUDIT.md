@@ -72,6 +72,43 @@ TanDEM-X (2026-05-31) and COSMIC-1 (2019-12-10) from CDAAC.
   at the reference point, 5 % were further apart at 5 km and 26 % at 20 and
   30 km.
 
+### M4. CDAAC's post-processed ECMWF profiles of October 2021
+* **Where**: every RO-minus-ECMWF statistic (`nwp.model_differences`,
+  `missions.compare` through ECMWF and minus ECMWF's difference); the app
+  reads echPrf as given.
+* **What was wrong**: the echPrf of the post-processed streams for 2021-10-01
+  to 10-31 come from ECMWF analysis files (`ecmAnc_2021.274`-`304`) whose
+  refractivity is about 0.35 % above the occultations'. A comparison over
+  that month showed every mission about 0.35 % below ECMWF. This was first
+  blamed on Metop-A (1df9e79), which was wrong.
+* **Check**: Metop-A, -B and -C minus echPrf from 10 to 30 km is -0.30 to
+  -0.38 % on every day checked in October, and within 0.06 % from 09-15 to
+  09-29 and 11-01 to 11-10. The same occultations minus ERA5 (`er5Prf`) and
+  GFS (`gfsPrf`) stay within 0.1 %. PAZ (10-05, 10-27) and KOMPSAT-5 (10-05)
+  post-processed files give -0.36 to -0.42 % against echPrf and -0.05 to
+  -0.09 % against ERA5. Bending angles show the same step. COSMIC-2's
+  near-real-time echPrf (ECMWF forecasts, `ecmFcc`) do not.
+* **Fix**: the files cannot be corrected here. `nwp.october_2021_echprf`
+  counts the occultations of a selection whose echPrf come from those files,
+  and the model and mission captions warn when there are any.
+* **Status**: done (0627dc0, e3c878d).
+
+### M5. Radiosonde pairs use the launch point at every level
+* **Where**: `radiosonde.py` (`compare`, `_differences`).
+* **What was wrong**: the occultation and the sounding were paired at the
+  occultation's reference point and the launch point, and every level was
+  compared, though the tangent point drifts with height.
+* **Fix**: a level is used only where the occultation's own tangent point
+  (per-level latitude and longitude) is within the distance limit of the
+  launch point. The balloon's own drift is not in IGRA and cannot be
+  corrected: typically a few km in the lower troposphere, about 20 km in
+  the upper troposphere and 50 km in the lower stratosphere (Seidel et al.
+  2011, doi:10.1029/2010JD014891, checked with Argus).
+* **Check**: on 42 COSMIC-2 / sonde pairs of 2026-10-10, this left out 2 of
+  12 pairs at 0-1 km and 2 of 31 at 10-11 km. The mean temperature
+  difference changed by at most 0.08 K.
+* **Status**: done (523a5ee).
+
 ## Low
 
 ### L1. GPS-UTC leap seconds
