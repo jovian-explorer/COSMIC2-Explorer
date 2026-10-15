@@ -89,7 +89,9 @@ STREAMS: dict[str, dict] = {
     "kompsat5-postProc": {
         "label": "KOMPSAT-5 post-processed (another mission, 2015 onwards)",
         "blurb": "KOMPSAT-5 reprocessed by CDAAC with final orbits, from 2015 to about "
-                 "four months ago; a day's wetPf2 is about 2 MB.",
+                 "four months ago; a day's wetPf2 is about 2 MB. It holds about three "
+                 "times as many occultations as the near-real-time stream (422 against "
+                 "141 on 2026-05-15, 23 and 31).",
         "levels": ["level2"],
         "mission": "kompsat5",
     },
