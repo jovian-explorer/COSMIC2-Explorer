@@ -60,8 +60,8 @@ function ecmwfNote(res) {
   const n = res.echprf_oct2021 || 0;
   return n ? `Caution: ${n} occultation${n === 1 ? '' : 's'} use CDAAC's post-processed ECMWF ` +
     'profiles (echPrf) of October 2021, whose refractivity is about 0.35 % above the ' +
-    'occultations\', ERA5\'s and GFS\'s (Metop-A, -B and -C on 2021-10-01 to 10-31, against ' +
-    'within 0.1 % in September and November): differences from ECMWF are about 0.35 % too ' +
+    'occultations\', ERA5\'s and GFS\'s (found on Metop-A, -B and -C, PAZ ' +
+    'and KOMPSAT-5; within 0.1 % in September and November): differences from ECMWF are about 0.35 % too ' +
     'low that month. ' : '';
 }
 
