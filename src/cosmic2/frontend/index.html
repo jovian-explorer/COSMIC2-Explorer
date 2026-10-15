@@ -1101,7 +1101,11 @@
       <label>Caption <input type="text" id="e-caption" placeholder="optional"></label>
       <button class="primary" id="btn-export-fig">Render figure</button>
       <p class="hint">Rendered with matplotlib at publication settings:
-        editable vector text, three-size font ladder, no chart junk.</p>
+        editable vector text, three-size font ladder, no chart junk. Each figure is saved
+        with a recipe (<code>.recipe.json</code>): the settings, exactly the files drawn,
+        the app version and the data citation, so it can be cited and made again.</p>
+      <label>Make a figure again from its recipe
+        <input type="file" id="e-recipe" accept=".json"></label>
     </div>
   </div>
 

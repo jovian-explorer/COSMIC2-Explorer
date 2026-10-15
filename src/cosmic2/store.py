@@ -334,6 +334,18 @@ def get_granules(gids: list[str]) -> list[dict]:
     return [_row_to_dict(r) for r in rows]
 
 
+def find_files(names: Iterable[str]) -> dict[str, dict]:
+    """Index rows by file name (the base name of their path), for the files
+    of ``names`` that are on this computer."""
+    wanted = set(names)
+    out = {}
+    for r in connect().execute("SELECT * FROM granules").fetchall():
+        d = _row_to_dict(r)
+        if d["file_name"] in wanted and os.path.exists(d["path"]):
+            out[d["file_name"]] = d
+    return out
+
+
 def datasets() -> list[dict]:
     rows = connect().execute(
         "SELECT * FROM datasets ORDER BY date DESC, product").fetchall()

@@ -104,6 +104,10 @@ def test_every_tab_and_main_action_without_script_errors(page):
     _press(page, "#btn-export-data")
     page.select_option("#e-fig", "profiles")
     _press(page, "#btn-export-fig")
+    from cosmic2.config import EXPORT_DIR
+    recipe = max(EXPORT_DIR.glob("*.recipe.json"), key=lambda q: q.stat().st_mtime)
+    page.set_input_files("#e-recipe", str(recipe))
+    page.wait_for_selector("#toasts .toast:has-text('again from')")
     for b in ("#btn-vars-catalog", "#btn-data-policy", "#btn-settings", "#btn-about", "#btn-help"):
         page.click(b)
         page.wait_for_timeout(400)

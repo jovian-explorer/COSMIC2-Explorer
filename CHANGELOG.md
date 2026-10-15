@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Figure recipes**: each exported figure is saved with a recipe (settings, exactly the files drawn, app version, data citations), and **Export > Make a figure again from its recipe** draws it again from the same files.
 - **Captions say when a statistic pools near-real-time and post-processed profiles**, with how much the two differ on the same occultations.
 - **Help: KOMPSAT-5 near-real-time against post-processed** (three times as many occultations after reprocessing; its rising atmPrf all flagged bad).
 - **Stream filter in Explore**: search one archive stream (or files imported from disk); with any, an occultation held in two streams counts once.

@@ -8,6 +8,7 @@ by default, so there is no authentication layer; binding is to 127.0.0.1 in
 from __future__ import annotations
 
 import datetime as dt
+import json
 import math
 import os
 import tarfile
@@ -1259,7 +1260,39 @@ def export_figure(req: FigureRequest) -> dict:
                                   req.dpi)
     extra_prov = _display_processing(req)
     res["provenance"] = exporters.provenance(rows, extra_prov)
+    # A recipe beside the figure: the request and exactly the files drawn,
+    # so the figure can be made again (replay_figure) and its data cited.
+    recipe = {"figure": res["filename"],
+              "request": req.model_dump(exclude={"granule_ids", "search"}),
+              "files": [{"file_name": r.get("file_name"), "stream": r.get("stream"),
+                         "product": r.get("product"), "date": r.get("date")} for r in rows],
+              "provenance": res["provenance"]}
+    path = Path(res["path"]).with_name(res["filename"] + ".recipe.json")
+    path.write_text(json.dumps(_clean(recipe), indent=1), encoding="utf-8")
+    res["recipe"] = path.name
     return _clean(res)
+
+
+class ReplayRequest(BaseModel):
+    recipe: dict
+
+
+@app.post("/api/export/replay")
+def replay_figure(req: ReplayRequest) -> dict:
+    """Make a figure again from the recipe saved beside it: the same request
+    on exactly the same files (found here by file name)."""
+    files = req.recipe.get("files") or []
+    found = store.find_files(f["file_name"] for f in files)
+    missing = [f for f in files if f["file_name"] not in found]
+    if missing:
+        days = sorted({f"{f.get('stream')} {f.get('product')} {f.get('date')}" for f in missing})
+        raise HTTPException(400, f"{len(missing)} of the recipe's {len(files)} files are not on "
+                                 f"this computer; download them first (stream, product, day): "
+                                 + "; ".join(days[:10]))
+    request = dict(req.recipe.get("request") or {})
+    request["max_profiles"] = max(len(files), 1)
+    return export_figure(FigureRequest(**request, granule_ids=[found[f["file_name"]]["id"]
+                                                                for f in files]))
 
 
 def _latlon(meta: dict) -> str:

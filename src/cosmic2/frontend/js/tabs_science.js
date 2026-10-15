@@ -707,6 +707,18 @@ export function initExportTab() {
       withBusy(e.target, 'Writing...', exportData));
   $('#btn-export-fig').addEventListener('click', (e) =>
       withBusy(e.target, 'Rendering...', exportFigure));
+  $('#e-recipe').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+      const res = await api.replayFigure(JSON.parse(await file.text()));
+      toast(`Made ${res.filename} again from ${file.name}.`, 'good');
+      await refreshExports();
+    } catch (err) {
+      toast(`Could not make the figure again: ${err.message}`, 'bad');
+    }
+  });
   $('#btn-open-exports').addEventListener('click', () =>
       api.revealFolder('exports').catch((err) => toast(err.message, 'bad')));
   refreshExports();
@@ -773,7 +785,7 @@ async function exportFigure() {
   req.uncert_method = $('#p-uncert-method') ? $('#p-uncert-method').value : 'none';
   
   const res = await api.exportFigure(req);
-  toast(`Rendered ${res.filename} (${bytes(res.bytes)}).`, 'good');
+  toast(`Rendered ${res.filename} (${bytes(res.bytes)}), with its recipe ${res.recipe}.`, 'good');
   await refreshExports();
 }
 

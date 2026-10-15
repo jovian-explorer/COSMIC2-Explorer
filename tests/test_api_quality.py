@@ -274,3 +274,22 @@ def test_figure_captions_say_what_is_drawn():
     assert api._what_is_drawn([{"product": "wetPf2", "sat": "C2E1"}] * 2, 2) == "2 COSMIC-2 profiles."
     assert api._what_is_drawn([{"product": "wetPf2", "sat": "C2E1"},
                                {"product": "wetPf2", "sat": "PAZ1"}], 2) == "1 COSMIC-2 and 1 PAZ profiles."
+
+
+def test_a_figure_can_be_made_again_from_its_recipe():
+    import json as _json
+    from cosmic2 import api
+    from cosmic2.config import EXPORT_DIR
+    post("/api/local/load-samples", {})
+    res = post("/api/export/figure", {"kind": "profiles", "field": "Temp",
+                                      "search": {"products": ["wetPf2"]}, "fmt": "svg"})
+    recipe = _json.loads((EXPORT_DIR / res["recipe"]).read_text(encoding="utf-8"))
+    assert [f["product"] for f in recipe["files"]] == ["wetPf2", "wetPf2"]
+    assert recipe["request"]["kind"] == "profiles" and recipe["provenance"]["data_citation"]
+    again = post("/api/export/replay", {"recipe": recipe})
+    assert again["provenance"]["granule_files"] == res["provenance"]["granule_files"]
+    gone = dict(recipe, files=recipe["files"] + [{"file_name": "wetPf2_X_nc", "stream": "nrt",
+                                                  "product": "wetPf2", "date": "2026-01-01"}])
+    with pytest.raises(urllib.error.HTTPError) as err:
+        post("/api/export/replay", {"recipe": gone})
+    assert "not on this computer" in err.value.read().decode()

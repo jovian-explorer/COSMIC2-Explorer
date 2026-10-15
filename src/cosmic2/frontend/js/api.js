@@ -94,6 +94,7 @@ export const api = {
 
   exportData:    (req)       => call('/api/export/data', {method: 'POST', body: req}),
   exportFigure:  (req)       => call('/api/export/figure', {method: 'POST', body: req}),
+  replayFigure:  (recipe)    => call('/api/export/replay', {method: 'POST', body: {recipe}}),
   exports:       ()          => call('/api/exports'),
   deleteExport:  (name)      => call(`/api/exports/${name}`, {method: 'DELETE'}),
   revealFolder:  (which)     => call(`/api/reveal-folder?which=${which}`),
