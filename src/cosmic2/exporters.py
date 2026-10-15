@@ -437,6 +437,36 @@ def export_netcdf(granules: Sequence[dict], fields: Sequence[str] | None = None,
 # json / figures / bundle
 # ---------------------------------------------------------------------------
 
+def export_plot_csv(title: str, caption: str, traces: Sequence[dict],
+                    basename: str = "cosmic2_plot") -> dict:
+    """The numbers of one on-screen plot, one row per point: trace name, x,
+    y (and z for a map cell), under a header with the plot's title and its
+    caption, which says what was averaged and how."""
+    path = export_path(basename, "csv")
+    with path.open("w", newline="", encoding="utf-8") as f:
+        for line in (f"{APP_TITLE} {APP_VERSION} - plot data exported {_stamp()}",
+                     f"Plot: {title}", f"Caption: {caption}"):
+            f.write(f"# {' '.join(line.split())}\n")
+        w = csv.writer(f)
+        w.writerow(["trace", "x", "y", "z"])
+        n = 0
+        for i, t in enumerate(traces):
+            name = t.get("name") or f"trace {i + 1}"
+            x, y, z = t.get("x") or [], t.get("y") or [], t.get("z")
+            if z is not None:              # a heatmap: z[row][column] at (x[column], y[row])
+                for r, row in enumerate(z):
+                    for c, v in enumerate(row or []):
+                        if v is not None and r < len(y) and c < len(x):
+                            w.writerow([name, x[c], y[r], v])
+                            n += 1
+                continue
+            for xv, yv in zip(x, y):
+                if xv is not None and yv is not None:
+                    w.writerow([name, xv, yv, ""])
+                    n += 1
+    return {"path": str(path), "filename": path.name, "rows": n, "bytes": path.stat().st_size}
+
+
 def export_json(payload: dict, basename: str = "cosmic2_data") -> dict:
     path = export_path(basename, "json")
     path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")

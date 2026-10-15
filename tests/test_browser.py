@@ -81,6 +81,10 @@ def test_every_tab_and_main_action_without_script_errors(page):
     assert dash_only == [], dash_only
     _press(page, "#btn-nwp")
     assert page.inner_text("#nwp-count") == "2 occultations"
+    # the numbers behind the plot, from its toolbar
+    page.hover("#nwp-plot")
+    page.click("#nwp-plot .modebar-btn[data-title^='Save the plotted numbers']")
+    page.wait_for_selector("#toasts .toast:has-text('values) to the exports folder')")
     page.select_option("#nwp-kind", "differences:bending_angle")
     _press(page, "#btn-nwp")
     assert page.inner_text("#nwp-count") == "2 occultations"

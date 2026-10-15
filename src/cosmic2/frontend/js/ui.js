@@ -333,7 +333,34 @@ export const PLOT_CONFIG = {
   topojsonURL: 'vendor/topojson/',
   toImageButtonOptions: {format: 'png', scale: 2, filename: 'cosmic2'},
   modeBarButtonsToRemove: ['sendDataToCloud', 'select2d'],
+  // the numbers behind every plot, with its caption, for use elsewhere
+  modeBarButtonsToAdd: [{
+    name: 'Save the plotted numbers as CSV (in the exports folder)',
+    icon: globalThis.Plotly ? globalThis.Plotly.Icons.disk : undefined,
+    click: (gd) => savePlotCsv(gd),
+  }],
 };
+
+async function savePlotCsv(gd) {
+  const card = gd.closest('.card');
+  const head = card && card.querySelector('h2');
+  const cap = card && card.querySelector('p.hint[id$="caption"]');
+  const title = (gd.layout && gd.layout.title && gd.layout.title.text) || (head ? head.textContent : gd.id);
+  const traces = (gd.data || []).filter((t) => t.visible !== false).map((t) => ({
+    name: t.name || t.legendgroup || '', x: t.x ? Array.from(t.x) : null,
+    y: t.y ? Array.from(t.y) : null, z: t.z ? Array.from(t.z, (r) => Array.from(r)) : null}));
+  try {
+    const res = await fetch('/api/export/plot-csv', {method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({title, caption: cap ? cap.textContent : '', traces,
+                            basename: gd.id || 'cosmic2_plot'})});
+    const out = await res.json();
+    if (!res.ok) throw new Error(out.detail || res.statusText);
+    toast(`Wrote ${out.filename} (${out.rows} values) to the exports folder.`, 'good');
+  } catch (err) {
+    toast(`Could not save the plot's numbers: ${err.message}`, 'bad');
+  }
+}
 
 export function layoutBase(extra = {}) {
   const isDark = document.documentElement.dataset.theme === 'dark';

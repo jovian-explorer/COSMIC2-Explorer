@@ -1211,6 +1211,21 @@ class FigureRequest(BaseModel):
     uncert_method: str = "none"
 
 
+class PlotCsvRequest(BaseModel):
+    title: str = ""
+    caption: str = ""
+    traces: list[dict] = Field(default_factory=list, max_length=500)
+    basename: str = "cosmic2_plot"
+
+
+@app.post("/api/export/plot-csv")
+def export_plot_csv(req: PlotCsvRequest) -> dict:
+    """The numbers behind an on-screen plot, as the browser holds them."""
+    if not req.traces:
+        raise HTTPException(400, "The plot has nothing drawn yet")
+    return _clean(exporters.export_plot_csv(req.title, req.caption, req.traces, req.basename))
+
+
 @app.post("/api/export/figure")
 def export_figure(req: FigureRequest) -> dict:
     """Render a publication-quality figure server-side and save it."""

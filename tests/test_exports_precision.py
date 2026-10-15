@@ -176,3 +176,15 @@ def test_exports_cite_the_dataset_of_every_mission_used():
     assert cite.index("10.5065/T353-C093") < cite.index("10.5065/P8ES-MC74")
     assert "COSMIC-1" not in cite
     assert exporters.provenance([{"sat": "C006"}])["data_citation"].count("https://doi.org/") == 1
+
+
+def test_plot_numbers_are_saved_with_title_and_caption(tmp_path, monkeypatch):
+    from cosmic2 import exporters
+    monkeypatch.setattr(exporters, "EXPORT_DIR", tmp_path)
+    traces = [{"name": "RO - ECMWF", "x": [0.1, None, -0.2], "y": [5.0, 10.0, 20.0]},
+              {"name": "map", "x": [-170.0, -150.0], "y": [-85.0], "z": [[1.5, None]]}]
+    res = exporters.export_plot_csv("Refractivity", "12 occultations;\nmean", traces)
+    lines = (tmp_path / res["filename"]).read_text(encoding="utf-8").splitlines()
+    assert lines[1] == "# Plot: Refractivity" and lines[2] == "# Caption: 12 occultations; mean"
+    assert lines[3] == "trace,x,y,z" and res["rows"] == 3
+    assert lines[4:] == ["RO - ECMWF,0.1,5.0,", "RO - ECMWF,-0.2,20.0,", "map,-170.0,-85.0,1.5"]

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **The numbers behind every plot**: a toolbar button on each plot saves what it draws (each line, band or map cell), with its title and caption, as a CSV in the exports folder.
+- **Radiosonde comparison by level**: a level is used only where the occultation's tangent point is within the distance limit of the launch point; the balloon's drift is not in IGRA and is not accounted for.
 - **Mission comparison by level**: a collocated pair is used at each height only where the two profiles' own tangent points are within the distance limit (a quarter of the COSMIC-2 / Metop pairs of October 2021 drifted further apart at 20-30 km).
 - **Help: how the missions differ** (orbits, setting or rising occultations, profiles a day, quality, ionPrf tops, ECMWF files).
 - **CDAAC's post-processed ECMWF profiles of October 2021 are about 0.35 % high in refractivity**, found on Metop-A, -B, -C, PAZ and KOMPSAT-5 against ERA5 and GFS profiles of the same occultations. The model and mission comparisons say when a selection uses them. (An earlier note blamed Metop-A for it.)
