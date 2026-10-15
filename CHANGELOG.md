@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Captions say when a statistic pools near-real-time and post-processed profiles**, with how much the two differ on the same occultations.
+- **Help: KOMPSAT-5 near-real-time against post-processed** (three times as many occultations after reprocessing; its rising atmPrf all flagged bad).
 - **Stream filter in Explore**: search one archive stream (or files imported from disk); with any, an occultation held in two streams counts once.
 - **Explore says how many files were left out** as second copies of the same occultations.
 - **Help: near-real-time against post-processed** profiles of the same PAZ occultations (601 pairs).

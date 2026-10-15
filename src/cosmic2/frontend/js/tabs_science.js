@@ -3,7 +3,7 @@
 import {api, state, selectedIds, deselectRow, axisTitle, vocabInfo} from './api.js';
 import {$, el, clear, fmt, fixed, bytes, dayOf, latlon, toast, withBusy, fillSelect,
         layoutBase, PLOT_CONFIG, PALETTE, emptyPlot, drawer, cleanPlotlyMath,
-        renderMath} from './ui.js';
+        renderMath, processingNote} from './ui.js';
 
 let lastPlot = null;      // the payload behind the current profile plot
 let diagCache = null;     // diagnostics table for the scatter panel
@@ -586,6 +586,7 @@ async function drawComposite() {
     cap += ` Pools ${missions.map(([m, n]) => `${n} ${m}`).join(' and ')} profiles; ` +
            'group by satellite, or use the Explore satellite filter, to keep them apart.';
   }
+  cap += processingNote(res.processing) ? ` ${processingNote(res.processing).trim()}` : '';
   $('#composite-caption').textContent = cap;
   $('#composite-title').textContent =
     `Average ${bareLabel(res.field_label)} by ` +

@@ -3,7 +3,7 @@
 
 import {api, state, selectedIds} from './api.js';
 import {$, el, clear, fmt, fixed, latlon, withBusy, layoutBase, PLOT_CONFIG, PALETTE,
-        emptyPlot, fillSelect, cleanPlotlyMath} from './ui.js';
+        emptyPlot, fillSelect, cleanPlotlyMath, processingNote} from './ui.js';
 import {FIELD_CHOICES, VERTICAL_CHOICES, PRODUCT_AXES, labelled, hexToRgba} from './tabs_science.js';
 
 export function initStatsTab() {
@@ -67,11 +67,12 @@ function ecmwfNote(res) {
 
 /** A caption sentence when a statistic mixes missions (PAZ or KOMPSAT-5
  *  downloaded for the mission comparison count everywhere else too). */
-function missionNote(missions) {
+function missionNote(missions, processing) {
   const parts = Object.entries(missions || {}).map(([name, n]) => `${n} ${name}`);
-  return parts.length > 1 ? `Selected: ${parts.join(' and ')} profiles; the Explore satellite ` +
-    'filter can keep one mission. ' : '';
+  return (parts.length > 1 ? `Selected: ${parts.join(' and ')} profiles; the Explore satellite ` +
+    'filter can keep one mission. ' : '') + processingNote(processing);
 }
+
 
 /** Plotly layout with titled axes, in the app's theme. */
 export function axesLayout(xTitle, yTitle, extra = {}) {
@@ -255,7 +256,7 @@ async function drawSection() {
                 std: 'Spread of', sem: 'Standard error of the mean of',
                 count: 'Profiles behind'}[show];
   $('#section-title').textContent = `${kind} ${res.field_label.replace(/\s*\[[^\]]*\]$/, '')}`;
-  $('#section-caption').textContent = missionNote(res.missions) +
+  $('#section-caption').textContent = missionNote(res.missions, res.processing) +
     (res.screen_k ? `Outlier screen (k = ${res.screen_k}): ${res.screened_out} profile(s) left out. ` : '') +
     `${res.n_profiles} ${product ? product + ' ' : ''}profiles in ${res.lat_centres.length} bands of ${req.lat_step}° ` +
     `(${res.profiles_per_band.join(', ')} profiles from south to north), on a ` +
@@ -379,7 +380,7 @@ async function drawMap() {
   const gw = res.gw;
   $('#mapgrid-title').textContent = `${res.title}: mean in each cell`;
   const what = res.insitu_samples ? 'samples' : 'profiles';
-  $('#mapgrid-caption').textContent = missionNote(res.missions) +
+  $('#mapgrid-caption').textContent = missionNote(res.missions, res.processing) +
     (res.insitu_samples
       ? `${res.n} in-situ samples, one a minute along the orbit, from the selected ivmL2m days; ` +
         'each cell is the mean of the samples taken in it. Overall mean '
@@ -613,7 +614,7 @@ async function drawTropopause() {
   const archive = res.bands.some((b) => b.archive);
   $('#tp-table').classList.toggle('no-cdaac', !archive);
   $('#tp-caption').textContent =
-    `${res.n_profiles} good ${res.products.join(' and ')} profiles. ${missionNote(res.missions)}` +
+    `${res.n_profiles} good ${res.products.join(' and ')} profiles. ${missionNote(res.missions, res.processing)}` +
     'Mean and, in brackets, the ' +
     '95% confidence interval of the mean (Student\'s t, profiles taken as independent); bands ' +
     `with fewer than ${res.min_count} values are left blank. WMO tropopause: the lowest level above ` +
@@ -681,7 +682,7 @@ async function drawModels() {
       'Altitude above mean sea level [km]'), PLOT_CONFIG);
     $('#nwp-caption').textContent =
       `${res.n_triplets} occultations with RO (atmPrf), ECMWF (echPrf) and NCEP (avnPrf) ` +
-      'refractivity. ' + missionNote(res.missions) + ecmwfNote(res) + 'Values in percent of the mean of the three. ' +
+      'refractivity. ' + missionNote(res.missions, res.processing) + ecmwfNote(res) + 'Values in percent of the mean of the three. ' +
       'Each error variance is ' +
       '(var(X - Y) + var(X - Z) - var(Y - Z)) / 2 (the three-cornered hat); the line is its square ' +
       `root, the shading the 95% interval from ${res.n_boot} bootstrap resamples of the ` +
@@ -721,7 +722,7 @@ async function drawModels() {
     $('#nwp-caption').textContent =
       `${res.n_profiles} occultations with their atmPrf and echPrf; ECMWF diagnoses a duct (echPrf ` +
       `ductid 1-3, elevated or at the surface) at ${res.n_duct} of them (${pctDuct}%). ` +
-      missionNote(res.missions) + ecmwfNote(res) +
+      missionNote(res.missions, res.processing) + ecmwfNote(res) +
       (res.around_duct ? 'Heights relative to the centre of ECMWF\'s super-refraction layer (echPrf ' +
         'zsr), duct cases only. ' : '') +
       'Differences in percent of the ECMWF value. Line: mean; light shading ± 1 standard deviation; ' +
@@ -736,7 +737,7 @@ async function drawModels() {
   }
   $('#nwp-caption').textContent =
     `${res.n_profiles} occultations of ${res.selected} selected profiles have model profiles. ` +
-    missionNote(res.missions) + ecmwfNote(res) +
+    missionNote(res.missions, res.processing) + ecmwfNote(res) +
     (res.relative ? 'Differences in percent of the model value. ' : '') +
     'Line: mean; light shading ± 1 standard deviation; dark shading the 95% confidence ' +
     'interval of the mean (Student\'s t, occultations taken as independent). The model ' +

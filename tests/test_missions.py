@@ -203,3 +203,10 @@ def test_levels_where_the_tangent_points_drift_apart_are_left_out(monkeypatch):
     raw, _ = missions._pair_diff(({"path": "a"}, {"path": "o"}, "temperature", grid,
                                   (None, None)))
     assert np.isfinite(raw).all()
+
+
+def test_captions_learn_when_near_real_time_and_post_processed_are_pooled():
+    from cosmic2 import api
+    rows = [{"stream": s} for s in ("nrt", "paz-nrt", "paz-postProc", "cosmic1-repro2021",
+                                     "rapid", "local", None)]
+    assert api._processing_of(rows) == {"near-real-time": 2, "post-processed": 2}

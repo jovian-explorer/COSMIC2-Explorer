@@ -757,6 +757,7 @@ def make_composite(req: CompositeRequest) -> dict:
         products[r["product"]] = products.get(r["product"], 0) + 1
     out["products"] = products
     out["missions"] = _missions_of(rows)
+    out["processing"] = _processing_of(rows)
     return _clean(out)
 
 
@@ -909,7 +910,8 @@ def compare_models(req: ModelCompareRequest) -> dict:
                                     min_count=req.min_count or 3)
     have = {p: sum(1 for g in groups if p in g) for p in ("atmPrf", "wetPf2", "echPrf", "avnPrf")}
     out.update(kind=req.kind, selected=len(rows), occultations=len(groups), products_found=have,
-               missions=_missions_of(rows), echprf_oct2021=nwp.october_2021_echprf(groups))
+               missions=_missions_of(rows), processing=_processing_of(rows),
+               echprf_oct2021=nwp.october_2021_echprf(groups))
     return _clean(out)
 
 
@@ -922,6 +924,19 @@ def _missions_of(rows) -> dict[str, int]:
         name = MISSION_NAMES.get(mission_of_sat(r.get("sat")) or "")
         if name:
             out[name] = out.get(name, 0) + 1
+    return out
+
+
+def _processing_of(rows) -> dict[str, int]:
+    """Profiles from near-real-time and from post-processed or reprocessed
+    streams, so a caption can say when a statistic pools the two."""
+    out: dict[str, int] = {}
+    for r in rows:
+        s = r.get("stream") or ""
+        kind = ("post-processed" if s.endswith(("postProc", "repro2021"))
+                else "near-real-time" if s.endswith("nrt") else None)
+        if kind:
+            out[kind] = out.get(kind, 0) + 1
     return out
 
 
@@ -941,8 +956,9 @@ def climatology_tropopause(req: TropopauseRequest) -> dict:
     if not rows:
         raise HTTPException(400, "No local profiles match that selection")
     out = climatology.tropopause_table(rows, lat_step=req.lat_step, min_count=req.min_count)
-    out["missions"] = _missions_of([r for r in rows if r.get("good", True)
-                                    and r.get("product") in ("atmPrf", "wetPf2")])
+    used = [r for r in rows if r.get("good", True) and r.get("product") in ("atmPrf", "wetPf2")]
+    out["missions"] = _missions_of(used)
+    out["processing"] = _processing_of(used)
     return _clean(out)
 
 
@@ -1004,7 +1020,9 @@ def climatology_section(req: SectionRequest) -> dict:
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
     sec["selected"] = len(rows)
-    sec["missions"] = _missions_of([r for r in rows if r.get("good", True) or not req.good_only])
+    used = [r for r in rows if r.get("good", True) or not req.good_only]
+    sec["missions"] = _missions_of(used)
+    sec["processing"] = _processing_of(used)
     return _clean(sec)
 
 
@@ -1050,6 +1068,7 @@ def climatology_map(req: MapRequest) -> dict:
     res["title"] = (climatology.INSITU_MAP[req.column][1] if res.get("insitu_samples")
                     else vocab.column_title(req.column))
     res["missions"] = _missions_of(rows)
+    res["processing"] = _processing_of(rows)
     return _clean(res)
 
 

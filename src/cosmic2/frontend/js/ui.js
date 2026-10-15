@@ -482,3 +482,14 @@ export function explainTerms(root = document) {
     }
   }
 }
+
+/** A caption sentence when a statistic pools near-real-time and
+ *  post-processed profiles. */
+export function processingNote(processing) {
+  const p = processing || {};
+  return p['near-real-time'] && p['post-processed']
+    ? `Pools ${p['near-real-time']} near-real-time and ${p['post-processed']} post-processed ` +
+      'profiles; on the same PAZ and KOMPSAT-5 occultations the two differ by under 0.07 % in ' +
+      'refractivity on average up to 30 km (see Help), and the Explore stream filter can keep one. '
+    : '';
+}
