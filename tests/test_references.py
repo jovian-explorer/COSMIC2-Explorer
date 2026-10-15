@@ -45,6 +45,7 @@ VERIFIED = {
     "10.5281/zenodo.23329841": "Aggarwal",   # this software, Zenodo concept DOI
     "10.3390/rs12244099": "Ho",
     "10.1175/JTECH-D-20-0209.1": "Rieckh",
+    "10.1029/2010JD014891": "Seidel",
     "10.5194/amt-7-3947-2014": "Rieckh",
     "10.5194/amt-11-2567-2018": "Gilpin",
     "10.5194/amt-13-2547-2020": "Steiner",

@@ -250,3 +250,15 @@ def test_atmprf_without_a_latitude_is_not_given_one(monkeypatch):
     monkeypatch.setattr(readers, "load", lambda *a, **k: g)
     assert radiosonde._ro_profile({"path": p, "product": "atmPrf", "lat": None}) is None
     assert radiosonde._ro_profile({"path": p, "product": "atmPrf", "lat": 30.0}) is not None
+
+
+def test_levels_whose_tangent_point_is_far_from_the_launch_are_left_out():
+    z = np.linspace(0.0, 30.0, 61)
+    ro = {"gph_km": z, "temp_K": 250.0 + 0 * z, "ref_N": None, "product": "wetPf2",
+          "lat": 0.1 * z, "lon": 0 * z}                     # drifts 11 km per km up
+    sonde = {"gph_km": z, "temp_K": 249.0 + 0 * z}
+    grid = np.arange(0.0, 30.01, 0.5)
+    d = radiosonde._differences(ro, sonde, grid, 200.0, (0.0, 0.0))["temp_K"]
+    far = 0.1 * grid * 111.195 > 200.0
+    assert np.isnan(d[far]).all() and d[~far] == pytest.approx(1.0)
+    assert np.isfinite(radiosonde._differences(ro, sonde, grid)["temp_K"]).all()

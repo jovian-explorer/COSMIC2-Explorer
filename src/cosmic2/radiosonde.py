@@ -16,7 +16,10 @@ Method
 * **Colocation**: an occultation and a sounding are a pair when the launch
   point (from the sounding header) is within ``max_km`` great-circle
   distance of the occultation and the launch time within ``max_hours``.
-  Each occultation keeps its nearest sounding.
+  Each occultation keeps its nearest sounding.  A level is then used only
+  where the occultation's own tangent point at that level (per-level
+  latitude and longitude) is within ``max_km`` of the launch point.  The
+  balloon's drift is not in IGRA and is not accounted for.
 * **Common height**: both profiles are compared on a geopotential-height
   grid.  The sonde's geopotential height is the reported one, filled in
   between reported levels by interpolation in ln p (the hypsometric
@@ -381,7 +384,9 @@ def _ro_profile(row: dict) -> dict | None:
     else:
         z = geopotential_height_km(d["MSL_alt"], lat)
     out = {"gph_km": z, "temp_K": analysis.to_kelvin(d["Temp"], g.units.get("Temp", "C")),
-           "ref_N": d.get("Ref", d.get("ref")), "product": g.product}
+           "ref_N": d.get("Ref", d.get("ref")), "product": g.product,
+           # the tangent point of each level (it drifts with height)
+           "lat": d.get("Lat", d.get("lat")), "lon": d.get("Lon", d.get("lon"))}
     if "sph" in d:
         out["sph_gkg"] = d["sph"]
     return out
@@ -394,8 +399,22 @@ QUANTITIES = {
 }
 
 
-def _differences(ro: dict, sonde: dict, grid: np.ndarray) -> dict:
+def _differences(ro: dict, sonde: dict, grid: np.ndarray, max_km: float | None = None,
+                 launch: tuple | None = None) -> dict:
+    """Occultation minus sonde on ``grid``.  With ``max_km`` and the launch
+    point, a level whose tangent point is further than ``max_km`` from it is
+    left out.  The sonde's own drift is not known (IGRA gives the launch
+    point only): typically a few km in the lower troposphere, about 20 km in
+    the upper troposphere and 50 km in the lower stratosphere (Seidel et al.
+    2011, doi:10.1029/2010JD014891)."""
     from .analysis import interp_to_grid
+    from .missions import _track
+    far = np.zeros(grid.size, bool)
+    if max_km is not None and launch is not None:
+        track = _track({"z": ro["gph_km"], "lat": ro.get("lat"), "lon": ro.get("lon")}, "z", grid)
+        if track is not None:
+            with np.errstate(invalid="ignore"):
+                far = great_circle_km(track[0], track[1], *launch) > max_km
     out = {}
     for key, info in QUANTITIES.items():
         if ro.get(key) is None or key not in sonde:
@@ -405,6 +424,7 @@ def _differences(ro: dict, sonde: dict, grid: np.ndarray) -> dict:
         b = interp_to_grid(sonde["gph_km"], sonde[key], grid, max_gap=1.0, log=log_)
         with np.errstate(invalid="ignore", divide="ignore"):
             out[key] = 100.0 * (a - b) / b if info["relative"] else a - b
+        out[key][far] = np.nan
     return out
 
 
@@ -496,7 +516,7 @@ def compare(rows: Sequence[dict], max_km: float = 300.0, max_hours: float = 3.0,
         if ro is None:
             continue
         sonde = sonde_profile(s)
-        dd = _differences(ro, sonde, grid)
+        dd = _differences(ro, sonde, grid, max_km, (s["lat"], s["lon"]))
         if not any(np.isfinite(v).any() for v in dd.values()):
             continue
         for q, v in dd.items():
