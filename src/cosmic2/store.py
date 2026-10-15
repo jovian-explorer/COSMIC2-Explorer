@@ -50,6 +50,7 @@ CREATE INDEX IF NOT EXISTS ix_gran_epoch   ON granules(epoch);
 CREATE INDEX IF NOT EXISTS ix_gran_product ON granules(product, epoch);
 CREATE INDEX IF NOT EXISTS ix_gran_pos     ON granules(lat, lon);
 CREATE INDEX IF NOT EXISTS ix_gran_day     ON granules(stream, product, year, doy);
+CREATE INDEX IF NOT EXISTS ix_gran_stamp   ON granules(product, stamp);
 
 CREATE TABLE IF NOT EXISTS datasets (
     key          TEXT PRIMARY KEY,
@@ -258,6 +259,13 @@ def query_granules(*, products: list[str] | None = None,
             args.extend([local_time_min, local_time_max])
     if good_only:
         where.append("good = 1")
+    if not streams:
+        # The same occultation downloaded from a near-real-time and a
+        # post-processed stream (PAZ, KOMPSAT-5, COSMIC-2 ivmL2m) would count
+        # twice: the post-processed copy (final orbits) stands for it.
+        where.append("NOT (COALESCE(stream, '') NOT LIKE '%postProc' AND EXISTS ("
+                     "SELECT 1 FROM granules AS p WHERE p.product = granules.product "
+                     "AND p.stamp = granules.stamp AND p.stream LIKE '%postProc'))")
 
     sql_where = (" WHERE " + " AND ".join(where)) if where else ""
     total = conn.execute(f"SELECT COUNT(*) FROM granules{sql_where}", args).fetchone()[0]

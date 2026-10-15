@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **PAZ and KOMPSAT-5 post-processed streams** (from 2018 and 2015). An occultation downloaded from a near-real-time and a post-processed stream counts once, as its post-processed copy.
 - **The numbers behind every plot**: a toolbar button on each plot saves what it draws (each line, band or map cell), with its title and caption, as a CSV in the exports folder.
 - **Radiosonde comparison by level**: a level is used only where the occultation's tangent point is within the distance limit of the launch point; the balloon's drift is not in IGRA and is not accounted for.
 - **Mission comparison by level**: a collocated pair is used at each height only where the two profiles' own tangent points are within the distance limit (a quarter of the COSMIC-2 / Metop pairs of October 2021 drifted further apart at 20-30 km).

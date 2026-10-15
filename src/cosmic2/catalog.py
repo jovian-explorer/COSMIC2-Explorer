@@ -78,6 +78,21 @@ STREAMS: dict[str, dict] = {
         "levels": ["level2"],
         "mission": "kompsat5",
     },
+    "paz-postProc": {
+        "label": "PAZ post-processed (another mission, 2018 onwards)",
+        "blurb": "PAZ reprocessed by CDAAC with final orbits, from 2018 (before the "
+                 "near-real-time stream starts) to about four months ago; a day's wetPf2 "
+                 "is about 7 MB.",
+        "levels": ["level2"],
+        "mission": "paz",
+    },
+    "kompsat5-postProc": {
+        "label": "KOMPSAT-5 post-processed (another mission, 2015 onwards)",
+        "blurb": "KOMPSAT-5 reprocessed by CDAAC with final orbits, from 2015 to about "
+                 "four months ago; a day's wetPf2 is about 2 MB.",
+        "levels": ["level2"],
+        "mission": "kompsat5",
+    },
     "metopa-postProc": {
         "label": "Metop-A post-processed (another mission, 2016-2021)",
         "blurb": "Profiles from the first European Metop weather satellite (polar orbit), "
@@ -146,6 +161,8 @@ COLLECTIONS: list[tuple[str, str]] = [
     ("provisional", "spaceWeather/level2"),
     ("paz-nrt", "level2"),
     ("kompsat5-nrt", "level2"),
+    ("paz-postProc", "level2"),
+    ("kompsat5-postProc", "level2"),
     ("metopa-postProc", "level2"),
     ("metopb-postProc", "level2"),
     ("metopc-postProc", "level2"),

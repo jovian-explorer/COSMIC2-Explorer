@@ -136,3 +136,18 @@ def test_a_bare_end_date_takes_in_the_whole_day(tmp_path):
         conn = store.connect()
         with conn:
             conn.execute("DELETE FROM granules WHERE stream='t-end'")
+
+
+def test_an_occultation_in_two_streams_counts_once(tmp_path):
+    rows = [dict(path=str(tmp_path / f"tdup_{s}"), product="tdup", stream=s, level="level2",
+                 stamp="PAZ1.2026.150.00.01.G01", time_utc="2026-05-30T00:01:00Z",
+                 epoch=1780099260.0, good=True) for s in ("paz-nrt", "paz-postProc")]
+    store.upsert_granules(rows)
+    try:
+        hits = store.query_granules(products=["tdup"])
+        assert hits["total"] == 1 and hits["granules"][0]["stream"] == "paz-postProc"
+        assert store.query_granules(products=["tdup"], streams=["paz-nrt"])["total"] == 1
+    finally:
+        conn = store.connect()
+        with conn:
+            conn.execute("DELETE FROM granules WHERE product='tdup'")

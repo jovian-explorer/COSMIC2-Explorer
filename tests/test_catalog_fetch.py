@@ -242,6 +242,8 @@ def test_other_missions_have_their_own_archive_paths_and_streams():
     assert catalog.mission_of("rapid") == "cosmic2" and catalog.mission_of("paz-nrt") == "paz"
     assert catalog.day_url("metopc-postProc", "level2", 2026, 151).endswith(
         "/gnss-ro/metopc/postProc/level2/2026/151")
+    assert catalog.day_url("paz-postProc", "level2", 2021, 278).endswith(
+        "/gnss-ro/paz/postProc/level2/2021/278")
     assert catalog.collection_url("cosmic1-repro2021", "level2").endswith(
         "/gnss-ro/cosmic1/repro2021/level2")
     # the stream code is also the cache folder: it must be a valid folder name everywhere
