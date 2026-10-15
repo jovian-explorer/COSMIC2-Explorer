@@ -181,3 +181,25 @@ def test_comparison_says_when_the_missions_share_no_day():
     res = missions.compare(c2 + other, [], other="metopa", min_count=1, workers=1)
     assert res["common_days"] == 0
     assert res["days_other"] == ["2021-10-27", "2021-10-29"] and res["days_cosmic2"] == ["2026-05-31"]
+
+
+def test_levels_where_the_tangent_points_drift_apart_are_left_out(monkeypatch):
+    from cosmic2 import readers
+    z = np.linspace(0.0, 30.0, 61)
+
+    class G:
+        def __init__(self, key):
+            # the other profile's tangent point drifts 0.1 degree of latitude
+            # per km: 3 degrees (334 km) apart at 30 km
+            lat = 0.1 * z if key == "o" else 0 * z
+            self.data = {"MSL_alt": z, "Temp": -50.0 + (key == "a") + 0 * z,
+                         "lat": lat, "lon": 0 * z}
+    monkeypatch.setattr(readers, "load", lambda path, product: G(path))
+    grid = np.arange(0.0, 30.01, 0.5)
+    raw, _ = missions._pair_diff(({"path": "a"}, {"path": "o"}, "temperature", grid,
+                                  (None, None), 300.0))
+    sep_km = 0.1 * grid * 111.195
+    assert np.isnan(raw[sep_km > 300]).all() and raw[sep_km < 299] == pytest.approx(1.0)
+    raw, _ = missions._pair_diff(({"path": "a"}, {"path": "o"}, "temperature", grid,
+                                  (None, None)))
+    assert np.isfinite(raw).all()

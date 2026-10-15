@@ -101,23 +101,55 @@ def collocate(ref_rows: Sequence[dict], other_rows: Sequence[dict], max_km: floa
     return pairs
 
 
+def _track(data: dict, vert: str, grid: np.ndarray) -> tuple | None:
+    """Latitude and longitude of the tangent point at each grid height, from
+    the file's per-level positions (atmPrf Lat/Lon, wetPf2 lat/lon)."""
+    la, lo = data.get("Lat", data.get("lat")), data.get("Lon", data.get("lon"))
+    z = data.get(vert)
+    if la is None or lo is None or z is None or np.size(la) != np.size(z):
+        return None
+    ok = np.isfinite(z) & np.isfinite(la) & np.isfinite(lo)
+    if ok.sum() < 2:
+        return None
+    o = np.argsort(z[ok])
+    zz = z[ok][o]
+    inside = (grid >= zz[0]) & (grid <= zz[-1])
+    lon = np.degrees(np.unwrap(np.radians(lo[ok][o])))      # no jump at 180 degrees
+    return (np.where(inside, np.interp(grid, zz, la[ok][o]), np.nan),
+            np.where(inside, np.interp(grid, zz, lon), np.nan))
+
+
 def _pair_diff(task: tuple):
     """One pair's gridded difference (COSMIC-2 minus other), and the same
     minus ECMWF's difference between the two occultations when both echPrf
     rows are given (else None).  Module-level so it runs on the worker
-    processes."""
+    processes.
+
+    The pair is chosen at the profiles' reference points; a level where the
+    two tangent points, which drift with height, are more than ``max_km``
+    apart is left out (a quarter of the COSMIC-2 / Metop pairs of October
+    2021 within 300 km at the reference point were further apart at 20-30
+    km)."""
     from . import nwp, readers
     from .analysis import interp_field
-    a_row, o_row, quantity, grid, ech_rows = task
+    from .radiosonde import great_circle_km
+    a_row, o_row, quantity, grid, ech_rows, *rest = task
+    max_km = rest[0] if rest else None
     prod, var, relative, vert, _, _, nwp_q = QUANTITIES[quantity]
     try:
-        cols = []
+        cols, tracks = [], []
         for row in (a_row, o_row):
             g = readers.load(row["path"], prod)
             cols.append(interp_field(g.data[vert], g.data[var], grid, var, max_gap=3.0))
+            tracks.append(_track(g.data, vert, grid))
     except Exception:  # noqa: BLE001 - an unreadable file drops the pair
         return None
     a, o = cols
+    if max_km is not None and all(t is not None for t in tracks):
+        (la1, lo1), (la2, lo2) = tracks
+        with np.errstate(invalid="ignore"):
+            far = great_circle_km(la1, lo1, la2, lo2) > max_km
+        a = np.where(far, np.nan, a)
     with np.errstate(invalid="ignore", divide="ignore"):
         raw = 100.0 * (a - o) / o if relative else a - o
     corrected = None
@@ -170,7 +202,7 @@ def compare(rows: Sequence[dict], index_rows: Sequence[dict], other: str = "paz"
     pairs = collocate(ref_rows, oth_rows, max_km, max_hours)
     ech = {r["stamp"]: r for r in index_rows
            if r.get("product") == "echPrf" and r.get("good", True) and r.get("stamp")}
-    tasks = [(a, o, quantity, grid, (ech.get(a.get("stamp")), ech.get(o.get("stamp"))))
+    tasks = [(a, o, quantity, grid, (ech.get(a.get("stamp")), ech.get(o.get("stamp"))), max_km)
              for a, o, _, _ in pairs]
     done = [d for d in pmap(_pair_diff, tasks, workers=workers) if d is not None]
     diffs = [raw for raw, _ in done]

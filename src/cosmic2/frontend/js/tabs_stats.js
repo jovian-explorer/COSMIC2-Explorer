@@ -531,7 +531,9 @@ async function drawMissions() {
   $('#ms-caption').textContent = apart + ecmwfNote(res) +
     `${res.n_cosmic2} COSMIC-2 and ${res.n_other} ${name} profiles. Collocated: each ${name} ` +
     `profile paired with the COSMIC-2 profile nearest in 0.75 |dt| / ${res.max_hours} h + 0.25 d / ` +
-    `${res.max_km} km within ${res.max_km} km and ${res.max_hours} h, each used once` +
+    `${res.max_km} km within ${res.max_km} km and ${res.max_hours} h, each used once; a level ` +
+    `where the two tangent points, which drift with height, are more than ${res.max_km} km apart ` +
+    'is left out' +
     (c.n_pairs ? ` (median ${fmt(c.median_km, 0)} km and ${fmt(c.median_hours, 2)} h apart)` : '') +
     '; each line is a mean and its shading the 95% confidence interval of that mean. The ± 1 standard ' +
     'deviation of the pair differences (which includes the atmosphere\'s own variability over that ' +

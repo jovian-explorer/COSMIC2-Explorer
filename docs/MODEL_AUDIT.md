@@ -65,7 +65,12 @@ TanDEM-X (2026-05-31) and COSMIC-1 (2019-12-10) from CDAAC.
   further apart than the window says.
 * **Fix**: say so in Help, next to the collocation windows. The per-level
   `Lat`/`Lon` stay available.
-* **Status**: documented in Help (section N) and the README notes.
+* **Status**: documented in Help (section N) and the README notes. The
+  collocated mission comparison now also leaves out each level where the
+  two profiles' own tangent points (per-level `Lat`/`Lon`) are further apart
+  than the limit: of 19 COSMIC-2 / Metop pairs of October 2021 within 300 km
+  at the reference point, 5 % were further apart at 5 km and 26 % at 20 and
+  30 km.
 
 ## Low
 
