@@ -319,7 +319,7 @@ export async function refreshFacets() {
     const products = f.products.length ? f.products : ['wetPf2'];
     fillSelect($('#f-product'), products, products[0]);
     fillSelect($('#f-sat'), satelliteChoices(f.sats), '');
-    const named = {local: 'imported from disk'};
+    const named = {local: 'files from this computer (imported, or the bundled examples)'};
     fillSelect($('#f-stream'), [{value: '', label: 'any'}].concat(f.streams.map((s) => ({
       value: s, label: (state.meta.streams && state.meta.streams[s] && state.meta.streams[s].label)
         || named[s] || s}))), '');
