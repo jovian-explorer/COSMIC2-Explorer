@@ -109,6 +109,19 @@ TanDEM-X (2026-05-31) and COSMIC-1 (2019-12-10) from CDAAC.
   difference changed by at most 0.08 K.
 * **Status**: done (523a5ee).
 
+### M6. One occultation held twice counted twice
+* **Where**: `store.query_granules`, which every search and statistic uses.
+* **What was wrong**: the index keys files by path. The same occultation
+  downloaded from a near-real-time and a post-processed stream, or also
+  imported from disk, was two profiles in every average, count and
+  interval. On 2026-05-31, 73 of 80 PAZ near-real-time wetPf2 were also among
+  the first 80 post-processed ones.
+* **Fix**: one copy per product and file stamp stands for the occultation:
+  the post-processed copy (final orbits) first, then the downloaded one,
+  then the imported one. A search that names a stream still gets all of its
+  files.
+* **Status**: done (ebc7a9a, 8a9a9e4).
+
 ## Low
 
 ### L1. GPS-UTC leap seconds
