@@ -523,3 +523,13 @@ def test_readme_python_snippet_runs(tmp_path, monkeypatch):
     scope: dict = {}
     exec(code, scope)
     assert scope["d"]["tropopause"]["found"] and list(tmp_path.glob("*.csv"))
+
+
+def test_readme_comparison_snippet_runs():
+    import re
+    readme = (Path(__file__).resolve().parents[1] / "README.md").read_text(encoding="utf-8")
+    code = next(c for c in re.findall(r"```python\n(.*?)```", readme, re.S)
+                if "model_differences" in c)
+    scope: dict = {}
+    exec(code, scope)
+    assert scope["ecmwf"]["n_profiles"] == 2 and scope["cmp"]["n_cosmic2"] == 2

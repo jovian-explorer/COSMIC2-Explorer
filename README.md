@@ -161,6 +161,22 @@ comp = analysis.composite([(path, meta)], "Temp", top_km=30, min_count=1)
 exporters.export_profiles_csv([meta])      # CSV with provenance in the exports folder
 ```
 
+The comparisons of the Statistics tab are functions too. Against the weather models CDAAC colocates with each occultation (echPrf, avnPrf), and against another mission once its files are downloaded (here PAZ: `paz-nrt` or `paz-postProc` wetPf2 and echPrf for the same days):
+
+```python
+from cosmic2 import missions, nwp, readers
+from cosmic2.config import sampledata_dir
+
+rows = [readers.quick_meta(str(p)) for p in sampledata_dir().iterdir() if p.name.endswith("_nc")]
+groups = nwp.stamp_groups([r for r in rows if r["product"] == "atmPrf"], rows)
+diff = nwp.model_differences(groups, "refractivity", top_km=30, min_count=1)
+ecmwf = diff["models"]["echPrf"]          # mean, std, n ... in % on diff["grid"] (km)
+print(nwp.october_2021_echprf(groups), "occultations use the October 2021 ECMWF files")
+cmp = missions.compare(rows, rows, other="paz", quantity="temperature", min_count=1)
+print(cmp["n_cosmic2"], "COSMIC-2 and", cmp["n_other"], "PAZ profiles;",
+      cmp["collocated"]["n_pairs"], "collocated pairs")
+```
+
 Downloading works the same way, through the app's own download queue; the files and the index are the app's, so they show up in the window too:
 
 ```python

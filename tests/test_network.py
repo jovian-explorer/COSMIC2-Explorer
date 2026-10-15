@@ -58,7 +58,8 @@ def test_readme_download_snippet_runs(tmp_path):
     from pathlib import Path
     root = Path(__file__).resolve().parents[1]
     readme = (root / "README.md").read_text(encoding="utf-8")
-    code = re.findall(r"```python\n(.*?)```", readme, re.S)[1]
+    code = next(c for c in re.findall(r"```python\n(.*?)```", readme, re.S)
+                if "submit_download" in c)
     code += "\nassert job.state == 'completed', job.error\nassert rows\n"
     env = dict(os.environ, COSMIC2_EXPLORER_HOME=str(tmp_path), PYTHONPATH=str(root / "src"))
     out = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True,
