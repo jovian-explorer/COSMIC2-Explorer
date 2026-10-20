@@ -8,14 +8,23 @@ import pytest
 BASE = os.environ.get("COSMIC2_TEST_BASE", "http://127.0.0.1:8992")
 
 
+# CI sets this, so a broken Playwright install fails instead of skipping
+REQUIRED = os.environ.get("COSMIC2_BROWSER_REQUIRED") == "1"
+
+
 @pytest.fixture(scope="module")
 def page():
-    sync_api = pytest.importorskip("playwright.sync_api")
+    if REQUIRED:
+        from playwright import sync_api
+    else:
+        sync_api = pytest.importorskip("playwright.sync_api")
     pw = sync_api.sync_playwright().start()
     try:
         browser = pw.chromium.launch()
     except Exception as exc:  # noqa: BLE001
         pw.stop()
+        if REQUIRED:
+            raise
         pytest.skip(f"Chromium for Playwright is not installed ({exc})")
     pg = browser.new_page(viewport={"width": 1400, "height": 900})
     pg.errors = []
@@ -116,7 +125,19 @@ def test_every_tab_and_main_action_without_script_errors(page):
     page.wait_for_timeout(500)
     bad = [t.inner_text() for t in page.query_selector_all("#toasts .toast.bad")]
     assert not bad, bad
+    # every panel drawn above holds a plot or says why it has none
+    empty = page.evaluate("""(ids) => ids.filter((id) => {
+      const el = document.getElementById(id);
+      return !el || !(el.querySelector('.main-svg') || el.innerText.trim());
+    })""", DRAWN_PANELS)
+    assert empty == [], empty
     assert not page.errors, page.errors
+
+
+DRAWN_PANELS = ["map-plot", "profile-plot", "composite-plot", "scatter-plot",
+                "st-lat-plot", "st-lt-plot", "st-pen-plot", "st-penlat-plot",
+                "section-plot", "mapgrid-plot", "zonal-plot", "pp-plot",
+                "nwp-plot", "ms-plot"]
 
 
 def test_settings_updates_row(page):

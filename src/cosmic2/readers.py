@@ -482,6 +482,9 @@ def _read_atmprf(path: str) -> Granule:
         # the same occultation)
         "geoid_undulation_m": None if scrub(attrs.get("rgeoid")) is None
         else 1000.0 * attrs["rgeoid"],
+        # about ten times the 60-80 km L1 SNR papers quote (COSMIC-2 GPS
+        # 12,737 against Ho et al. 2020's 1,250 V/V; KOMPSAT-5 6,250
+        # against about 700): another scale, good for ranking only
         "l1_snr_mean_Vv": attrs.get("snr1avg"),
         "l2_snr_mean_Vv": attrs.get("snr2avg"),
         "occ_point_offset_km": attrs.get("occpt_offset"),

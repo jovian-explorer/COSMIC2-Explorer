@@ -56,6 +56,8 @@ def test_penetration_above_ground_uses_wetpf2_terrain():
     # only atmPrf_0 has terrain: 1.2 km above sea level is 0.3 km above ground
     assert agl["n"] == 1 and agl["median_km"] == pytest.approx(0.3)
     assert agl["fraction_below"]["0.5"] == 1.0
+    # the 200 m mark Schreiner et al. (2020) quote
+    assert agl["fraction_below"]["0.2"] == 0.0
 
 
 def test_stats_endpoint_on_bundled_samples():

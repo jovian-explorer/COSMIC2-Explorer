@@ -262,3 +262,91 @@ def test_levels_whose_tangent_point_is_far_from_the_launch_are_left_out():
     far = 0.1 * grid * 111.195 > 200.0
     assert np.isnan(d[far]).all() and d[~far] == pytest.approx(1.0)
     assert np.isfinite(radiosonde._differences(ro, sonde, grid)["temp_K"]).all()
+
+
+# --- IGRA files: parsing details, the parsed-file cache, which file a year is in
+
+
+def _zip_sounding(path, text=SOUNDING):
+    import zipfile
+    with zipfile.ZipFile(path, "w") as zf:
+        zf.writestr("USM00072201-data.txt", text)
+    return path
+
+
+def test_sounding_header_details():
+    # RELTIME 9999 (launch time unknown) falls back to the nominal hour; a
+    # value IGRA's quality control removed (-8888) is missing, not -888.8 C
+    text = SOUNDING.replace(" 00 2305 ", " 00 9999 ").replace("  147B  290B", "  147B-8888B")
+    a = radiosonde.parse_soundings(text)[0]
+    assert a["time"] == dt.datetime(2026, 6, 20, 0, 0, tzinfo=dt.timezone.utc)
+    assert np.isnan(a["temp_c"][1]) and a["temp_c"][2] == pytest.approx(22.7)
+    # a sounding with fewer than five pressure levels is dropped
+    short = SOUNDING.split("#")[2].splitlines()
+    short = "#" + "\n".join(short[:1] + short[1:5]).replace("    5 ncdc", "    4 ncdc")
+    assert radiosonde.parse_soundings(short) == []
+    # keep() skips a sounding before its levels are read
+    kept = radiosonde.parse_soundings(SOUNDING, keep=lambda h: h["time"].hour == 11)
+    assert [s["time"].hour for s in kept] == [11]
+
+
+def test_station_arrays_are_cached_and_rebuilt_when_the_file_changes(tmp_path):
+    z = _zip_sounding(tmp_path / "USM00072201-data.txt.zip")
+    a = radiosonde._station_arrays(z)
+    assert a["count"].tolist() == [6, 5] and a["start"].tolist() == [0, 6]
+    assert a["p_hpa"][6] == pytest.approx(1015.0)
+    assert (tmp_path / "USM00072201-data.txt.zip.npz").exists()
+    # a newer file (the year-to-date file grows) is parsed again
+    one = "#" + SOUNDING.split("#")[2]
+    os.utime(z, (1, 1))
+    _zip_sounding(z, one)
+    os.utime(z, None)
+    b = radiosonde._station_arrays(z)
+    assert b["count"].tolist() == [5]
+
+
+def test_station_file_names_and_missing_marker(tmp_path, monkeypatch):
+    monkeypatch.setattr(radiosonde, "cache_dir", lambda: tmp_path)
+    asked = []
+
+    def fake(url, dest, timeout=120.0):
+        asked.append(url)
+        raise OSError("404")
+    monkeypatch.setattr(radiosonde, "_download", fake)
+    year = dt.datetime.now(dt.timezone.utc).year
+    assert radiosonde.station_file("USM00072201", year) is None
+    assert asked[-1].endswith(f"/data-y2d/USM00072201-data-beg{year}.txt.zip")
+    assert radiosonde.station_file("USM00072201", 2020) is None
+    assert asked[-1].endswith("/data-por/USM00072201-data.txt.zip")
+    # a file the archive did not have is not asked for again within a day
+    assert radiosonde.station_file("USM00072201", 2020) is None
+    assert len(asked) == 2
+    # nor without downloads; a file on disk is used as it is
+    _zip_sounding(tmp_path / "USM00072202-data.txt.zip")
+    assert radiosonde.station_file("USM00072202", 2020, download=False).exists()
+    assert radiosonde.station_file("USM00072203", 2020, download=False) is None
+    assert len(asked) == 2
+
+
+def test_soundings_near_keeps_only_launches_within_the_window(tmp_path, monkeypatch):
+    z = _zip_sounding(tmp_path / "USM00072201-data.txt.zip")
+    monkeypatch.setattr(radiosonde, "station_file", lambda *a, **k: z)
+    t = dt.datetime(2026, 6, 20, 12, 0, tzinfo=dt.timezone.utc)
+    near = radiosonde.soundings_near("USM00072201", [t], 3.0, download=False)
+    assert [s["time"] for s in near] == [dt.datetime(2026, 6, 20, 11, 10, tzinfo=dt.timezone.utc)]
+    assert near[0]["p_hpa"].tolist()[:2] == [1015.0, 1000.0]
+    assert radiosonde.soundings_near("USM00072201", [t], 0.5, download=False) == []
+
+
+def test_station_list_uses_the_cached_copy_when_a_refresh_fails(tmp_path, monkeypatch):
+    monkeypatch.setattr(radiosonde, "cache_dir", lambda: tmp_path)
+    monkeypatch.setattr(radiosonde, "_download",
+                        lambda *a, **k: (_ for _ in ()).throw(OSError("offline")))
+    with pytest.raises(RuntimeError, match="Could not fetch"):
+        radiosonde.station_list()
+    with pytest.raises(RuntimeError, match="not cached"):
+        radiosonde.station_list(download=False)
+    path = tmp_path / "igra2-station-list.txt"
+    path.write_text(STATIONS, encoding="utf-8")
+    os.utime(path, (1, 1))                      # older than 30 days
+    assert [s["id"] for s in radiosonde.station_list()] == ["AEM00041217", "USM00072201"]

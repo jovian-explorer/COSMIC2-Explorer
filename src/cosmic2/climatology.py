@@ -17,7 +17,7 @@ import numpy as np
 # ("penetration depth").  atmPrf is the observation itself; wetPf2's lowest
 # level is that of the 1D-Var retrieval, which follows the same profile.
 NEUTRAL = ("atmPrf", "wetPf2")
-PENETRATION_THRESHOLDS_KM = (0.1, 0.5, 1.0, 2.0, 3.0, 5.0)
+PENETRATION_THRESHOLDS_KM = (0.1, 0.2, 0.5, 1.0, 2.0, 3.0, 5.0)
 
 
 def _hist(values: np.ndarray, edges: np.ndarray) -> list[int]:
@@ -122,9 +122,9 @@ def sampling_statistics(rows: Sequence[dict], lat_step: float = 10.0,
                 # Height above the ground: wetPf2 files name the atmPrf they
                 # were retrieved from and carry the terrain height there, so
                 # an atmPrf with its wetPf2 also on disk gets a true
-                # penetration depth (the quantity papers quote: Schreiner et
-                # al. 2020 report over 80 % of COSMIC-2 profiles reaching
-                # within 1 km of the surface).
+                # penetration depth (the quantity Schreiner et al. 2020 quote:
+                # half of COSMIC-2's profiles reach within 200 m of the
+                # ground; Ho et al. 2020 quote heights above sea level).
                 if terrain is None:
                     terrain = terrain_by_atmprf(rows)
                 agl = np.array([r["alt_min"] - terrain[r.get("file_name")]

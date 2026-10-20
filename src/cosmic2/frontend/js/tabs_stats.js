@@ -91,7 +91,7 @@ export function axesLayout(xTitle, yTitle, extra = {}) {
 function groundCell(product, pen) {
   if (pen && pen.above_ground && pen.above_ground.n) {
     return el('td', {class: 'num'},
-              `${pct(pen.above_ground.fraction_below['1'])} (n=${pen.above_ground.n})`);
+              `${pct(pen.above_ground.fraction_below['1'])} (median ${fixed(pen.above_ground.median_km, 2)} km, n=${pen.above_ground.n})`);
   }
   if (product === 'atmPrf' && pen) {
     return el('td', {class: 'num', title: 'Needs the wetPf2 files of the same occultations on disk (they carry the terrain height).'},

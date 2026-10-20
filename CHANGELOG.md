@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **Checked against published results** (README and Help): penetration depth, radiosonde and ECMWF differences recomputed with the app's own functions on two whole days and set beside Schreiner et al. (2020) and Ho et al. (2020). Refractivity minus radiosonde 0-30 km is -0.34 % (SD 1.90 %) against Ho's -0.32 % (1.83 %); temperature 8-30 km +0.09 K (1.30 K) against -0.04 K (1.34 K).
+- **Penetration depth was cited wrongly**: the README and the code credited Schreiner et al. (2020) with "over 80 % within 1 km of the surface"; they report half of the profiles within 200 m of the ground (the app finds 44.9 %), and the over-85 %-below-1-km figure is Ho et al.'s, above sea level (83.7 % over the oceans here). The Statistics tab now gives the median height above the ground and the fraction below 200 m.
+- **CDAAC's `snr1avg` is not the SNR papers quote**: it reads about ten times their 60-80 km L1 SNR for COSMIC-2 and KOMPSAT-5 alike; the README and Help say so.
+- **Help: the near-surface refractivity bias** against RS41 sondes is about 4 % (5 % in the tropics), as Ho et al. report, not 3-4 %.
+- **Browser test in CI**: every tab is opened in Chromium with the bundled examples, and a panel drawn without a plot or an explanation fails it.
+- **Tests for the IGRA file handling**: launch times, removed values, the parsed-file cache, which file holds a year, and the cached station list.
+
 - **Figure recipes**: each exported figure is saved with a recipe (settings, exactly the files drawn, app version, data citations), and **Export > Make a figure again from its recipe** draws it again from the same files.
 - **Captions say when a statistic pools near-real-time and post-processed profiles**, with how much the two differ on the same occultations.
 - **Help: KOMPSAT-5 near-real-time against post-processed** (three times as many occultations after reprocessing; its rising atmPrf all flagged bad).
