@@ -298,9 +298,9 @@ def test_station_arrays_are_cached_and_rebuilt_when_the_file_changes(tmp_path):
     assert (tmp_path / "USM00072201-data.txt.zip.npz").exists()
     # a newer file (the year-to-date file grows) is parsed again
     one = "#" + SOUNDING.split("#")[2]
-    os.utime(z, (1, 1))
     _zip_sounding(z, one)
-    os.utime(z, None)
+    later = (tmp_path / "USM00072201-data.txt.zip.npz").stat().st_mtime + 10
+    os.utime(z, (later, later))
     b = radiosonde._station_arrays(z)
     assert b["count"].tolist() == [5]
 

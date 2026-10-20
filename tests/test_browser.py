@@ -205,7 +205,8 @@ _LONGEST_OPTION_FITS = """() => { const c = document.createElement('canvas').get
 
 def test_dropdown_labels_fit_at_1366(page):
     """The 290 px controls column cut quantity and height names short
-    ("Altitude above mean sea level (MSL")."""
+    ("Altitude above mean sea level (MSL"), also in a wider font such as
+    Linux's DejaVu Sans (CI)."""
     page.set_viewport_size({"width": 1366, "height": 900})
     page.goto(BASE + "/")
     page.wait_for_selector("#version-tag:not(:empty)")

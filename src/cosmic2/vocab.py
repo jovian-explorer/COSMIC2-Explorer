@@ -178,7 +178,7 @@ VAR_INFO: dict[str, dict] = {
         algorithm="Abel inversion applied directly to L1 bending angles before dual-frequency ionospheric combination."
     ),
     "Bend_ang": dict(
-        label="Bending angle (ionosphere-corrected)", units="rad",
+        label="Bending angle (ionosphere-free)", units="rad",
         plain="The angle by which the atmosphere bent the radio ray. The fundamental RO measurement.",
         role=FIELD,
         formula=r"\alpha(a) = \frac{f_1^2 \alpha_1(a) - f_2^2 \alpha_2(a)}{f_1^2 - f_2^2}",
@@ -564,7 +564,7 @@ VAR_INFO: dict[str, dict] = {
         algorithm="Shown by the latitude-height section of the Statistics tab (Show: departure): the mean refractivity of each latitude band minus the mean of all selected profiles at the same height, in percent of the latter. Not stored as a per-profile field."
     ),
     "buoyancy_freq_sq": dict(
-        label="Squared buoyancy frequency N^2", units="s^-2",
+        label="Buoyancy frequency N^2", units="s^-2",
         plain="Atmospheric stiffness against vertical motion; controls gravity-wave propagation.", role=FIELD,
         formula=r"N_{BV}^2 = \frac{g}{T}\left(\frac{dT}{dz} + \frac{g}{c_p}\right) = \frac{g}{\theta}\frac{d\theta}{dz}",
         reference="Vaisala, V. (1925), Soc. Sci. Fenn. Commentat. Phys.-Math., 2(19); Brunt, D. (1927), Q. J. R. Meteorol. Soc., 53, 30-32",
@@ -594,7 +594,7 @@ VAR_INFO: dict[str, dict] = {
         algorithm="Pressure e-folding scale height of dry air at the local temperature, with constant standard gravity g0 = 9.80665 m s-2."
     ),
     "buoyancy_period": dict(
-        label="Brunt-Vaisala Buoyancy Period", units="min",
+        label="Brunt-Vaisala period", units="min",
         plain="Natural period of vertical buoyancy oscillations in a stably stratified atmosphere.", role=FIELD,
         formula=r"\tau_B = \frac{2\pi}{N_{BV}} = \frac{2\pi}{\sqrt{N_{BV}^2}} \cdot \frac{1}{60}",
         reference="Gill, A. E. (1982), Atmosphere-Ocean Dynamics, Academic Press",

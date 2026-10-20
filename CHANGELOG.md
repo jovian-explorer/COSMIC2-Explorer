@@ -7,6 +7,7 @@
 - **CDAAC's `snr1avg` is not the SNR papers quote**: it reads about ten times their 60-80 km L1 SNR for COSMIC-2 and KOMPSAT-5 alike; the README and Help say so.
 - **Help: the near-surface refractivity bias** against RS41 sondes is about 4 % (5 % in the tropics), as Ho et al. report, not 3-4 %.
 - **Browser test in CI**: every tab is opened in Chromium with the bundled examples, and a panel drawn without a plot or an explanation fails it.
+- **Field names fit their dropdowns on Linux** too, whose wider font cut three of them short (now "Bending angle (ionosphere-free)", "Buoyancy frequency N^2", "Brunt-Vaisala period").
 - **Tests for the IGRA file handling**: launch times, removed values, the parsed-file cache, which file holds a year, and the cached station list.
 
 - **Figure recipes**: each exported figure is saved with a recipe (settings, exactly the files drawn, app version, data citations), and **Export > Make a figure again from its recipe** draws it again from the same files.
