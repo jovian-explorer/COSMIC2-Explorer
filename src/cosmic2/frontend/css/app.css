@@ -464,6 +464,14 @@ body.no-curious [data-curious] { display: none; }
   overflow: hidden;
 }
 .plot.tall { height: 530px; }
+/* a panel not drawn yet says so instead of standing blank */
+.plot:empty { display: flex; align-items: center; justify-content: center;
+  border: 1px dashed var(--line); }
+.plot:empty::before {
+  content: "Not drawn yet: set the options and press the button for this panel.";
+  color: var(--ink-soft); font-size: calc(13px * var(--font-scale, 1.0));
+  padding: 0 16px; text-align: center;
+}
 
 .chips { display: flex; flex-wrap: wrap; gap: 6px; max-height: 200px; overflow-y: auto; margin-bottom: 12px; }
 .chip {

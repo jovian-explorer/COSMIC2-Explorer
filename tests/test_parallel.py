@@ -158,3 +158,56 @@ def test_workers_exit_when_their_parent_is_killed():
     while time.time() < deadline and any(_alive(p) for p in pids):
         time.sleep(0.5)
     assert not [p for p in pids if _alive(p)]
+
+
+# --- the pool's failure paths: fall back, or let the error through
+
+
+def test_a_job_the_pool_cannot_run_falls_back_to_serial(force_parallel):
+    # a lambda cannot be pickled to a worker: same answer, run here instead
+    xs = list(range(30))
+    assert parallel.pmap(lambda x: x * x, xs, workers=force_parallel) == [x * x for x in xs]
+    assert parallel._pool is None                  # the broken pool was dropped
+
+
+def test_an_error_of_the_work_itself_is_not_hidden(force_parallel, monkeypatch):
+    ran_serially = []
+    monkeypatch.setattr(parallel.log, "warning", lambda *a: ran_serially.append(a))
+    with pytest.raises(ValueError):
+        parallel.pmap(int, ["1"] * 20 + ["x"] + ["2"] * 9, workers=force_parallel)
+    assert not ran_serially                        # raised as is, not retried
+
+
+def test_a_broken_pool_is_replaced_and_the_job_still_runs(force_parallel, monkeypatch):
+    from concurrent.futures.process import BrokenProcessPool
+
+    class Broken:
+        def map(self, *a, **k):
+            raise BrokenProcessPool("a worker died")
+
+        def shutdown(self, *a, **k):
+            pass
+
+    monkeypatch.setattr(parallel, "_pool", Broken())
+    monkeypatch.setattr(parallel, "_pool_size", force_parallel)
+    assert parallel.pmap(math.sqrt, [4.0] * 30, workers=force_parallel) == [2.0] * 30
+    assert parallel._pool is None
+
+
+def test_the_pool_is_kept_for_reuse_and_rebuilt_for_a_new_size(force_parallel):
+    a = parallel._get_pool(2)
+    assert parallel._get_pool(2) is a
+    b = parallel._get_pool(3)
+    assert b is not a and parallel._pool_size == 3
+    parallel.shutdown()
+    assert parallel._pool is None and parallel._pool_size == 0
+
+
+def test_an_unreadable_worker_setting_means_automatic(monkeypatch):
+    monkeypatch.setattr(parallel, "cpu_count", lambda: 4)
+    assert parallel.resolve_workers("many") == 3
+    assert parallel.resolve_workers(-2) == 3
+    from cosmic2.config import SETTINGS
+    monkeypatch.setattr(SETTINGS, "analysis_workers", 2)
+    assert parallel.resolve_workers() == 2
+    assert parallel.warm_up(1) == 0                # serial: no pool to start

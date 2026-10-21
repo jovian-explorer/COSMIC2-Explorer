@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **A panel not drawn yet says so** ("Not drawn yet: set the options and press the button for this panel.") instead of standing as a blank box; on the Statistics tab most panels wait for their own button.
+- **First-start banner**: it says the example files are CDAAC's file of 19 July 2026 (one profile is from a few minutes before midnight on the 18th) and points to the Explore table from any tab.
+- **Tests for the worker pool's failure paths**: a job it cannot run falls back to serial, an error of the work itself is raised as it is, a broken pool is replaced, and the pool is reused or rebuilt for a new size.
+
 - **Checked against published results** (README and Help): penetration depth, radiosonde and ECMWF differences recomputed with the app's own functions on two whole days and set beside Schreiner et al. (2020) and Ho et al. (2020). Refractivity minus radiosonde 0-30 km is -0.34 % (SD 1.90 %) against Ho's -0.32 % (1.83 %); temperature 8-30 km +0.09 K (1.30 K) against -0.04 K (1.34 K).
 - **Penetration depth was cited wrongly**: the README and the code credited Schreiner et al. (2020) with "over 80 % within 1 km of the surface"; they report half of the profiles within 200 m of the ground (the app finds 44.9 %), and the over-85 %-below-1-km figure is Ho et al.'s, above sea level (83.7 % over the oceans here). The Statistics tab now gives the median height above the ground and the fraction below 200 m.
 - **CDAAC's `snr1avg` is not the SNR papers quote**: it reads about ten times their 60-80 km L1 SNR for COSMIC-2 and KOMPSAT-5 alike; the README, Help, model audit (L7) and the metadata CSV header say so.

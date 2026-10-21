@@ -131,6 +131,9 @@ def test_every_tab_and_main_action_without_script_errors(page):
       return !el || !(el.querySelector('.main-svg') || el.innerText.trim());
     })""", DRAWN_PANELS)
     assert empty == [], empty
+    # a panel never drawn (radiosondes need the network) says so
+    note = page.evaluate("getComputedStyle(document.getElementById('rs-temp-plot'), '::before').content")
+    assert "Not drawn yet" in note, note
     assert not page.errors, page.errors
 
 

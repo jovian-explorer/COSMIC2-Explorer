@@ -801,7 +801,8 @@ async function boot() {
     // the tab that shows it (the app opens on Get data)
     $('button[data-tab=explore]').click();
     banner('Showing the example files that come with the app (real COSMIC-2 ' +
-           'profiles of 19 July 2026). Tick a row in the table below, then open ' +
+           'profiles from the CDAAC file of 19 July 2026, one of them taken a few ' +
+           'minutes before midnight on the 18th). Tick a row in the Explore table, then open ' +
            'Profiles and press Draw; download any other day on the "Get data" tab.');
   } else {
     banner('No profiles on this computer yet. Pick a date and fetch some on the ' +
