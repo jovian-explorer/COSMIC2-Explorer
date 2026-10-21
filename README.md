@@ -153,7 +153,7 @@ Published COSMIC-2 validation numbers, recomputed with the app's own functions (
 | Refractivity minus ECMWF | very small biases from 6 to 40 km, negative below 2 km (Schreiner et al. 2020, Figure 5) | within 0.1 % from 6 to 30 km, -0.25 % at 35 km and -0.33 % at 40 km, -0.58 % at 2 km and -2.3 % at 1 km (2233 atmPrf with their echPrf); bending angle within 0.3 % from 5 to 40 km. The small positive bias Schreiner et al. found at 2-6 km is not there in 2026 (-0.15 to +0.06 %) |
 | Mean L1 SNR (60-80 km) | 1,250 V/V GPS, 1,100 V/V GLONASS (Ho et al. 2020); over 1,500 V/V (Schreiner et al. 2020) | CDAAC's `snr1avg` reads 12,737 and 11,801: not the same scale (see the note above) |
 
-The comparison with KOMPSAT-5 (0.12 % mean refractivity difference within 200 km and 1.5 h, Ho et al. 2020) could not be repeated: these two days give 2 such pairs.
+The comparison with KOMPSAT-5 (0.12 % mean refractivity difference within 200 km and 1.5 h, Ho et al. 2020) is deferred: these two days give 2 such pairs (10 within 300 km and 3 h, from 98 KOMPSAT-5 and 11193 COSMIC-2 wetPf2), about one a day, so a meaningful mean needs a couple of months of COSMIC-2 files (about 190 MB of wetPf2 a day).
 
 ### Platform notes
 

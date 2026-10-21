@@ -199,6 +199,16 @@ def _header_lines(prov: dict) -> list[str]:
     return [l for l in lines if l]
 
 
+# Header notes for metadata columns whose meaning is not what the name says.
+EXTRA_NOTES = {
+    "l1_snr_mean_Vv": "l1_snr_mean_Vv, l2_snr_mean_Vv: CDAAC's snr1avg and snr2avg as "
+                      "stored, about ten times the 60-80 km L1 SNR papers quote (COSMIC-2 "
+                      "GPS 12,737 against 1,250 V/V and KOMPSAT-5 6,250 against about 700 "
+                      "in Ho et al. 2020, doi:10.3390/rs12244099); for ranking "
+                      "occultations, not for SNR thresholds from the literature.",
+}
+
+
 def export_metadata_csv(granules: Sequence[dict],
                         basename: str = "cosmic2_index", extra_prov: dict | None = None) -> dict:
     """One row per profile: the searchable metadata plus derived scalars."""
@@ -213,7 +223,8 @@ def export_metadata_csv(granules: Sequence[dict],
             if k not in extra_keys:
                 extra_keys.append(k)
     with path.open("w", newline="", encoding="utf-8") as fh:
-        for line in _header_lines(prov):
+        for line in _header_lines(prov) + [EXTRA_NOTES[k] for k in extra_keys
+                                           if k in EXTRA_NOTES]:
             fh.write(f"# {line}\n")
         w = csv.writer(fh)
         w.writerow(fields + extra_keys)

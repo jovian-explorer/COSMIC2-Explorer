@@ -150,6 +150,18 @@ def test_metadata_csv_writes_lists_as_delimited_values():
     assert [lo, hi] == meta["extras"]["lat_range"]
 
 
+def test_metadata_csv_says_the_snr_columns_are_not_the_papers_scale():
+    atm = readers.quick_meta(str(next(sampledata_dir().glob("atmPrf_*E23*"))))
+    res = exporters.export_metadata_csv([atm])
+    head = [l for l in open(res["path"], encoding="utf-8") if l.startswith("#")]
+    assert any(l.startswith("# l1_snr_mean_Vv, l2_snr_mean_Vv:") and "ten times" in l
+               for l in head)
+    # a file without those columns gets no note
+    ivm = readers.quick_meta(str(next(sampledata_dir().glob("ivmL2m_*"))))
+    res = exporters.export_metadata_csv([ivm])
+    assert not any("snr" in l for l in open(res["path"], encoding="utf-8") if l.startswith("#"))
+
+
 def test_exports_name_atmprf_derived_fields_as_dry():
     from netCDF4 import Dataset
     atm = readers.quick_meta(str(next(sampledata_dir().glob("atmPrf_*E23*"))))

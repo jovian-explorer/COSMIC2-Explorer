@@ -173,6 +173,23 @@ TanDEM-X (2026-05-31) and COSMIC-1 (2019-12-10) from CDAAC.
   is far too small to move the point.
 * **Fix**: none.
 
+### L7. CDAAC's mean SNR is not on the papers' scale
+* **Where**: `readers.py` (atmPrf extras `l1_snr_mean_Vv`, `l2_snr_mean_Vv`
+  from `snr1avg`, `snr2avg`); metadata CSV export.
+* **What**: the attributes are passed through as stored; the names say V/V.
+* **Problem**: they are about ten times the 60-80 km L1 SNR the validation
+  papers quote. On 2026-09-16 and 17 the mean `snr1avg` is 12,737 for
+  COSMIC-2 GPS (4,405 good atmPrf with GLONASS), 11,801 for GLONASS and
+  6,250 for KOMPSAT-5, against 1,250, 1,100 and about 700 V/V in Ho et al.
+  (2020, doi:10.3390/rs12244099); Schreiner et al. (2020,
+  doi:10.1029/2019GL086841) give over 1,500 V/V for COSMIC-2. The ratios
+  between missions agree (2.0 against 1.8), so it is a scale, not noise.
+  A reader comparing exported values with SNR thresholds from the
+  literature would be off by an order of magnitude.
+* **Fix**: values kept as stored (they rank occultations correctly); the
+  README, Help and the metadata CSV header say what scale they are on.
+* **Status**: documented.
+
 ### L6. Constants and formulas checked against their sources
 * `sat_vapour_pressure_hpa` (`radiosonde.py:304`): Bolton 1980,
   doi:10.1175/1520-0493(1980)108<1046:TCOEPT>2.0.CO;2. Correct.

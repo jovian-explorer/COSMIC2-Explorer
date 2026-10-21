@@ -1,4 +1,5 @@
 """Figure rendering follows the user's settings."""
+import numpy as np
 from cosmic2 import plotting
 from cosmic2.config import SETTINGS
 
@@ -138,3 +139,83 @@ def test_vector_figures_have_every_glyph_the_titles_use():
         assert not missing, (fmt, missing)
         if fmt == "pdf":
             assert b"/FontFile2" in data           # TrueType embedded, text stays editable
+
+
+# --- what the figures draw: spread bands, colour by value, counts
+
+
+def _comp(**kw):
+    g = {"mean": [1.0, 2.0, None], "std": [0.5, 0.25, None], "p10": [0.0, 1.5, None],
+         "p90": [3.0, 2.5, None], "ci95_lo": [0.9, 1.9, None], "ci95_hi": [1.1, 2.1, None],
+         "n": 12}
+    comp = {"groups": {"all": g}, "grid": [0.0, 1.0, 2.0], "field": "Temp",
+            "vertical": "MSL_alt", "n_profiles": 12, "min_count": 3}
+    comp.update(kw)
+    return comp
+
+
+def _band_x(fig):
+    import matplotlib.collections as mc
+    ax = fig.axes[0]
+    poly = next(c for c in ax.collections if isinstance(c, mc.PolyCollection))
+    xy = poly.get_paths()[0].vertices
+    return sorted({round(float(v), 6) for v in xy[:, 0] if np.isfinite(v)})
+
+
+def test_composite_band_is_the_chosen_spread():
+    import matplotlib.pyplot as plt
+    from cosmic2 import plotting
+    for spread, edges in (("std", [0.5, 1.5, 1.75, 2.25]), ("p10p90", [0.0, 1.5, 2.5, 3.0]),
+                          ("ci95", [0.9, 1.1, 1.9, 2.1])):
+        fig = plotting.composite_figure(_comp(), spread=spread)
+        assert _band_x(fig) == edges, spread
+        line = fig.axes[0].lines[0]
+        assert list(line.get_xdata()[:2]) == [1.0, 2.0] and list(line.get_ydata()[:2]) == [0, 1]
+        plt.close(fig)
+
+
+def test_composite_caption_names_the_band_the_screen_and_dropped_groups():
+    import matplotlib.pyplot as plt
+    from cosmic2 import plotting
+    fig = plotting.composite_figure(_comp(screen_k=3.5, screened_out={"all": 2},
+                                          dropped_groups={"south": 2}), spread="ci95")
+    text = " ".join(t.get_text() for t in fig.texts)
+    assert "95% confidence interval of the mean" in text and "12 profiles" in text
+    assert "1 km grid" in text and "fewer than 3 profiles" in text
+    assert "2 profile(s) more than 3.5 robust" in text and "south (n=2)" in text
+    plt.close(fig)
+
+
+def test_many_profiles_are_coloured_by_their_value():
+    import matplotlib.colors as mcolors
+    import matplotlib.pyplot as plt
+    from cosmic2 import plotting
+    series = [{"x": [200.0, 210.0], "y": [0.0, 1.0], "value": v}
+              for v in (-40, -20, 0, 10, 20, 30, 40)] + [{"x": [1, 2], "y": [0, 1], "value": None}]
+    fig = plotting.profile_figure(series, "Temp", "MSL_alt", color_by="lat")
+    ax = fig.axes[0]
+    cmap = plt.get_cmap("viridis")
+    assert mcolors.to_rgba(ax.lines[0].get_color()) == cmap(0.0)
+    assert mcolors.to_rgba(ax.lines[6].get_color()) == cmap(1.0)
+    assert mcolors.to_hex(ax.lines[7].get_color()) == plotting.META_GREY   # no value
+    assert len(fig.axes) == 2                                              # the colourbar
+    plt.close(fig)
+
+
+def test_profile_uncertainty_band_is_value_plus_minus_it():
+    import matplotlib.pyplot as plt
+    from cosmic2 import plotting
+    fig = plotting.profile_figure([{"x": [10.0, 20.0], "y": [0.0, 1.0],
+                                    "uncertainty": [1.0, 2.0]}], "Temp", "MSL_alt")
+    assert _band_x(fig) == [9.0, 11.0, 18.0, 22.0]
+    plt.close(fig)
+
+
+def test_map_counts_only_placed_occultations():
+    import matplotlib.pyplot as plt
+    from cosmic2 import plotting
+    pts = [{"lat": 10, "lon": 20, "v": 1.0}, {"lat": -5, "lon": 100, "v": None},
+           {"lat": None, "lon": None, "v": 2.0}]
+    fig = plotting.map_figure(pts, color_by="v")
+    assert fig.axes[0].get_title("left") == "Occultation locations (n = 2)"
+    plt.close(fig)

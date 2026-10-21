@@ -274,3 +274,113 @@ def test_day_scan_lists_other_missions_only_when_asked(monkeypatch):
     asked.clear()
     arc.day_manifest(dt.date(2026, 6, 20), ["paz-nrt"], with_sizes=False)
     assert asked == ["paz-nrt"]
+
+
+# ---------------------------------------------------------------------------
+# what a download keeps: hour quota, quality filter, whole-day flag
+# ---------------------------------------------------------------------------
+
+def _atm_tar(tmp_path, hours, bad=()):
+    """A day tarball of copies of a sample atmPrf, one per entry of ``hours``
+    (its nominal hour in the name); entries listed in ``bad`` flagged bad."""
+    import io
+    import shutil
+    import tarfile
+    from netCDF4 import Dataset
+    from cosmic2.config import sampledata_dir
+    src = next(sampledata_dir().glob("atmPrf_*E23*"))
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w:gz", compresslevel=1) as tf:
+        for k, h in enumerate(hours):
+            name = f"atmPrf_C2E1.2026.200.{h:02d}.{k:02d}.G{k + 1:02d}_0001.0001_nc"
+            p = tmp_path / name
+            shutil.copy(src, p)
+            if k in bad:
+                with Dataset(p, "a") as ds:
+                    ds.bad = "1"
+            tf.add(str(p), arcname=f"atmPrf/{name}")
+    return buf.getvalue()
+
+
+def _download(data, stream, product="atmPrf", quota_gb=0, **params):
+    import io
+    from cosmic2 import fetch
+
+    class Resp:
+        status_code, headers = 200, {}
+        raw = io.BytesIO(data)
+
+        def raise_for_status(self):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    remote = catalog.RemoteFile("atmPrf", "nrt", 2026, 200, "atmPrf_nrt_2026_200.tar.gz",
+                                "https://x/atmPrf_nrt_2026_200.tar.gz")
+    arc = types.SimpleNamespace(
+        files=lambda *a: [remote], head_size=lambda url: len(data),
+        session=lambda: types.SimpleNamespace(get=lambda *a, **k: Resp()))
+    settings = types.SimpleNamespace(concurrent_downloads=1, max_profiles_per_download=0,
+                                     cache_quota_gb=quota_gb, request_timeout_s=5)
+    mgr = fetch.DownloadManager(archive=arc, settings=settings)
+    p = dict(stream=stream, level="level2", product=product, date="2026-07-19",
+             year=2026, doy=200, max_profiles=None, sampling="first", good_only=False)
+    p.update(params)
+    job = fetch.Job(id="t", kind="download", title="t", params=p)
+    mgr._run_download(job)
+    return job
+
+
+@pytest.fixture
+def cleanup_streams():
+    from cosmic2 import store
+    yield
+    for d in store.datasets():
+        if d["stream"].endswith("-test"):
+            store.delete_dataset(d["key"])
+
+
+def test_spread_keeps_a_quota_per_hour_and_the_day_is_not_complete(tmp_path, cleanup_streams):
+    from cosmic2 import store
+    # 48 over 24 h is two an hour: three 00 UTC profiles lose one, 05 UTC keeps its one
+    job = _download(_atm_tar(tmp_path, [0, 0, 0, 5]), "spread-test",
+                    max_profiles=48, sampling="spread")
+    assert job.state == "completed", job.error
+    assert (job.extracted, job.skipped, job.per_hour_quota, job.hours_covered) == (3, 1, 2, 2)
+    ds = [d for d in store.datasets() if d["stream"] == "spread-test"][0]
+    assert ds["complete"] == 0          # a sample is not the whole day
+
+
+def test_whole_day_is_complete_and_a_cap_is_not(tmp_path, cleanup_streams):
+    from cosmic2 import store
+    data = _atm_tar(tmp_path, [0, 1, 2])
+    whole = _download(data, "whole-test")
+    capped = _download(data, "capped-test", max_profiles=2)
+    assert (whole.extracted, capped.extracted) == (3, 2)
+    flags = {d["stream"]: d["complete"] for d in store.datasets()}
+    assert flags["whole-test"] == 1 and flags["capped-test"] == 0
+
+
+def test_good_only_leaves_flagged_profiles_out(tmp_path, cleanup_streams):
+    from cosmic2 import store
+    job = _download(_atm_tar(tmp_path, [0, 1, 2], bad={1}), "good-test", good_only=True)
+    assert (job.extracted, job.skipped) == (2, 1)
+    rows = store.query_granules(streams=["good-test"])["granules"]
+    assert len(rows) == 2 and all(r["good"] for r in rows)
+    assert not any(p.name.endswith(".G02_0001.0001_nc")
+                   for p in __import__("pathlib").Path(job.result["directory"]).iterdir())
+
+
+def test_a_product_the_day_lacks_and_a_full_cache_fail_with_a_reason(tmp_path, monkeypatch,
+                                                                    cleanup_streams):
+    from cosmic2 import store
+    data = _atm_tar(tmp_path, [0])
+    job = _download(data, "missing-test", product="wetPf2")
+    assert job.state == "failed" and "not published" in job.error
+    monkeypatch.setattr(store, "cache_bytes", lambda *a, **k: 2 * 1024 ** 3)
+    job = _download(data, "quota-test", quota_gb=1)
+    assert job.state == "failed" and "1 GB quota" in job.error and job.extracted == 0
