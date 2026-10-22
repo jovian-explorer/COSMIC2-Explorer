@@ -63,7 +63,7 @@ This directory contains master high-resolution graphical assets for COSMIC-2 Exp
 When utilizing these logos or scientific software outputs in publications or posters, please credit:
 
 * **Lead Researcher and Author**: Keshav Aggarwal
-* **Affiliation**: Research Associate, Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), Indian Space Research Organisation (ISRO), Thiruvananthapuram, Kerala, India (Former PMRF Scholar at DAASE, IIT Indore).
+* **Affiliation**: Student visitor at the Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), Indian Space Research Organisation (ISRO), Thiruvananthapuram, Kerala, India (Former PMRF Scholar at DAASE, IIT Indore).
 
 ```bibtex
 @software{Aggarwal_COSMIC2_Explorer_2026,

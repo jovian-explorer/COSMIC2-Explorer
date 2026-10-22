@@ -44,13 +44,14 @@ export const PRODUCT_AXES = {
  *  product's default instead of drawing an empty plot. */
 function fitAxesToSelection() {
   const products = new Set(selectedIds().map((id) => state.selected.get(id).product));
-  if (products.size !== 1) return;
+  if (products.size !== 1) { relabel('#p-field', null); return; }
   fitPair([...products][0], '#p-field', '#p-vertical');
 }
 
 /** Switch a quantity/height pair of controls to what ``product`` can show,
  *  leaving a choice it can show alone. */
 function fitPair(product, fieldSel, verticalSel) {
+  relabel(fieldSel, product);
   const axes = PRODUCT_AXES[product];
   if (!axes) return;
   const [fields, verticals] = axes;
@@ -72,7 +73,10 @@ function fitPair(product, fieldSel, verticalSel) {
  *  came back empty and the regridded exports failed. */
 function fitAxesToSearch() {
   const products = (state.lastSearch && state.lastSearch.products) || [];
-  if (products.length !== 1) return;
+  if (products.length !== 1) {
+    for (const sel of ['#c-field', '#e-field']) relabel(sel, null);
+    return;
+  }
   fitPair(products[0], '#c-field', '#c-vertical');
   // Ionospheric heights need a taller, coarser grid than the 0-40 km default.
   const iono = ['ionPrf', 'scnLv2'].includes(products[0]);
@@ -94,9 +98,26 @@ function exportVertical() {
   return (axes && axes[1].find((v) => VERTICAL_CHOICES.includes(v))) || 'MSL_alt';
 }
 
-export function labelled(names) {
-  return names.map((n) => ({value: n, label: `${vocabInfo(n).label} (${n})`,
-                            title: vocabInfo(n).plain}));
+/** The vocabulary entry of ``name`` as ``product`` stores it: atmPrf
+ *  "Temp" and "Pres" are the dry temperature and pressure. */
+function vocabOf(name, product) {
+  const aliases = ((state.meta && state.meta.product_aliases) || {})[product] || {};
+  return vocabInfo(aliases[name] || name);
+}
+
+export function labelled(names, product = null) {
+  return names.map((n) => ({value: n, label: `${vocabOf(n, product).label} (${n})`,
+                            title: vocabOf(n, product).plain}));
+}
+
+/** Name a quantity dropdown's choices as ``product`` stores them (null:
+ *  the generic names, for a mixed or empty selection). */
+function relabel(sel, product) {
+  for (const o of $(sel).options) {
+    const [l] = labelled([o.value], product);
+    o.text = l.label;
+    if (l.title) o.title = l.title;
+  }
 }
 
 export function initProfileTab() {
@@ -713,7 +734,7 @@ export function initExportTab() {
     if (!file) return;
     try {
       const res = await api.replayFigure(JSON.parse(await file.text()));
-      toast(`Made ${res.filename} again from ${file.name}.`, 'good');
+      toast(`Made ${res.filename} again from ${file.name}${inExports()}.`, 'good');
       await refreshExports();
     } catch (err) {
       toast(`Could not make the figure again: ${err.message}`, 'bad');
@@ -722,6 +743,12 @@ export function initExportTab() {
   $('#btn-open-exports').addEventListener('click', () =>
       api.revealFolder('exports').catch((err) => toast(err.message, 'bad')));
   refreshExports();
+}
+
+/** Where an export went, for its message: the exports folder's path. */
+function inExports() {
+  const dir = state.meta && state.meta.app && state.meta.app.export_dir;
+  return dir ? ` to the exports folder, ${dir}` : ' to the exports folder';
 }
 
 async function exportData() {
@@ -739,7 +766,7 @@ async function exportData() {
   req.uncert_method = $('#p-uncert-method') ? $('#p-uncert-method').value : 'none';
   
   const res = await api.exportData(req);
-  toast(`Wrote ${res.filename} (${bytes(res.bytes)}).`, 'good');
+  toast(`Wrote ${res.filename} (${bytes(res.bytes)})${inExports()}.`, 'good');
   await refreshExports();
 }
 
@@ -785,7 +812,7 @@ async function exportFigure() {
   req.uncert_method = $('#p-uncert-method') ? $('#p-uncert-method').value : 'none';
   
   const res = await api.exportFigure(req);
-  toast(`Rendered ${res.filename} (${bytes(res.bytes)}), with its recipe ${res.recipe}.`, 'good');
+  toast(`Rendered ${res.filename} (${bytes(res.bytes)}), with its recipe ${res.recipe},${inExports()}.`, 'good');
   await refreshExports();
 }
 

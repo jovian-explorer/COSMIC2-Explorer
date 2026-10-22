@@ -461,17 +461,24 @@ def manager() -> DownloadManager:
 def unpack_tarball(path: str) -> list[str]:
     """The files of a CDAAC day tarball (``atmPrf_nrt_2026_151.tar.gz``),
     unpacked into the cache's ``imported`` folder; their paths.  Member names
-    are reduced to the file name, so nothing lands outside that folder."""
+    are reduced to the file name, so nothing lands outside that folder.  A
+    tarball that cannot be read to its end (cut short) leaves none of its
+    files behind."""
     dest = CACHE_DIR / "imported" / os.path.basename(path).removesuffix(".tar.gz")
     dest.mkdir(parents=True, exist_ok=True)
     out = []
-    with tarfile.open(path, "r:gz") as tf:
-        for member in tf:
-            fh = tf.extractfile(member) if member.isfile() else None
-            if fh is not None:
-                target = dest / os.path.basename(member.name)
-                target.write_bytes(fh.read())
-                out.append(str(target))
+    try:
+        with tarfile.open(path, "r:gz") as tf:
+            for member in tf:
+                fh = tf.extractfile(member) if member.isfile() else None
+                if fh is not None:
+                    target = dest / os.path.basename(member.name)
+                    target.write_bytes(fh.read())
+                    out.append(str(target))
+    except BaseException:
+        for f in out:
+            Path(f).unlink(missing_ok=True)
+        raise
     return out
 
 

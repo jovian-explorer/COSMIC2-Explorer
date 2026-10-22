@@ -490,19 +490,20 @@ def check_and_stage(force: bool = False, releases: Optional[List[Dict[str, Any]]
     part = UPDATES_DIR / (asset["name"] + ".part")
     total = int(asset.get("size") or 0)
     progress(0, total, f"Downloading {asset['name']}")
+    work = UPDATES_DIR / "unpacked"
     try:
         _download(asset, part, progress)
         progress(total, total, "Checking the download")
         verify(part, asset.get("size"), sha)
         progress(total, total, "Unpacking")
-        work = UPDATES_DIR / "unpacked"
         top = extract(part, work)
         target = staged_dir(root)
         shutil.rmtree(target, ignore_errors=True)
         shutil.move(str(top), str(target))
-        shutil.rmtree(work, ignore_errors=True)
     finally:
         part.unlink(missing_ok=True)
+        # also when the unpacked build is refused (no marker, no app)
+        shutil.rmtree(work, ignore_errors=True)
     try:
         tags: Optional[List[str]] = fetch_tags()
     except Exception:  # noqa: BLE001 - only the "releases behind" line depends on it

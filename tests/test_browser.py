@@ -110,10 +110,14 @@ def test_every_tab_and_main_action_without_script_errors(page):
     assert "at least 30 occultations" in page.inner_text("#nwp-plot")
     page.click("button[data-tab=export]")
     page.select_option("#e-kind", "grid_csv")
+    from cosmic2.config import EXPORT_DIR
     _press(page, "#btn-export-data")
+    # the message says where the file went, not only its name
+    msg = page.inner_text("#toasts .toast:has-text('Wrote cosmic2')")
+    assert f"to the exports folder, {EXPORT_DIR}" in msg, msg
     page.select_option("#e-fig", "profiles")
     _press(page, "#btn-export-fig")
-    from cosmic2.config import EXPORT_DIR
+    assert str(EXPORT_DIR) in page.inner_text("#toasts .toast:has-text('Rendered')")
     recipe = max(EXPORT_DIR.glob("*.recipe.json"), key=lambda q: q.stat().st_mtime)
     page.set_input_files("#e-recipe", str(recipe))
     page.wait_for_selector("#toasts .toast:has-text('again from')")
@@ -256,3 +260,22 @@ def test_drop_mixed_files_says_what_was_added_and_what_was_not(page):
     assert "Added 1 file" in msg and "1 could not be read" in msg
     assert "1 not netCDF" in msg
     assert not page.errors
+
+
+def test_field_dropdown_names_the_quantity_of_the_selected_product(page):
+    """atmPrf "Temp" and "Pres" are the dry temperature and pressure, as the
+    plot's axis says; wetPf2's are the real ones."""
+    page.goto(BASE + "/")
+    page.wait_for_selector("#version-tag:not(:empty)")
+    label = "v => [...document.querySelectorAll('#p-field option')].find((o) => o.value === v).text"
+    for product, temp, pres in (("atmPrf", "Dry temperature (Temp)", "Dry pressure (Pres)"),
+                                ("wetPf2", "Temperature (Temp)", "Pressure (Pres)")):
+        page.click("button[data-tab=explore]")
+        page.select_option("#f-product", product)
+        _press(page, "#btn-search")
+        page.click("#btn-clear-sel")
+        page.click("#btn-select-page")
+        page.click("button[data-tab=profile]")
+        assert page.evaluate(label, "Temp") == temp
+        assert page.evaluate(label, "Pres") == pres
+    assert not page.errors, page.errors

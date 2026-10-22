@@ -5,6 +5,7 @@ Run with: python -m pytest tests/ -v
 """
 import json
 import os
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -434,6 +435,50 @@ class TestAPI:
         assert res["indexed"] == 2 and not res["failed"]
         folder = Path(res["saved_path"]).parent / "echPrf_test_2026_200"
         assert len(list(folder.iterdir())) == 2 and not os.path.exists(res["saved_path"])
+
+    def test_import_folder_with_a_tarball_keeps_only_readable_profiles(self, tmp_path):
+        """A folder of the user's own files: its netCDF files are indexed
+        where they are; a day tarball in it is unpacked into the cache, and a
+        member that is not a profile is reported and not kept there (the
+        user's own unreadable files are left alone)."""
+        import io
+        import tarfile
+        samples = sorted(sampledata_dir().glob("echPrf_*_nc"))[:2]
+        (tmp_path / samples[0].name).write_bytes(samples[0].read_bytes())
+        (tmp_path / "notes.txt").write_text("not a profile")
+        (tmp_path / "broken_nc").write_bytes(b"cut")
+        with tarfile.open(tmp_path / "echPrf_imp_2026_201.tar.gz", "w:gz") as tf:
+            tf.add(samples[1], arcname="echPrf/" + samples[1].name)
+            data = b"not netCDF"
+            info = tarfile.TarInfo("echPrf/stray_nc")
+            info.size = len(data)
+            tf.addfile(info, io.BytesIO(data))
+        res = post("/api/local/import", {"paths": [str(tmp_path)]})
+        assert res["indexed"] == 2
+        failed = sorted(Path(f["path"]).name for f in res["failed"])
+        assert failed == ["broken_nc", "stray_nc"]
+        assert (tmp_path / "broken_nc").exists()
+        stray = next(Path(f["path"]) for f in res["failed"] if f["path"].endswith("stray_nc"))
+        assert not stray.exists() and stray.with_name(samples[1].name).exists()
+
+    def test_import_of_a_damaged_tarball_says_so_and_keeps_nothing(self, tmp_path):
+        import tarfile
+        good = tmp_path / "echPrf_full_2026_202.tar.gz"
+        with tarfile.open(good, "w:gz") as tf:
+            for p in sorted(sampledata_dir().glob("echPrf_*_nc"))[:2]:
+                tf.add(p, arcname=p.name)
+        cut = tmp_path / "echPrf_cut_2026_202.tar.gz"
+        cut.write_bytes(good.read_bytes()[: good.stat().st_size * 2 // 3])
+        req = urllib.request.Request(
+            BASE + "/api/local/import", data=json.dumps({"paths": [str(cut)]}).encode(),
+            method="POST", headers={"Content-Type": "application/json"})
+        with pytest.raises(urllib.error.HTTPError) as err:
+            urllib.request.urlopen(req, timeout=30)
+        assert err.value.code == 400
+        assert "echPrf_cut_2026_202.tar.gz is not a readable .tar.gz" in err.value.read().decode()
+        from cosmic2.config import CACHE_DIR
+        folder = CACHE_DIR / "imported" / "echPrf_cut_2026_202"
+        assert not folder.exists() or not any(folder.iterdir())
 
 
 

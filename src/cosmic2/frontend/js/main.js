@@ -530,7 +530,7 @@ function aboutBody() {
 
     <h3>4. Lead Researcher and Developer</h3>
     <p><strong>Keshav Aggarwal</strong></p>
-    <p>Research Associate, Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), Indian Space Research Organisation (ISRO), Thiruvananthapuram, Kerala, India.</p>
+    <p>Student visitor at the Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), Indian Space Research Organisation (ISRO), Thiruvananthapuram, Kerala, India.</p>
     <p>Former Prime Minister's Research Fellow (PMRF Scholar), Department of Astronomy, Astrophysics and Space Engineering (DAASE), Indian Institute of Technology (IIT) Indore.</p>
     <p>Research Specialization: Radio Occultation, Space Physics, Solar Wind Velocity and Turbulence, Coronal Electron Density, and Planetary Atmospheric and Ionospheric Structure.</p>
     <p><a href="https://jovian-explorer.github.io/" target="_blank" rel="noopener">🌐 Visit Researcher Website ↗</a></p>
@@ -657,7 +657,7 @@ function dataPolicyBody() {
 
     <h3>4. Software Licensing (MIT)</h3>
     <p style="font-size: calc(12px * var(--font-scale, 1.0));">
-      COSMIC-2 Explorer is free and open-source software distributed under the <strong>MIT License</strong>. Copyright &copy; 2026 <strong>Keshav Aggarwal</strong>, Research Associate at Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), Indian Space Research Organisation (ISRO), Thiruvananthapuram, Kerala, India (Former PMRF Scholar at DAASE, IIT Indore).
+      COSMIC-2 Explorer is free and open-source software distributed under the <strong>MIT License</strong>. Copyright &copy; 2026 <strong>Keshav Aggarwal</strong>, Student visitor at the Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), Indian Space Research Organisation (ISRO), Thiruvananthapuram, Kerala, India (Former PMRF Scholar at DAASE, IIT Indore).
     </p>
   `;
   renderMath(container);

@@ -179,6 +179,9 @@ def meta() -> dict:
                          "license": p.license}
                      for c, p in PRODUCTS.items()},
         "vocabulary": {k: vocab.info(k) for k in vocab.VAR_INFO},
+        # names that mean another quantity in one product (atmPrf "Temp": dry)
+        "product_aliases": {p: {n: k for (q, n), k in vocab.PRODUCT_ALIASES.items() if q == p}
+                            for p, _ in vocab.PRODUCT_ALIASES},
         "diag_columns": {c: vocab.column_title(c) for c in vocab.DIAG_COLUMNS},
         "defaults": {"field": vocab.DEFAULT_FIELD, "vertical": vocab.DEFAULT_VERTICAL},
         "lat_bands": [{"min": lo, "max": hi, "name": n}
@@ -451,6 +454,7 @@ class ImportRequest(BaseModel):
 def import_files(req: ImportRequest) -> dict:
     """Index granules the user already has on disk."""
     found: list[str] = []
+    unpacked: list[str] = []
     for raw in req.paths:
         p = Path(raw).expanduser()
         if p.is_dir():
@@ -460,13 +464,29 @@ def import_files(req: ImportRequest) -> dict:
             files = [p] if p.is_file() else []
         for q in files:
             if q.name.endswith(".tar.gz"):
-                found += fetch.unpack_tarball(str(q))
+                unpacked += _unpack(q)
             else:
                 found.append(str(q))
+    found += unpacked
     if not found:
         raise HTTPException(400, "No netCDF files (.nc or _nc) or CDAAC day tarballs "
                                  "(.tar.gz) found at the given paths")
-    return _clean(fetch.import_local_files(found, req.product))
+    res = fetch.import_local_files(found, req.product)
+    # an unreadable member of a tarball is not kept in the cache (the
+    # user's own files are left where they are)
+    for bad in res["failed"]:
+        if bad["path"] in unpacked:
+            Path(bad["path"]).unlink(missing_ok=True)
+    return _clean(res)
+
+
+def _unpack(path: Path) -> list[str]:
+    """The files of a day tarball unpacked into the cache; a 400 if it cannot
+    be read (cut short, not gzip)."""
+    try:
+        return fetch.unpack_tarball(str(path))
+    except (OSError, tarfile.TarError, EOFError) as exc:
+        raise HTTPException(400, f"{path.name} is not a readable .tar.gz ({exc})") from exc
 
 
 @app.post("/api/local/upload-file")
@@ -492,11 +512,9 @@ async def upload_file(request: Request, filename: str = Query(...)) -> dict:
 
     if clean_name.endswith(".tar.gz"):
         try:
-            paths = fetch.unpack_tarball(str(target_path))
-        except (OSError, tarfile.TarError, EOFError) as exc:
+            paths = _unpack(target_path)
+        finally:
             target_path.unlink()
-            raise HTTPException(400, f"{clean_name} is not a readable .tar.gz ({exc})") from exc
-        target_path.unlink()
     else:
         paths = [str(target_path)]
     res = fetch.import_local_files(paths)

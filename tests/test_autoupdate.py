@@ -390,3 +390,75 @@ def test_tags_endpoint_failure_does_not_block_the_update(fake):
     assert au.check_and_stage(force=True)["result"] == "staged"
     b = au.load_state()["staged"]["behind"]
     assert b["behind"] == 1 and b["compare_url"] is None
+
+
+def test_a_refused_archive_leaves_nothing_unpacked(fake):
+    """An archive refused after unpacking (no INSTALL_FOLDER.json) must not
+    leave its files, a whole build, in the updates folder until next week."""
+    root, api = fake
+    api.release("v0.0.1-build.2", _zip_bytes(au.launcher(root).name, marker=False))
+    with pytest.raises(ValueError, match="INSTALL_FOLDER"):
+        au.check_and_stage(force=True)
+    assert not (au.UPDATES_DIR / "unpacked").exists()
+
+
+def test_verify_refuses_a_wrong_size_or_a_damaged_zip(tmp_path):
+    good = _zip_bytes("COSMIC2-Explorer.exe")
+    arc = tmp_path / "a.zip"
+    arc.write_bytes(good)
+    with pytest.raises(ValueError, match="bytes"):
+        au.verify(arc, len(good) + 1, hashlib.sha256(good).hexdigest())
+    # a flipped byte inside a member: the digest is the release's, the zip is not whole
+    bad = bytearray(good)
+    bad[good.index(b"new build")] ^= 0xFF
+    arc.write_bytes(bytes(bad))
+    with pytest.raises(ValueError, match="damaged"):
+        au.verify(arc, len(bad), hashlib.sha256(bytes(bad)).hexdigest())
+
+
+def test_a_staged_build_is_installed_only_from_its_own_folder(fake, monkeypatch):
+    """The state file names the staged folder; a path elsewhere, or a staged
+    folder missing its app, is never swapped in."""
+    root, api = fake
+    api.release("v0.0.1-build.2", _zip_bytes(au.launcher(root).name))
+    au.check_and_stage(force=True)
+    started = []
+    monkeypatch.setattr(au.subprocess, "Popen", lambda cmd, **kw: started.append(cmd))
+    st = au.load_state()
+    st["staged"]["path"] = str(root.parent / "elsewhere")
+    au.save_state(st)
+    assert au.install_staged_on_start([]) is False
+    st["staged"]["path"] = str(au.staged_dir(root))
+    au.save_state(st)
+    au.launcher(au.staged_dir(root)).unlink()
+    assert au.install_staged_on_start([]) is False
+    assert not started
+
+
+def test_background_check_reports_its_error_and_runs_once_at_a_time(fake, monkeypatch):
+    gate = threading.Event()
+
+    def failing(force):
+        gate.wait(5)
+        raise RuntimeError("rate limited")
+    monkeypatch.setattr(au, "check_and_stage", failing)
+    monkeypatch.setitem(au._job, "running", False)
+    first = au.start_check(force=True)
+    assert first["job"]["running"]
+    assert au.start_check(force=True)["job"]["message"] == "Looking for a newer build"
+    gate.set()
+    for _ in range(100):
+        if not au._job["running"]:
+            break
+        threading.Event().wait(0.05)
+    assert au._job["error"] == "rate limited" and not au._job["running"]
+
+
+def test_a_token_from_the_environment_goes_to_github_only(monkeypatch):
+    monkeypatch.delenv("COSMIC2_UPDATE_API_URL", raising=False)
+    monkeypatch.setenv("GITHUB_TOKEN", "secret")
+    au._token_cache.clear()
+    try:
+        assert au._api_headers()["Authorization"] == "Bearer secret"
+    finally:
+        au._token_cache.clear()

@@ -384,3 +384,22 @@ def test_a_product_the_day_lacks_and_a_full_cache_fail_with_a_reason(tmp_path, m
     monkeypatch.setattr(store, "cache_bytes", lambda *a, **k: 2 * 1024 ** 3)
     job = _download(data, "quota-test", quota_gb=1)
     assert job.state == "failed" and "1 GB quota" in job.error and job.extracted == 0
+
+
+def test_job_progress_follows_the_profile_cap_then_the_bytes():
+    from cosmic2.fetch import Job
+    job = Job(id="j", kind="download", title="t", params={"max_profiles": 40},
+              state="running", bytes_done=50, bytes_total=200, extracted=10)
+    job.started_at = job.created_at - 10
+    s = job.snapshot()
+    # capped: a quarter of the profiles, not of the day's bytes
+    assert s["percent"] == 25.0 and "_cancel" not in s
+    assert s["speed_bps"] is not None and s["eta_s"] > 0
+    job.params["max_profiles"] = None
+    assert job.snapshot()["percent"] == 25.0          # 50 of 200 bytes
+    job.extracted = job.bytes_done = 200
+    assert job.snapshot()["percent"] == 99.0           # 100 only once finished
+    job.cancel()
+    job.state = "cancelled"
+    s = job.snapshot()
+    assert s["percent"] == 100.0 and s["cancel_requested"]

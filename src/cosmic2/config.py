@@ -25,7 +25,7 @@ APP_VERSION = "0.1.0"
 
 # Lead Researcher and Maintainer Attribution
 LEAD_RESEARCHER = (
-    "Keshav Aggarwal, Research Associate at Space Physics Laboratory (SPL), "
+    "Keshav Aggarwal, Student visitor at the Space Physics Laboratory (SPL), "
     "Vikram Sarabhai Space Centre (VSSC), Indian Space Research Organisation (ISRO), "
     "Thiruvananthapuram, Kerala, India (Former PMRF Scholar at DAASE, IIT Indore)"
 )

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **Dropdowns name the quantity the product holds**: for an atmPrf selection the Profiles, Compare and Export dropdowns say "Dry temperature (Temp)" and "Dry pressure (Pres)", as the plot axis does; for wetPf2 they stay "Temperature" and "Pressure".
+- **Export messages name the exports folder** and its path, not only the file.
+- **A damaged tarball imported from disk** is reported as not readable (it gave a server error) and leaves none of its files in the cache; a tarball member that is not a profile is not kept there.
+- **A downloaded update refused after unpacking** (no app or INSTALL_FOLDER.json in it) no longer leaves the unpacked build in the updates folder.
+- **Affiliation**: student visitor at the Space Physics Laboratory (SPL), VSSC, ISRO.
+- **Tests** for importing folders and tarballs, download progress, and the update's checks (size, damaged zip, staged folder, background check).
 - **A panel not drawn yet says so** ("Not drawn yet: set the options and press the button for this panel.") instead of standing as a blank box; on the Statistics tab most panels wait for their own button.
 - **First-start banner**: it says the example files are CDAAC's file of 19 July 2026 (one profile is from a few minutes before midnight on the 18th) and points to the Explore table from any tab.
 - **Tests for the worker pool's failure paths**: a job it cannot run falls back to serial, an error of the work itself is raised as it is, a broken pool is replaced, and the pool is reused or rebuilt for a new size.

@@ -75,6 +75,14 @@ def test_author_affiliation():
         assert ("Space Physics Laboratory" in content or "SPL" in content), f"SPL affiliation missing in {p.name}"
         assert ("Vikram Sarabhai Space Centre" in content or "VSSC" in content), f"VSSC affiliation missing in {p.name}"
         assert "ISRO" in content, f"ISRO affiliation missing in {p.name}"
+    # The owner's role at SPL is student visitor (as in VEDA), never the
+    # earlier "Research Associate".
+    for p in [ROOT / "README.md", ROOT / "images" / "BRANDING_AND_MEDIA_KIT.md",
+              ROOT / "src" / "cosmic2" / "config.py", FRONTEND / "index.html",
+              FRONTEND / "js" / "main.js"]:
+        content = p.read_text(encoding="utf-8")
+        assert "Student visitor at the Space Physics Laboratory (SPL)" in content, p.name
+        assert "Research Associate" not in content, p.name
 
 
 def test_katex_offline_assets_integrity():
