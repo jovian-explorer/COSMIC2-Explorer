@@ -10,6 +10,7 @@ from __future__ import annotations
 import csv
 import datetime as dt
 import json
+import math
 import re
 from pathlib import Path
 from typing import Sequence
@@ -140,12 +141,14 @@ def export_profiles_csv(granules: Sequence[dict], variables: Sequence[str] | Non
                     units.setdefault(c, set()).add(u)
             base = [g.meta["file_name"], g.meta["product"], g.meta["time_utc"],
                     g.meta["lat"], g.meta["lon"], g.meta["local_time"]]
-            arrs = [src[c] for c in cols]
-            n = min(a.size for a in arrs)
+            n = min(src[c].size for c in cols)
+            # one column at a time (formatting value by value was most of a
+            # large export's time)
+            texts = [_fmt_column(src[c][:n]) for c in cols]
             for i in range(n):
                 vals = [""] * len(columns)
-                for k, a in zip(idx, arrs):
-                    vals[k] = _fmt(a[i])
+                for k, t in zip(idx, texts):
+                    vals[k] = t[i]
                 writer.writerow(base + [i] + vals)
                 n_rows += 1
     width = 7 + len(columns)
@@ -174,6 +177,12 @@ def _fmt(v) -> str:
     # number of decimals (as before) left small quantities such as N^2
     # (~1e-5 s-2) or upper-stratosphere density with one or two digits.
     return "" if not np.isfinite(f) else repr(f)
+
+
+def _fmt_column(a) -> list[str]:
+    """_fmt of every value of an array, as plain floats in one pass."""
+    return ["" if not math.isfinite(x) else repr(x)
+            for x in np.asarray(a, dtype=float).ravel().tolist()]
 
 
 def _licence_text(lic) -> str:

@@ -553,7 +553,10 @@ def test_headless_example_runs_on_the_bundled_samples(tmp_path):
     env = dict(os.environ, COSMIC2_EXPLORER_HOME=str(tmp_path),
                PYTHONPATH=str(root / "src"))
     out = subprocess.run([sys.executable, str(root / "examples" / "headless.py")],
-                         env=env, capture_output=True, text=True, timeout=120)
+                         env=env, capture_output=True, text=True,
+                         # ~30 s here; 10x that, so a PC busy with other work
+                         # does not fail it (a hang or an error still does)
+                         timeout=300)
     assert out.returncode == 0, out.stderr
     assert "wetPf2" in out.stdout and "tropopause 12.1 km" in out.stdout
     assert list((tmp_path / "exports").glob("headless_example_*.csv"))

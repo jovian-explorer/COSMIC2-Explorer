@@ -165,7 +165,7 @@ The comparison with KOMPSAT-5 (0.12 % mean refractivity difference within 200 km
 
 ## Using it from Python
 
-The readers and diagnostics behind the app are ordinary Python functions, so a script or notebook can use them without opening the window (install with Option 2 or 3 above). [`examples/headless.py`](examples/headless.py) runs on the bundled example files, or on a folder of your own CDAAC files: `python examples/headless.py path/to/folder`.
+The readers and diagnostics behind the app are ordinary Python functions, so a script or notebook can use them without opening the window (install with Option 2 or 3 above). [`examples/headless.py`](examples/headless.py) runs on the bundled example files, or on a folder of your own CDAAC files: `python examples/headless.py path/to/folder`. A pip install (Option 2) does not include the `examples` folder, so download that one file from the repository first. It writes the 12 example profiles, about 95,000 rows, to a CSV in the exports folder and takes about half a minute.
 
 ```python
 from cosmic2 import analysis, exporters, readers

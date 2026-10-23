@@ -19,6 +19,11 @@ def test_fmt_round_trips_small_values():
     assert exporters._fmt(float("nan")) == ""
 
 
+def test_fmt_column_matches_fmt_value_by_value():
+    a = np.array([1.5e-5, np.nan, -np.inf, 273.15, 0.0, np.float32(0.1)])
+    assert exporters._fmt_column(a) == [exporters._fmt(v) for v in a]
+
+
 def test_profiles_csv_keeps_full_precision_of_derived_fields():
     meta = _wet_meta()
     res = exporters.export_profiles_csv([meta], ["buoyancy_freq_sq"],

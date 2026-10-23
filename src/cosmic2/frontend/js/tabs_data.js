@@ -52,12 +52,15 @@ function updateSamplingHint() {
   const spread = $('#get-sampling').value === 'spread';
   const all = $('#get-count').value === '0';
   $('#sampling-hint').textContent = all
-    ? 'The whole day will be transferred. For atmPrf that is over 2 GB.'
+    ? 'The whole day will be transferred. For atmPrf that is over 2 GB, ' +
+      'which takes half an hour to three hours at 0.2-1 MB/s.'
     : spread
       ? 'Fills an even quota for each UTC hour, so the sample spans the whole ' +
         'day. The archive keeps each day as one compressed file, so the whole ' +
         'file is read (for atmPrf about 2 GB, wetPf2 about 180 MB) and only the ' +
-        'sample is kept.'
+        'sample is kept. At 0.2-1 MB/s, a typical speed from the archive, that ' +
+        'is a few minutes to a quarter of an hour for wetPf2 and half an hour ' +
+        'to three hours for atmPrf; "First profiles of the day" stops much sooner.'
       : 'Takes profiles in archive order and stops as soon as the quota is met. ' +
         'Cheapest option, but covers only the start of the UTC day.';
 }

@@ -37,7 +37,8 @@ if wet:
                                convert_kelvin=True)
     mean = comp.groups["all"]["mean"]
     for z, t in list(zip(comp.grid, mean))[::5]:
-        print(f"{z:4.0f} km  {t:6.1f} K")
+        if t == t:                           # NaN below the lowest profile
+            print(f"{z:4.0f} km  {t:6.1f} K")
 
 out = exporters.export_profiles_csv(rows, basename="headless_example")
 print("wrote", out["path"])

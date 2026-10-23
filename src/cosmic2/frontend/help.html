@@ -151,6 +151,9 @@
     <li><strong>Error bars:</strong> the running scatter of the values about their 5-level running mean (so a smooth vertical gradient does not count as uncertainty), as a standard deviation or as the standard error of the running mean. This estimates level-to-level noise, not the retrieval uncertainty.</li>
   </ol>
 
+  <h3>Downloads: how big and how long</h3>
+  <p>CDAAC keeps each product of each day as one compressed file, and a sample of a day is cut from that whole file, so even 24 profiles mean reading the full file: about 180 MB for wetPf2 and about 2 GB for atmPrf. At 0.2-1 MB/s, a typical speed from the archive, a wetPf2 day therefore takes a few minutes to a quarter of an hour and an atmPrf day half an hour to three hours. For a first look, wetPf2 with <em>First profiles of the day</em> is the quickest, since it stops as soon as the quota is met. A download can be left running while you work in the other tabs, and if it is cancelled or the connection fails, the profiles it has already unpacked are kept and can be searched.</p>
+
   <h3>Updates</h3>
   <p>A downloaded build looks for a newer release once a week and downloads it in the background (<strong>Settings &gt; Updates</strong>: turn it off, or <em>Check now</em>). The download is checked against the SHA-256 digest published with the release, and the new build is installed the next time you start the app: only the app folder is replaced, and your downloads, exports, index and settings are kept. The first time the new build starts, a panel shows what is new and lists the settings that are new (with their defaults), changed, no longer allowed or no longer used; closing it changes nothing.</p>
 

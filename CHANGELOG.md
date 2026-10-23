@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **Profile CSV exports are about twice as fast**: the values are formatted a column at a time; the file is byte for byte the same. The headless example's export of the 12 example profiles took about a minute and now takes about half that.
+- **Get data and Help say how long a download takes**: a day's file is read whole, so at 0.2-1 MB/s a wetPf2 day takes a few minutes to a quarter of an hour and an atmPrf day half an hour to three hours; "First profiles of the day" is the quick start. Help has a new section, "Downloads: how big and how long".
+- **The headless example** no longer prints "nan K" for the heights below the lowest profile, and the README says a pip install does not include the `examples` folder.
+- **Tests for the two start-up commands** (`cosmic2-explorer` and `cosmic2-explorer-server`): a missing frontend, a backend that never answers, browser mode, the warning for a non-local host, and the free-port search. The headless-example test allows 300 s (it took about 30 s and failed once at 120 s on a fully loaded PC).
+
 - **The Statistics section follows the Explore search**, as the Compare and Export tabs do: its quantity names an atmPrf search's "Dry temperature (Temp)", and an ionPrf or scnLv2 search moves it to electron density or S4 on a 100-600 km grid (it stayed on 0-40 km, so the section came back empty).
 - **An echPrf or avnPrf search averages those profiles** in the Statistics section; before, it averaged the atmPrf files of the same days instead. An ivmL2m search says that an in-situ day has no latitude-height section and where to look instead.
 - **A "nothing to draw" note no longer stays under a plot** drawn afterwards in the same panel.
