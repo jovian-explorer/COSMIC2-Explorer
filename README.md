@@ -29,7 +29,7 @@ Six COSMIC-2 satellites watch GPS and other navigation signals bend as they pass
 ## Author and Affiliation
 
 * **Lead Developer and Researcher**: Keshav Aggarwal
-* **Current Affiliation**: Student visitor at the Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), Indian Space Research Organisation (ISRO), Thiruvananthapuram, Kerala, India
+* **Current Affiliation**: Student Visitor at the Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), Indian Space Research Organisation (ISRO), Thiruvananthapuram, Kerala, India
 * **Former Affiliation**: Prime Minister's Research Fellow (PMRF Scholar), Department of Astronomy, Astrophysics and Space Engineering (DAASE), Indian Institute of Technology Indore (IIT Indore), Madhya Pradesh, India
 * **Repository**: https://github.com/jovian-explorer/COSMIC2-Explorer
 

@@ -81,8 +81,9 @@ def test_author_affiliation():
               ROOT / "src" / "cosmic2" / "config.py", FRONTEND / "index.html",
               FRONTEND / "js" / "main.js"]:
         content = p.read_text(encoding="utf-8")
-        assert "Student visitor at the Space Physics Laboratory (SPL)" in content, p.name
+        assert "Student Visitor at the Space Physics Laboratory (SPL)" in content, p.name
         assert "Research Associate" not in content, p.name
+        assert "Dr. Keshav" not in content, p.name
 
 
 def test_katex_offline_assets_integrity():
