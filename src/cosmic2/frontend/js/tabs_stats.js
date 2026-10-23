@@ -11,11 +11,13 @@ export function initStatsTab() {
       withBusy(e.target, 'Counting...', drawStats));
   fillSelect($('#x-field'), labelled(FIELD_CHOICES), 'Temp');
   fillSelect($('#x-vertical'), labelled(VERTICAL_CHOICES), 'MSL_alt');
-  // Electron density lives hundreds of km up: move the grid with it.
+  // Ionospheric and in-situ quantities live hundreds of km up (scintillation
+  // 220-390 km, the IVM at 550-580 km): move the grid with them.
   $('#x-field').addEventListener('change', () => {
-    const iono = ['ELEC_dens'].includes($('#x-field').value);
+    const f = $('#x-field').value;
+    const iono = !['wetPf2', 'atmPrf', 'echPrf', 'avnPrf'].some((p) => PRODUCT_AXES[p][0].includes(f));
     $('#x-bottom').value = iono ? 100 : 0;
-    $('#x-top').value = iono ? 550 : 40;
+    $('#x-top').value = iono ? 600 : 40;
     $('#x-step').value = iono ? 5 : 0.5;
   });
   $('#btn-section').addEventListener('click', (e) =>
@@ -217,11 +219,18 @@ async function drawSection() {
     // Explore tab's product, and wetPf2 (real temperature) over atmPrf (dry
     // temperature) otherwise. Two products holding Temp as different
     // quantities are never averaged together.
-    const carriers = ['wetPf2', 'atmPrf', 'ionPrf', 'scnLv2', 'ivmL2m']
+    const carriers = ['wetPf2', 'atmPrf', 'ionPrf', 'scnLv2', 'ivmL2m', 'echPrf', 'avnPrf']
         .filter((p) => PRODUCT_AXES[p][0].includes(field));
     const wanted = (req.search.products || []).filter((p) => carriers.includes(p));
     product = wanted[0] || carriers[0] || null;
     if (product) req.search.products = [product];
+  }
+  if (product === 'ivmL2m') {
+    emptyPlot('section-plot', 'An ivmL2m file is a day of in-situ measurements along the ' +
+              'orbit at about 550-580 km, not a height profile, so it has no latitude-height section. ' +
+              'Map it with "Map of a diagnostic", or draw it against latitude in the Profiles tab.');
+    $('#section-caption').textContent = '';
+    return;
   }
   const res = await api.section(req);
   if (!res.n_profiles) {

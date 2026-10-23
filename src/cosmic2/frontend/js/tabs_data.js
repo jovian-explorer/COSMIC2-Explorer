@@ -254,13 +254,15 @@ export async function refreshLocal() {
     const stats = [
       ['profiles indexed', String(s.n_granules)],
       ['products', String(s.by_product.length)],
-      ['on disk', bytes(s.cache_bytes_on_disk)],
+      // the bundled examples are read where they are installed: 0 B here
+      ['in the cache', bytes(s.cache_bytes_on_disk),
+       'Downloaded and imported files kept in the data folder (counted against the quota). The bundled examples are not counted.'],
       ['quota', bytes(s.cache_quota_bytes)],
       ['earliest', s.time_min ? s.time_min.slice(0, 10) : '-'],
       ['latest', s.time_max ? s.time_max.slice(0, 10) : '-'],
     ];
-    for (const [k, v] of stats) {
-      box.append(el('div', {class: 'stat'}, el('div', {class: 'v'}, v),
+    for (const [k, v, title] of stats) {
+      box.append(el('div', {class: 'stat', title}, el('div', {class: 'v'}, v),
                     el('div', {class: 'k'}, k)));
     }
     const {datasets} = await api.datasets();

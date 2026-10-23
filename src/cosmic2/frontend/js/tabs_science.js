@@ -67,14 +67,15 @@ function fitPair(product, fieldSel, verticalSel) {
   }
 }
 
-/** The Explore search changed: the Compare and Export tabs (which work on
- *  the search) follow its product, as the Profiles tab follows a selection.
+/** The Explore search changed: the Compare and Export tabs and the
+ *  Statistics section (which work on the search) follow its product, as the
+ *  Profiles tab follows a selection.
  *  An ionPrf search left them on Temp, so every average and overlay figure
  *  came back empty and the regridded exports failed. */
 function fitAxesToSearch() {
   const products = (state.lastSearch && state.lastSearch.products) || [];
   if (products.length !== 1) {
-    for (const sel of ['#c-field', '#e-field']) relabel(sel, null);
+    for (const sel of ['#c-field', '#e-field', '#x-field']) relabel(sel, null);
     return;
   }
   fitPair(products[0], '#c-field', '#c-vertical');
@@ -88,6 +89,10 @@ function fitAxesToSearch() {
     $('#c-step').value = 0.5;
   }
   fitPair(products[0], '#e-field', null);
+  // the section's grid follows its quantity (its change handler)
+  const x = $('#x-field').value;
+  fitPair(products[0], '#x-field', '#x-vertical');
+  if ($('#x-field').value !== x) $('#x-field').dispatchEvent(new Event('change'));
   if (!selectedIds().length) fitPair(products[0], '#p-field', '#p-vertical');
 }
 

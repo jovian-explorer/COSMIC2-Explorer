@@ -472,6 +472,8 @@ body.no-curious [data-curious] { display: none; }
   color: var(--ink-soft); font-size: calc(13px * var(--font-scale, 1.0));
   padding: 0 16px; text-align: center;
 }
+/* a "nothing to draw" note left from an earlier press, once a plot is drawn */
+.plot:has(.main-svg) > p.hint { display: none; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 6px; max-height: 200px; overflow-y: auto; margin-bottom: 12px; }
 .chip {

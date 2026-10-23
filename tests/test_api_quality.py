@@ -293,3 +293,76 @@ def test_a_figure_can_be_made_again_from_its_recipe():
     with pytest.raises(urllib.error.HTTPError) as err:
         post("/api/export/replay", {"recipe": gone})
     assert "not on this computer" in err.value.read().decode()
+
+
+def _error(path, body=None, method=None):
+    with pytest.raises(urllib.error.HTTPError) as err:
+        _req(path, body, method)
+    return err.value.code, json.loads(err.value.read())["detail"]
+
+
+def test_archive_listing_failures_say_cdaac_failed(monkeypatch):
+    from cosmic2 import api
+
+    def down(*a, **k):
+        raise OSError("timed out")
+    for name in ("years", "doys", "day_manifest"):
+        monkeypatch.setattr(api.ARCHIVE, name, down)
+    for path in ("/api/archive/years", "/api/archive/days?year=2026",
+                 "/api/archive/day?date=2026-07-19"):
+        code, msg = _error(path)
+        assert code == 502 and msg == "CDAAC listing failed: timed out", path
+    assert _error("/api/archive/day?date=19/07/2026") == (400, "date must be YYYY-MM-DD")
+    monkeypatch.setattr(api.ARCHIVE, "latest_available", lambda *a: None)
+    code, msg = _error("/api/archive/latest?search_days=3")
+    assert code == 404 and "3 newest days" in msg
+
+
+def test_archive_day_sums_sizes_it_knows(monkeypatch):
+    from cosmic2 import api
+    monkeypatch.setattr(api.ARCHIVE, "day_manifest", lambda d, s, with_sizes: [
+        {"name": "a", "size_bytes": 10}, {"name": "b", "size_bytes": None}])
+    res = json.loads(_req("/api/archive/day?date=2026-07-19&sizes=false").read())
+    assert res["total_bytes"] == 10 and len(res["files"]) == 2
+
+
+def test_unknown_job_and_export_are_404_not_500():
+    assert _error("/api/jobs/nope")[0] == 404
+    assert _error("/api/jobs/nope/cancel", method="POST")[0] == 409
+    assert _error("/api/exports/none.csv")[0] == 404
+    assert _error("/api/exports/none.csv", method="DELETE")[0] == 404
+
+
+def test_export_names_cannot_leave_the_exports_folder():
+    from cosmic2.config import EXPORT_DIR
+    outside = EXPORT_DIR.parent / "outside_exports.txt"
+    outside.write_text("keep", encoding="utf-8")
+    try:
+        for name in ("..%2Foutside_exports.txt", "..%5Coutside_exports.txt"):
+            assert _error(f"/api/exports/{name}", method="DELETE")[0] in (404, 405)
+            assert _error(f"/api/exports/{name}")[0] in (404, 405)
+        assert outside.exists()
+    finally:
+        outside.unlink()
+
+
+def test_missing_or_unreadable_profile_file_is_explained(monkeypatch):
+    from cosmic2 import readers, store
+    gid = store.query_granules(products=["atmPrf"], limit=1)["granules"][0]["id"]
+    monkeypatch.setattr(readers, "load", lambda *a: 1 / 0)
+    code, msg = _error(f"/api/profiles/{gid}")
+    assert code == 422 and msg.startswith("Could not read atmPrf_")
+    real = store.get_granule
+    monkeypatch.setattr(store, "get_granule", lambda g: dict(real(g), path="/gone/x_nc"))
+    code, msg = _error(f"/api/profiles/{gid}/data")
+    assert code == 410 and "Rebuild index" in msg
+    monkeypatch.undo()
+    assert _error("/api/profiles/no-such-id")[0] == 404
+
+
+def test_profile_data_lists_what_the_file_lacks():
+    from cosmic2 import store
+    gid = store.query_granules(products=["atmPrf"], limit=1)["granules"][0]["id"]
+    res = json.loads(_req(f"/api/profiles/{gid}/data?vars=Ref,ELEC_dens&max_points=50").read())
+    assert list(res["series"]) == ["Ref"] and res["unavailable"] == ["ELEC_dens"]
+    assert res["series"]["Ref"]["decimated"] and len(res["series"]["Ref"]["values"]) <= 50

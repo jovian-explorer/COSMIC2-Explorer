@@ -279,3 +279,37 @@ def test_field_dropdown_names_the_quantity_of_the_selected_product(page):
         assert page.evaluate(label, "Temp") == temp
         assert page.evaluate(label, "Pres") == pres
     assert not page.errors, page.errors
+
+
+def test_section_follows_the_searched_product(page):
+    """The Statistics section's quantity names an atmPrf search's dry
+    temperature; an ionPrf or scnLv2 search moves it and its grid up to the
+    ionosphere (they stayed on 0-40 km: an empty section), and an echPrf
+    search averages echPrf (it averaged atmPrf)."""
+    page.goto(BASE + "/")
+    page.wait_for_selector("#version-tag:not(:empty)")
+    label = "v => [...document.querySelectorAll('#x-field option')].find((o) => o.value === v).text"
+    for product, field in (("atmPrf", "Temp"), ("ionPrf", "ELEC_dens"),
+                           ("scnLv2", "s4_L1"), ("echPrf", "Ref")):
+        page.click("button[data-tab=explore]")
+        page.select_option("#f-product", product)
+        _press(page, "#btn-search")
+        if product == "atmPrf":
+            assert page.evaluate(label, "Temp") == "Dry temperature (Temp)"
+        page.click("button[data-tab=stats]")
+        assert page.eval_on_selector("#x-field", "e => e.value") == field
+        page.fill("#x-min", "1")
+        _press(page, "#btn-section")
+        assert page.query_selector("#section-plot .main-svg"), product
+        assert f" {product} profiles in " in page.inner_text("#section-caption")
+        # no "nothing to draw" note from an earlier press under the plot
+        assert "None of" not in page.inner_text("#section-plot"), product
+    assert page.input_value("#x-top") == "40"
+    # an IVM day is no height profile: the panel says so and where to look
+    page.click("button[data-tab=explore]")
+    page.select_option("#f-product", "ivmL2m")
+    _press(page, "#btn-search")
+    page.click("button[data-tab=stats]")
+    _press(page, "#btn-section")
+    assert "not a height profile" in page.inner_text("#section-plot")
+    assert not page.errors, page.errors

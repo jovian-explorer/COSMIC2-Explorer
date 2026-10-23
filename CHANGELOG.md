@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **The Statistics section follows the Explore search**, as the Compare and Export tabs do: its quantity names an atmPrf search's "Dry temperature (Temp)", and an ionPrf or scnLv2 search moves it to electron density or S4 on a 100-600 km grid (it stayed on 0-40 km, so the section came back empty).
+- **An echPrf or avnPrf search averages those profiles** in the Statistics section; before, it averaged the atmPrf files of the same days instead. An ivmL2m search says that an in-situ day has no latitude-height section and where to look instead.
+- **A "nothing to draw" note no longer stays under a plot** drawn afterwards in the same panel.
+- **Get data**: the size of the local files is labelled "in the cache" (it read "0 B on disk" beside 12 example profiles, which are read where they are installed).
+- **Tests for the API's error answers**: CDAAC listing failures, a wrong date, unknown jobs and exports, export names that try to leave the exports folder, a profile file that is missing or unreadable, and the variables a file lacks.
+
 - **Dropdowns name the quantity the product holds**: for an atmPrf selection the Profiles, Compare and Export dropdowns say "Dry temperature (Temp)" and "Dry pressure (Pres)", as the plot axis does; for wetPf2 they stay "Temperature" and "Pressure".
 - **Export messages name the exports folder** and its path, not only the file.
 - **A damaged tarball imported from disk** is reported as not readable (it gave a server error) and leaves none of its files in the cache; a tarball member that is not a profile is not kept there.
