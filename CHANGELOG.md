@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **The two level 1b scintillation files are described and read properly.** `scnPhs` (the 50 Hz excess phase and SNR behind each scnLv2 file) and `scn1c2` (the S4 the receiver computes on board every 10 s along a tracking arc) were listed as "Undocumented CDAAC product"; their Get data cards, the README product table and Help now say what they hold, from CDAAC's file format descriptions and real files of 2026-10-07.
+- **scnPhs files were all marked bad** (CDAAC writes the error text "OK") and had no position, so they could not be found by place. They are now good unless flagged, and are placed as scnLv2 is: at the tangent point of the ray where an S4 the app computes from the L1 SNR is largest (within 0.01 of scnLv2's own S4 maximum, a median 4.6 km from its place on the 11 occultations checked). Their time axis is in seconds, not metres as CDAAC labels it.
+- **scn1c2 time** counts seconds from the start of the arc, as its unit says (the values were GPS seconds).
+
 - **Profile CSV exports are about twice as fast**: the values are formatted a column at a time; the file is byte for byte the same. The headless example's export of the 12 example profiles took about a minute and now takes about half that.
 - **Get data and Help say how long a download takes**: a day's file is read whole, so at 0.2-1 MB/s a wetPf2 day takes a few minutes to a quarter of an hour and an atmPrf day half an hour to three hours; "First profiles of the day" is the quick start. Help has a new section, "Downloads: how big and how long".
 - **The headless example** no longer prints "nan K" for the heights below the lowest profile, and the README says a pip install does not include the `examples` folder.

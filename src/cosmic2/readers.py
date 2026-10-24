@@ -756,7 +756,7 @@ def _read_avnprf(path: str) -> Granule:
 # Raised whenever a reader change alters what is indexed (position, local
 # time, quality, extras); an index written by an older version is then
 # re-read once at start-up (see store.index_outdated).
-INDEX_VERSION = 9
+INDEX_VERSION = 10
 
 READERS = {
     "atmPrf": _read_atmprf,
@@ -794,13 +794,77 @@ def _read_generic(path: str, product: str) -> Granule:
     return g
 
 
+def _read_scnphs(path: str) -> Granule:
+    """scnPhs: CDAAC's level 1b high-rate (50 Hz) excess phase and SNR of a
+    scintillation event, the input of the scnLv2 file with the same stamp.
+
+    ``time`` is in seconds after ``startTime`` (CDAAC's own label calls it an
+    excess phase in metres).  The record is placed as scnLv2 is: at the
+    tangent point of the ray in the 10 s window of largest S4, here
+    sqrt(<I^2> - <I>^2) / <I> of I = caL1Snr^2 without detrending.  On the
+    11 files of 2026-10-07 that also have an scnLv2, this S4 maximum is within
+    0.01 of scnLv2's s4max_L1 and the tangent points from the file's low-rate
+    orbits within 0.5 km of scnLv2's at the same times.
+    """
+    g = _read_generic(path, "scnPhs")
+    g.warnings.clear()
+    d, a = g.data, g.attrs
+    g.units["time"] = "s"
+    try:
+        t = np.asarray(d["time"], dtype="float64")
+        start = float(np.ravel(d["startTime"])[0])
+        orb = np.asarray(d["orbtime"], dtype="float64")
+        power = np.asarray(d["caL1Snr"], dtype="float64") ** 2
+        geometry = {k: d[src] for k, src in (
+            ("x_LEO", "xLeoLR"), ("y_LEO", "yLeoLR"), ("z_LEO", "zLeoLR"),
+            ("x_GPS", "xGnssLR"), ("y_GPS", "yGnssLR"), ("z_GPS", "zGnssLR"))}
+        # gast1 is the sidereal angle at the first high-rate sample
+        geometry.update(time=orb, gast1=[float(np.ravel(d["gast1"])[0]) + EARTH_ROTATION_RAD_S
+                                         * (orb[0] - start - t[0])])
+    except (KeyError, IndexError, TypeError, ValueError):
+        return g
+    window = np.floor((t - t[0]) / 10.0)
+    s4_max, t_max = None, t[0]
+    for w in np.unique(window[np.isfinite(window)]):
+        x = power[(window == w) & np.isfinite(power)]
+        if x.size >= 100 and x.mean() > 0:
+            s4 = float(np.sqrt(max(np.mean(x * x) - x.mean() ** 2, 0.0)) / x.mean())
+            if s4_max is None or s4 > s4_max:
+                s4_max, t_max = s4, float(np.mean(t[window == w]))
+    tangent = scn_tangent_point(geometry, int(np.argmin(np.abs(orb - start - t_max))))
+    if tangent is not None:
+        lat, lon, height = tangent
+        epoch = g.meta["epoch"]
+        g.meta.update(lat=lat, lon=lon, local_time=_local_time(
+            lon, None if epoch is None else epoch + t_max - t[0]))
+        g.meta["extras"]["tangent_height_s4max_L1_km"] = height
+    g.meta["extras"]["s4max_L1_from_snr"] = s4_max
+    g.meta["ref_sat"] = _to_str(a.get("refsatId", ""))
+    g.meta["mission"] = _to_str(a.get("missionId", ""))
+    return g
+
+
+def _read_scn1c2(path: str) -> Granule:
+    """scn1c2: S4 computed on board every 10 s along a whole tracking arc
+    (level 1b).  CDAAC writes ``time`` in GPS seconds under the unit "seconds
+    since <start of the arc>", so it is made relative to ``start_time``."""
+    g = _read_generic(path, "scn1c2")
+    t, t0 = g.data.get("time"), scrub(g.attrs.get("start_time"))
+    if t is not None and t0 is not None and np.nanmin(t) >= t0:
+        g.data["time"] = t - float(t0)
+    return g
+
+
+READERS.update(scnPhs=_read_scnphs, scn1c2=_read_scn1c2)
+
+
 def load(path: str, product: str | None = None) -> Granule:
     """Read a granule, dispatching on product code."""
     prod = product or parse_filename(path)["product"]
     fn = READERS.get(prod)
     g = _read_generic(path, prod or "unknown") if fn is None else fn(path)
     err = _to_str(g.attrs.get("errstr", ""))
-    if err:
+    if err and err.strip().upper() != "OK":     # scnPhs writes errstr = "OK"
         g.meta["error_text"] = err
         g.meta["good"] = False
     _nominal_time(g.meta)

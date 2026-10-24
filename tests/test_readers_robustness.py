@@ -383,3 +383,45 @@ def test_podtc2_and_scn1c2_get_satellite_and_position_from_their_attributes(tmp_
     assert (m["lat"], m["lon"]) == pytest.approx((-11.663, 23.304))
     assert m["local_time"] == pytest.approx(readers._local_time(23.304, m["epoch"]))
     assert readers.parse_filename("scn1c2_2026.270.002.01.02.G06.OS006_0001.0001_nc")["sat"] == "C2E2"
+
+
+def test_scnphs_is_placed_at_the_tangent_point_of_its_largest_s4(tmp_path):
+    # 50 Hz from 7 s to 47 s after startTime; the third 10 s window (27-37 s)
+    # flickers between SNR 200 and 600 (S4 = 0.8), the rest is steady.  The
+    # ray runs along x = 6700 km, so its tangent point is (6700, 0, 0) inertial.
+    t = 7.0 + np.arange(2000) * 0.02
+    snr = np.full(t.size, 400.0)
+    burst = (t >= 27.0) & (t < 37.0)
+    snr[burst] = np.where(np.arange(burst.sum()) % 2, 600.0, 200.0)
+    start, n = 1475401011.0, 48
+    attrs = dict(year=2026, month=10, day=7, hour=9, minute=36, second=58.0,
+                 errstr="OK", bad="0", refsatId=31.0, missionId="coseqr")
+    v = {"time": (t, {"units": "m"}), "caL1Snr": (snr, {}),
+         "occheight": (np.linspace(560.0, 60.0, t.size), {"units": "km"}),
+         "startTime": (np.array([start]), {}), "gast1": (np.array([0.5]), {}),
+         "orbtime": (start + np.arange(n, dtype=float), {})}
+    for k, val in (("xLeoLR", 6700.0), ("yLeoLR", -2000.0), ("zLeoLR", 0.0),
+                   ("xGnssLR", 6700.0), ("yGnssLR", 20000.0), ("zGnssLR", 0.0)):
+        v[k] = (np.full(n, val), {"units": "km"})
+    g = readers.load(_write(tmp_path / "scnPhs_2026.280.002.01.01.G04.SC001_0001.0001_nc", attrs, v))
+    m = g.meta
+    assert m["good"] and not m["error_text"] and not g.warnings   # errstr "OK" is no error
+    assert (m["sat"], m["occ_prn"], g.units["time"]) == ("C2E2", "G04", "s")
+    assert m["extras"]["s4max_L1_from_snr"] == pytest.approx(0.8)
+    # nearest 1 s orbit sample to the window's middle (32 s): Earth turned 25 s after gast1
+    theta = 0.5 + readers.EARTH_ROTATION_RAD_S * 25.0
+    assert (m["lat"], m["lon"]) == pytest.approx((0.0, -np.degrees(theta)), abs=1e-6)
+    assert m["extras"]["tangent_height_s4max_L1_km"] == pytest.approx(6700.0 - readers.WGS84_A_KM)
+    assert m["local_time"] == pytest.approx(
+        readers._local_time(m["lon"], m["epoch"] + float(np.mean(t[burst])) - 7.0))
+
+
+def test_scn1c2_time_counts_from_the_start_of_the_arc(tmp_path):
+    attrs = dict(year=2026, month=10, day=7, hour=0, minute=1, second=45.0, leo_id=2,
+                 prn_id=1, start_time=np.float64(1475366505.0), lat_start=-12.1, lon_start=-52.6)
+    v = {"time": (1475366505.0 + np.array([0.0, 10.0, 20.0]),
+                  {"units": "seconds since 2026-10-07 00:01:45"}),
+         "s4_L1": (np.array([0.09, 0.5, 0.1]), {})}
+    g = readers.load(_write(tmp_path / "scn1c2_2026.280.002.01.01.G01.OS001_0001.0001_nc", attrs, v))
+    assert list(g.data["time"]) == [0.0, 10.0, 20.0]
+    assert (g.meta["sat"], g.meta["lat"]) == ("C2E2", pytest.approx(-12.1))

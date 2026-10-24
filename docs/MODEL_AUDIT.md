@@ -190,6 +190,29 @@ TanDEM-X (2026-05-31) and COSMIC-1 (2019-12-10) from CDAAC.
   README, Help and the metadata CSV header say what scale they are on.
 * **Status**: documented.
 
+### L8. scnPhs placed at an S4 the app computes; scn1c2 at the start of its arc
+* **Where**: `readers.py:797` (`_read_scnphs`), `readers.py:847`
+  (`_read_scn1c2`).
+* **What**: scnPhs (level 1b, 50 Hz phase and SNR of a scintillating
+  occultation) carries no S4 and no position. The app computes S4 in 10 s
+  windows as sqrt(<I^2> - <I>^2) / <I> with I = caL1Snr^2, without
+  detrending, and places the record at the tangent point (L5) from the
+  file's 1 s orbits at the middle of the window of largest S4. scn1c2
+  (on-board S4 every 10 s along a tracking arc) is placed at CDAAC's
+  `lat_start`/`lon_start`, the satellite's own position at the start.
+* **Check**: on the 11 scnPhs of 2026-10-07 (first 4 MB of the day's file)
+  that also have an scnLv2, the S4 maximum is within 0.01 of scnLv2's
+  `s4max_L1` (0.982 against 0.992 for the strongest), the tangent points
+  match scnLv2's at the same times within 0.5 km, and the record lies
+  0.5-50 km (median 4.6 km) from where the scnLv2 is placed. Of 314 scn1c2
+  arcs of that day, 98 % cross the satellite's horizon, so an arc has no
+  single tangent point.
+* **Problem**: the scn1c2 position is the satellite's, not where the ray
+  crossed the ionosphere; for scnLv2 those two lie a median 1947 km apart
+  (README), and the start of a 26-minute arc can be farther still.
+* **Fix**: none beyond the README note; for a map of scintillation use
+  scnLv2 or scnPhs.
+
 ### L6. Constants and formulas checked against their sources
 * `sat_vapour_pressure_hpa` (`radiosonde.py:304`): Bolton 1980,
   doi:10.1175/1520-0493(1980)108<1046:TCOEPT>2.0.CO;2. Correct.

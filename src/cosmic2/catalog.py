@@ -39,7 +39,8 @@ STREAMS: dict[str, dict] = {
     "rapid": {
         "label": "Rapid",
         "blurb": "Reprocessed within days with better orbits. The scintillation "
-                 "(scnLv2) and in-situ IVM (ivmL2m) files live here; ionospheric "
+                 "(scnLv2, with its level 1b scnPhs and scn1c2) and in-situ IVM (ivmL2m) "
+                 "files live here; ionospheric "
                  "profiles (ionPrf) are in the provisional stream.",
         "levels": ["level2", "level1b", "level3"],
     },
@@ -330,6 +331,43 @@ PRODUCTS: dict[str, Product] = {p.code: p for p in [
         doi="10.3390/atmos13091409",
         archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level1b/",
         processing_chain="Geometry-free linear combination of dual-frequency carrier phases from the upward-looking precise orbit determination (POD) antennas."
+    ),
+    Product(
+        "scnPhs", "Scintillation high-rate phase and SNR", "scintillation", "scnPhs",
+        "Level 1b input of scnLv2: 50 Hz excess phase (raw and detrended) on L1 and L2, "
+        "SNR on L1 C/A and L2, and straight-line ray height, for each occultation whose "
+        "on-board S4 passed the threshold (same file stamp as its scnLv2). The app places "
+        "a file at the tangent point of the ray in the 10 s window of largest S4, which it "
+        "computes from the L1 SNR, as scnLv2 is placed.",
+        "The fast raw signal behind each scintillation file, for those who want to "
+        "compute their own indices.",
+        "medium",
+        ("caL1Snr", "exL1", "occheight"),
+        reference="CDAAC file format description scnPhs, "
+                  "https://cdaac-www.cosmic.ucar.edu/cdaac/cgi_bin/fileFormats.cgi?type=scnPhs",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level1b/",
+        processing_chain="High-rate (50 Hz) carrier phase and SNR of the occultation antenna, "
+                         "sent down when the on-board S4 passes a threshold; excess phase with "
+                         "orbits at 1 s (in the file) for the ray geometry."
+    ),
+    Product(
+        "scn1c2", "On-board S4 along the tracking arc", "scintillation", "scn1c2",
+        "Level 1b S4 index on L1 and L2 that the receiver computes on board from 50 Hz "
+        "observations, every 10 s over a whole tracking arc of one GNSS satellite (a "
+        "median 26 minutes), with elevation and satellite and transmitter positions. The "
+        "transmitter is below the satellite's horizon for part of nearly every arc (98 % of "
+        "the files of 2026-10-07) and above it for the rest, so an arc has no single "
+        "tangent point: the app places a file at the satellite's "
+        "position at the start of the arc and gives its time in seconds from that start.",
+        "A low-rate flicker index for every satellite the receiver tracked, not only "
+        "during occultations.",
+        "medium",
+        ("s4_L1", "elevation"),
+        reference="CDAAC file format description scn1c2, "
+                  "https://cdaac-www.cosmic.ucar.edu/cdaac/cgi_bin/fileFormats.cgi?type=scn1c2",
+        archive_url="https://data.cosmic.ucar.edu/gnss-ro/cosmic2/rapid/level1b/",
+        processing_chain="S4 computed in near real time by the TGRS receiver from 50 Hz "
+                         "observations in 10 s intervals, one file per GNSS satellite and data dump."
     ),
     Product(
         "leoOrb", "LEO orbit solution", "orbit", "",
