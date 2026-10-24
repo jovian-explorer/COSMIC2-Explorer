@@ -110,8 +110,12 @@ def test_scnlv2_is_placed_at_the_tangent_point_of_the_s4_maximum():
         lat, lon, _ = readers.scn_tangent_point(d, i)
         m, ex = g.meta, g.meta["extras"]
         assert (m["lat"], m["lon"]) == (pytest.approx(lat), pytest.approx(lon))
+        # time counts from startTime (8 s before the first sample) while the
+        # calendar attributes, hence epoch, are the first sample's time
+        assert d["time"][0] == 8.0
+        assert g.attrs["startTime"] % 60 == (g.attrs["second"] - 8.0) % 60
         assert m["local_time"] == pytest.approx(
-            ((m["epoch"] + d["time"][i]) % 86400 / 3600 + lon / 15) % 24)
+            ((m["epoch"] + d["time"][i] - d["time"][0]) % 86400 / 3600 + lon / 15) % 24, abs=1e-6)
         assert ex["tangent_height_s4max_L1_km"] == pytest.approx(d["occheight"][i])
         # the archive's position is the satellite's: about 570 km up and
         # nearly 2000 km from where its ray grazed the F region

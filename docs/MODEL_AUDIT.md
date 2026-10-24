@@ -172,6 +172,11 @@ TanDEM-X (2026-05-31) and COSMIC-1 (2019-12-10) from CDAAC.
   0.0002 and 0.006 degrees on 602 files. Ionospheric bending at 100-400 km
   is far too small to move the point.
 * **Fix**: none.
+* **Local time** (2026-10-24): `time` counts from `startTime`, while the
+  calendar attributes (hence the record's epoch) are the time of the first
+  sample, 8 s later in the example files; the local time at the S4 maximum
+  was 8 s (0.002 h) late. It now adds `time[i] - time[0]` to the epoch, as
+  scnPhs does; index version 11 re-reads indexed files once.
 
 ### L7. CDAAC's mean SNR is not on the papers' scale
 * **Where**: `readers.py` (atmPrf extras `l1_snr_mean_Vv`, `l2_snr_mean_Vv`

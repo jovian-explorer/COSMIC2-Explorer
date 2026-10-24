@@ -20,7 +20,7 @@ def page():
         sync_api = pytest.importorskip("playwright.sync_api")
     pw = sync_api.sync_playwright().start()
     try:
-        browser = pw.chromium.launch()
+        browser = pw.chromium.launch(args=["--disable-gpu"])   # software rendering: the GPU is often busy
     except Exception as exc:  # noqa: BLE001
         pw.stop()
         if REQUIRED:
@@ -174,7 +174,13 @@ def test_settings_changed_panel_once(page):
     text = page.text_content("#settings-changes")
     assert "New settings" in text and "Update automatically" in text and "before: 0.0.0" in text
     page.click("#drawer-close")
-    page.wait_for_timeout(500)
+    for _ in range(50):     # the marker is written by a request; poll on a busy PC
+        try:
+            if json.loads(sm.MARKER_PATH.read_text(encoding="utf-8"))["schema"] == sm.current_schema():
+                break
+        except (OSError, ValueError):   # caught mid-write (Windows locks it)
+            pass
+        page.wait_for_timeout(200)
     assert SETTINGS_PATH.read_text(encoding="utf-8") == before
     assert json.loads(sm.MARKER_PATH.read_text(encoding="utf-8"))["schema"] == sm.current_schema()
     page.reload()

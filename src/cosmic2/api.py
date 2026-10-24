@@ -754,7 +754,17 @@ def _resolve_selection(granule_ids: list[str] | None,
         rows = store.query_granules(**payload)["granules"]
     else:
         rows = store.query_granules(limit=cap)["granules"]
-    return [r for r in rows if os.path.exists(r["path"])]
+    kept = [r for r in rows if os.path.exists(r["path"])]
+    if len(kept) < len(rows):
+        # files moved or deleted outside the app: the index forgets them
+        # (as it does at start-up) instead of every tool saying "no match"
+        store.prune_missing()
+        if not kept:
+            raise HTTPException(400, f"The {len(rows)} matching profiles are no longer on disk "
+                                     "(their files were moved or deleted outside the app); they "
+                                     "are now removed from the index. Download those days again "
+                                     "under Get data.")
+    return kept
 
 
 @app.post("/api/composite")

@@ -366,3 +366,61 @@ def test_profile_data_lists_what_the_file_lacks():
     res = json.loads(_req(f"/api/profiles/{gid}/data?vars=Ref,ELEC_dens&max_points=50").read())
     assert list(res["series"]) == ["Ref"] and res["unavailable"] == ["ELEC_dens"]
     assert res["series"]["Ref"]["decimated"] and len(res["series"]["Ref"]["values"]) <= 50
+
+
+NO_SUCH = {"granule_ids": ["0000000000000000"]}
+
+
+@pytest.mark.parametrize("path, body, text", [
+    ("/api/composite", NO_SUCH, "No local profiles"),
+    ("/api/stats/sampling", NO_SUCH, "No local profiles"),
+    ("/api/compare/products", NO_SUCH, "No local profiles"),
+    ("/api/compare/models", NO_SUCH, "No local profiles"),
+    ("/api/climatology/tropopause", NO_SUCH, "No local profiles"),
+    ("/api/climatology/section", NO_SUCH, "No local profiles"),
+    ("/api/climatology/map", NO_SUCH, "No local profiles"),
+    ("/api/export/data", dict(NO_SUCH, kind="metadata_csv"), "No local profiles"),
+    ("/api/export/figure", dict(NO_SUCH, kind="profiles"), "No local profiles"),
+    ("/api/validation/radiosonde", NO_SUCH, "No good atmPrf or wetPf2"),
+    ("/api/export/plot-csv", {"traces": []}, "nothing drawn"),
+])
+def test_an_empty_selection_is_a_400_that_says_so(path, body, text):
+    code, msg = _error(path, body)
+    assert code == 400 and text in msg
+
+
+LAYER = {"search": {"limit": 50}, "bottom_km": 20, "top_km": 10}
+
+
+@pytest.mark.parametrize("path, body, text", [
+    ("/api/compare/products", LAYER, "top_km must be above bottom_km"),
+    ("/api/compare/models", LAYER, "top_km must be above bottom_km"),
+    ("/api/compare/missions", LAYER, "top_km must be above bottom_km"),
+    ("/api/climatology/section", LAYER, "top_km must be above bottom_km"),
+    ("/api/climatology/map", {"search": {"limit": 50}, "gw_z_lo": 40, "gw_z_hi": 20},
+     "gw_z_hi must be above gw_z_lo"),
+])
+def test_an_upside_down_layer_is_refused(path, body, text):
+    assert _error(path, body) == (422, text)
+
+
+def test_settings_reject_unknown_defaults_and_a_non_object_ack():
+    code, msg = _error("/api/settings", {"default_product": "noSuchPrf"})
+    assert code == 422 and "atmPrf" in msg
+    code, msg = _error("/api/settings/changes/ack", {"settings": [1, 2]})
+    assert code == 400 and msg == "settings must be a JSON object"
+
+
+def test_files_deleted_outside_the_app_are_named_and_forgotten(tmp_path):
+    import shutil
+    from cosmic2 import store
+    from cosmic2.config import sampledata_dir
+    src = next(sampledata_dir().glob("atmPrf_*"))
+    copy = tmp_path / src.name
+    shutil.copy(src, copy)
+    assert post("/api/local/import", {"paths": [str(copy)]})["indexed"] == 1
+    gid = store.granule_id(str(copy))
+    copy.unlink()
+    code, msg = _error("/api/composite", {"granule_ids": [gid]})
+    assert code == 400 and "no longer on disk" in msg and "Get data" in msg
+    assert store.get_granules([gid]) == []

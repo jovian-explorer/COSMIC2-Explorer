@@ -43,14 +43,6 @@ from . import readers, store
 from .catalog import Archive, date_to_doy, describe_product
 from .config import CACHE_DIR, SETTINGS, ensure_dirs
 
-# Nominal granules per day, used only as the initial guess for ``spread``
-# before enough of the stream has been read to estimate it properly.
-NOMINAL_PER_DAY = {
-    "atmPrf": 5500, "wetPf2": 5500, "avnPrf": 5500, "echPrf": 5500,
-    "bfrPrf": 5500, "ionPrf": 4500, "scnLv2": 9000, "ivmL2m": 6,
-    "conPhs": 5500, "podTc2": 6, "leoOrb": 6,
-}
-
 
 class Cancelled(Exception):
     pass

@@ -616,8 +616,9 @@ def _read_scnlv2(path: str) -> Granule:
     tangent_height = None
     if tangent is not None:
         lat, lon, _h = tangent
+        # time counts from startTime; the calendar attributes are time[0]
         t = np.asarray(data["time"], dtype="float64")
-        local_time = _local_time(lon, None if epoch is None else epoch + float(t[i_max]))
+        local_time = _local_time(lon, None if epoch is None else epoch + float(t[i_max] - t[0]))
         occ = data.get("occheight")
         if occ is not None and i_max < np.size(occ) and np.isfinite(occ[i_max]):
             tangent_height = float(occ[i_max])
@@ -756,7 +757,7 @@ def _read_avnprf(path: str) -> Granule:
 # Raised whenever a reader change alters what is indexed (position, local
 # time, quality, extras); an index written by an older version is then
 # re-read once at start-up (see store.index_outdated).
-INDEX_VERSION = 10
+INDEX_VERSION = 11
 
 READERS = {
     "atmPrf": _read_atmprf,

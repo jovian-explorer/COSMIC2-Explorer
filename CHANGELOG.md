@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **Profiles whose files were moved or deleted outside the app** are named as such: a plot, statistic or export of them said only "No local profiles match that selection"; it now says the files are no longer on disk, removes them from the index and points to Get data to download those days again.
+- **scnLv2 local time** at the S4 maximum was 8 s late (the file's time axis counts from its start time, the calendar attributes from the first sample); the index is updated once at start-up.
+- **Tests for the API's error answers** of every analysis and export tool given an empty selection or an upside-down height layer, and for the settings checks.
+
 - **The two level 1b scintillation files are described and read properly.** `scnPhs` (the 50 Hz excess phase and SNR behind each scnLv2 file) and `scn1c2` (the S4 the receiver computes on board every 10 s along a tracking arc) were listed as "Undocumented CDAAC product"; their Get data cards, the README product table and Help now say what they hold, from CDAAC's file format descriptions and real files of 2026-10-07.
 - **scnPhs files were all marked bad** (CDAAC writes the error text "OK") and had no position, so they could not be found by place. They are now good unless flagged, and are placed as scnLv2 is: at the tangent point of the ray where an S4 the app computes from the L1 SNR is largest (within 0.01 of scnLv2's own S4 maximum, a median 4.6 km from its place on the 11 occultations checked). Their time axis is in seconds, not metres as CDAAC labels it.
 - **scn1c2 time** counts seconds from the start of the arc, as its unit says (the values were GPS seconds).
