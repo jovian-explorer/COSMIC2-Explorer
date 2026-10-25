@@ -319,3 +319,27 @@ def test_section_follows_the_searched_product(page):
     _press(page, "#btn-section")
     assert "not a height profile" in page.inner_text("#section-plot")
     assert not page.errors, page.errors
+
+
+def test_explore_opens_on_the_default_product_and_profiles_grey_out_the_rest(page):
+    """Explore opens on Settings' default product (wetPf2), not atmPrf, the
+    first in the alphabet, and says the other products are under Product;
+    with an atmPrf selection the Profiles quantities only wetPf2 holds are
+    greyed out (it listed "Dry temperature (temp_dry)" beside its Temp)."""
+    page.goto(BASE + "/")
+    page.wait_for_selector("#version-tag:not(:empty)")
+    page.wait_for_load_state("networkidle")
+    page.click("button[data-tab=explore]")
+    assert page.input_value("#f-product") == "wetPf2"
+    _press(page, "#btn-search")
+    assert "These are wetPf2 files; choose another Product" in page.inner_text("#search-note")
+    disabled = "v => [...document.querySelectorAll('#p-field option')].find((o) => o.value === v).disabled"
+    page.select_option("#f-product", "atmPrf")
+    _press(page, "#btn-search")
+    page.click("#btn-clear-sel")
+    page.click("#btn-select-page")
+    assert page.evaluate(disabled, "temp_dry") and page.evaluate(disabled, "ref")
+    assert not page.evaluate(disabled, "Temp") and not page.evaluate(disabled, "Ref")
+    page.click("#btn-clear-sel")
+    assert not page.evaluate(disabled, "temp_dry")
+    assert not page.errors, page.errors

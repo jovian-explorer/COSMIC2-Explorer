@@ -11,6 +11,7 @@ import csv
 import datetime as dt
 import json
 import math
+from itertools import islice
 import re
 from pathlib import Path
 from typing import Sequence
@@ -109,6 +110,7 @@ def export_profiles_csv(granules: Sequence[dict], variables: Sequence[str] | Non
     # Rows go to a scratch file until all columns are known.
     columns: list[str] = []
     units: dict[str, set[str]] = {}
+    blocks: list[tuple[int, int]] = []    # (rows, columns) of each profile
     body = path.with_name(path.name + ".part")
     with body.open("w", newline="", encoding="utf-8") as fb:
         writer = csv.writer(fb)
@@ -144,14 +146,13 @@ def export_profiles_csv(granules: Sequence[dict], variables: Sequence[str] | Non
             n = min(src[c].size for c in cols)
             # one column at a time (formatting value by value was most of a
             # large export's time)
-            texts = [_fmt_column(src[c][:n]) for c in cols]
-            for i in range(n):
-                vals = [""] * len(columns)
-                for k, t in zip(idx, texts):
-                    vals[k] = t[i]
-                writer.writerow(base + [i] + vals)
-                n_rows += 1
-    width = 7 + len(columns)
+            full = [[""] * n] * len(columns)
+            for k, c in zip(idx, cols):
+                full[k] = _fmt_column(src[c][:n])
+            writer.writerows((*base, i, *vals) for i, vals in enumerate(zip(*full)))
+            blocks.append((n, len(columns)))
+            n_rows += n
+    width = len(columns)
     with path.open("w", newline="", encoding="utf-8") as fh, \
             body.open(newline="", encoding="utf-8") as fb:
         if comment_header:
@@ -164,8 +165,14 @@ def export_profiles_csv(granules: Sequence[dict], variables: Sequence[str] | Non
             writer = csv.writer(fh)
             writer.writerow(["granule", "product", "time_utc", "lat", "lon",
                              "local_time_h", "level_index"] + columns)
-            for row in csv.reader(fb):
-                writer.writerow(row + [""] * (width - len(row)))
+            # pad each profile's rows to the final columns by text: parsing
+            # and rewriting every row was a third of a large export
+            for n, w in blocks:
+                pad = "," * (width - w)
+                if pad:
+                    fh.writelines(line[:-2] + pad + "\r\n" for line in islice(fb, n))
+                else:
+                    fh.writelines(islice(fb, n))
     body.unlink()
     return {"path": str(path), "filename": path.name, "bytes": path.stat().st_size,
             "mime": "text/csv", "rows": n_rows, "provenance": prov}

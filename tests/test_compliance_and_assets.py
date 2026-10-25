@@ -191,3 +191,26 @@ def test_clean_plotly_math_and_katex_integration():
     assert "\\\\left" not in index_html, "Double backslash \\left detected in index.html"
     assert "\\\\frac" not in index_html, "Double backslash \\frac detected in index.html"
 
+
+
+def test_citation_texts_agree():
+    """README, Help, CITATION.cff, the data policy and the in-app citations
+    give the same version, DOI and author line (Help's citation had neither
+    version nor DOI, and no role)."""
+    import re
+    from cosmic2.config import APP_VERSION
+    doi = "10.5281/zenodo.23329841"
+    cff = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
+    assert f"version: {APP_VERSION}\n" in cff and f"doi: {doi}\n" in cff
+    assert re.search(r'^version = "([^"]+)"', (ROOT / "pyproject.toml").read_text(encoding="utf-8"),
+                     re.M).group(1) == APP_VERSION
+    assert "Student Visitor" in cff
+    texts = {p: p.read_text(encoding="utf-8") for p in (
+        ROOT / "README.md", ROOT / "DATA_POLICY.md", FRONTEND / "help.html",
+        FRONTEND / "index.html", FRONTEND / "js" / "main.js")}
+    for p, text in texts.items():
+        assert doi in text, p.name
+        assert "Keshav Aggarwal" in text, p.name
+        assert "Student Visitor at the Space Physics Laboratory (SPL)" in text, p.name
+    for p in (ROOT / "README.md", ROOT / "DATA_POLICY.md", FRONTEND / "help.html"):
+        assert f"ersion {APP_VERSION})" in texts[p], p.name

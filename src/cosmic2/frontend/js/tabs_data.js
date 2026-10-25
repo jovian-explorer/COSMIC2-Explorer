@@ -6,6 +6,7 @@ import {$, $$, el, clear, fmt, fixed, bytes, clock, isoDay, timeOf, latlon,
         emptyPlot} from './ui.js';
 
 let pollTimer = null;
+let fetched = null;    // the last download asked for, shown in Explore when it ends
 let manifest = [];
 
 // ==========================================================================
@@ -163,6 +164,7 @@ async function startDownload(f, button) {
     await api.download(req);
     toast(days > 1 ? `Fetching ${f.label} for ${days} days, ${f.date} to ${end}.`
                    : `Fetching ${f.label} for ${f.date}.`);
+    fetched = {product: f.product, start: f.date, end: days > 1 ? end : f.date};
     pollJobs();
   });
 }
@@ -192,8 +194,25 @@ export function pollJobs() {
     renderJobs(jobs);
     const active = jobs.some((j) => j.state === 'running' || j.state === 'queued');
     if (active) pollTimer = setTimeout(pollJobs, 900);
-    else { refreshLocal(); refreshFacets(); }
+    else { refreshLocal(); showFetched(); }
   }).catch(() => { /* backend restarting; the next user action will retry */ });
+}
+
+/** After a download, Explore lists what it brought: it stayed on the
+ *  product it had (atmPrf of the examples), so a fresh wetPf2 day seemed
+ *  to be missing. */
+async function showFetched() {
+  const f = fetched;
+  fetched = null;
+  await refreshFacets(f && f.product);
+  if (!f || $('#f-product').value !== f.product) return;
+  $('#f-start').value = f.start;
+  $('#f-end').value = f.end;
+  const res = await runSearch();
+  if (res.total) {
+    toast(`${res.total} ${f.product} profiles of ${f.start === f.end ? f.start : `${f.start} to ${f.end}`} ` +
+          'are listed on the Explore tab.', 'good');
+  }
 }
 
 function renderJobs(jobs) {
@@ -318,11 +337,15 @@ export function satelliteChoices(sats) {
   return out.concat(sats.map((s) => ({value: s, label: OTHER_MISSIONS[s] ? `${OTHER_MISSIONS[s]} (${s})` : s})));
 }
 
-export async function refreshFacets() {
+export async function refreshFacets(prefer = null) {
   try {
     const f = await api.facets();
     const products = f.products.length ? f.products : ['wetPf2'];
-    fillSelect($('#f-product'), products, products[0]);
+    // the product asked for, else the one shown, else Settings' default
+    // (wetPf2): it opened on atmPrf, the first in the alphabet
+    const product = [prefer, $('#f-product').value, state.meta.settings.default_product]
+      .find((p) => products.includes(p)) || products[0];
+    fillSelect($('#f-product'), products, product);
     fillSelect($('#f-sat'), satelliteChoices(f.sats), '');
     const named = {local: 'files from this computer (imported, or the bundled examples)'};
     fillSelect($('#f-stream'), [{value: '', label: 'any'}].concat(f.streams.map((s) => ({
@@ -413,6 +436,8 @@ export async function runSearch(offset = 0) {
   state.offset = res.offset;
   $('#search-note').textContent =
     `${res.total} profiles match. Showing ${res.granules.length}.` +
+    (req.products && $('#f-product').options.length > 1
+      ? ` These are ${req.products[0]} files; choose another Product above for the rest.` : '') +
     (res.folded ? ` ${res.folded} more ${res.folded === 1 ? 'file is a second copy' : 'files are second copies'} ` +
       'of the same occultations (from another stream, or imported) and ' +
       `${res.folded === 1 ? 'is' : 'are'} not counted (the post-processed copy is used first).` : '');

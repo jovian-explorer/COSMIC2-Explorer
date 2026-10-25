@@ -108,7 +108,11 @@ def test_profiles_csv_keeps_each_product_under_its_own_columns():
     rows = list(csv.DictReader(open(res["path"], encoding="utf-8")))
     atm = [r for r in rows if r["product"] == "atmPrf"]
     wet = [r for r in rows if r["product"] == "wetPf2"]
-    assert {len(r) for r in rows} == {len(rows[0])}
+    # every row padded to the header by text, the atmPrf rows too (DictReader
+    # would fill short rows with None and hide it)
+    plain = list(csv.reader(open(res["path"], encoding="utf-8", newline="")))
+    assert {len(r) for r in plain} == {len(plain[0])}
+    assert open(res["path"], "rb").read().count(b"\r\n") == len(plain)
     assert atm[0]["Bend_ang"] and not wet[0]["Bend_ang"]
     assert wet[-1]["gph"] and not atm[0]["gph"]
     assert float(wet[-1]["MSL_alt"]) == 60.0

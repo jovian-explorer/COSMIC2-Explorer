@@ -44,8 +44,13 @@ export const PRODUCT_AXES = {
  *  product's default instead of drawing an empty plot. */
 function fitAxesToSelection() {
   const products = new Set(selectedIds().map((id) => state.selected.get(id).product));
-  if (products.size !== 1) { relabel('#p-field', null); return; }
-  fitPair([...products][0], '#p-field', '#p-vertical');
+  const one = products.size === 1 ? [...products][0] : null;
+  // Grey out what the selected product does not hold: an atmPrf selection
+  // offered wetPf2's "Dry temperature (temp_dry)" beside its own Temp.
+  const fields = one && PRODUCT_AXES[one] ? PRODUCT_AXES[one][0] : null;
+  for (const o of $('#p-field').options) o.disabled = !!fields && !fields.includes(o.value);
+  if (!one) { relabel('#p-field', null); return; }
+  fitPair(one, '#p-field', '#p-vertical');
 }
 
 /** Switch a quantity/height pair of controls to what ``product`` can show,

@@ -1,6 +1,6 @@
 # COSMIC-2 Explorer: Data Availability and Third-Party Data Policy
 
-**Lead Author and Maintainer**: Keshav Aggarwal, Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO, Thiruvananthapuram, Kerala, India.
+**Lead Author and Maintainer**: Keshav Aggarwal, Student Visitor at the Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO, Thiruvananthapuram, Kerala, India.
 
 ## 1. Overview and Open Access Philosophy
 

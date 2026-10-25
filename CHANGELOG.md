@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **A finished download is shown on the Explore tab.** Explore stayed on the product it had (atmPrf, the first in the alphabet, for the bundled examples), so a newly downloaded wetPf2 day seemed to be missing; it now switches to the downloaded product and days, searches, and a message says how many profiles are listed there.
+- **Explore opens on wetPf2**, the default product in Settings and the one the quick start recommends, and its note says which product the table shows and that the others are under Product.
+- **Profiles greys out quantities the selected product does not hold**: an atmPrf selection offered wetPf2's "Dry temperature (temp_dry)" and "Refractivity (ref)" beside its own Temp and Ref, which drew nothing.
+- **Profile CSV exports are about a third faster** (the same bytes): each profile's rows are padded to the final columns as text instead of being parsed and written a second time.
+- **Citation texts agree**: Help's suggested citation gives the version and the DOI, as README, CITATION.cff, the data policy and the BibTeX entries do; CITATION.cff and the data policy give the author's role (Student Visitor). A test checks that they keep agreeing.
 - **Profiles whose files were moved or deleted outside the app** are named as such: a plot, statistic or export of them said only "No local profiles match that selection"; it now says the files are no longer on disk, removes them from the index and points to Get data to download those days again.
 - **scnLv2 local time** at the S4 maximum was 8 s late (the file's time axis counts from its start time, the calendar attributes from the first sample); the index is updated once at start-up.
 - **Tests for the API's error answers** of every analysis and export tool given an empty selection or an upside-down height layer, and for the settings checks.

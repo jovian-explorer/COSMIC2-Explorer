@@ -5,6 +5,7 @@ type: software
 authors:
   - family-names: Aggarwal
     given-names: Keshav
+    affiliation: "Student Visitor, Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO"
     email: keshavaggarwal2310@gmail.com
 version: 0.1.0
 # Concept DOI on Zenodo: all versions, always resolves to the newest release
