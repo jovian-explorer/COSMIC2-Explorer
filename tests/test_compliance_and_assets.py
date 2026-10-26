@@ -63,7 +63,6 @@ def test_license_and_documentation_present():
 def test_author_affiliation():
     """Verify lead researcher name and ISRO/VSSC/SPL affiliation are consistently documented."""
     docs_to_check = [
-        ROOT / "LICENSE",
         ROOT / "DATA_POLICY.md",
         ROOT / "README.md",
         FRONTEND / "js" / "main.js",
@@ -77,13 +76,21 @@ def test_author_affiliation():
         assert "ISRO" in content, f"ISRO affiliation missing in {p.name}"
     # The owner's role at SPL is student visitor (as in VEDA), never the
     # earlier "Research Associate".
-    for p in [ROOT / "README.md", ROOT / "images" / "BRANDING_AND_MEDIA_KIT.md",
+    for p in [ROOT / "README.md",
               ROOT / "src" / "cosmic2" / "config.py", FRONTEND / "index.html",
               FRONTEND / "js" / "main.js"]:
         content = p.read_text(encoding="utf-8")
         assert "Student Visitor at the Space Physics Laboratory (SPL)" in content, p.name
         assert "Research Associate" not in content, p.name
-        assert "Dr. Keshav" not in content, p.name
+        assert "Dr. Keshav" not in content and "Mr. Keshav" not in content, p.name
+    # The software is owned by the author alone: no institution in LICENSE or in
+    # any copyright line; citations carry the affiliation but not the visitor title.
+    lic = (ROOT / "LICENSE").read_text(encoding="utf-8")
+    assert lic.splitlines()[2] == "Copyright (c) 2026 Keshav Aggarwal"
+    for banned in ("ISRO", "VSSC", "Space Physics Laboratory"):
+        assert banned not in lic, f"LICENSE names an institution: {banned}"
+    cfg = (ROOT / "src" / "cosmic2" / "config.py").read_text(encoding="utf-8")
+    assert '"copyright": "Copyright (c) 2026 Keshav Aggarwal",' in cfg
 
 
 def test_katex_offline_assets_integrity():
@@ -204,13 +211,18 @@ def test_citation_texts_agree():
     assert f"version: {APP_VERSION}\n" in cff and f"doi: {doi}\n" in cff
     assert re.search(r'^version = "([^"]+)"', (ROOT / "pyproject.toml").read_text(encoding="utf-8"),
                      re.M).group(1) == APP_VERSION
-    assert "Student Visitor" in cff
+    assert 'affiliation: "Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO"' in cff
+    assert "Student Visitor" not in cff
     texts = {p: p.read_text(encoding="utf-8") for p in (
         ROOT / "README.md", ROOT / "DATA_POLICY.md", FRONTEND / "help.html",
         FRONTEND / "index.html", FRONTEND / "js" / "main.js")}
     for p, text in texts.items():
         assert doi in text, p.name
         assert "Keshav Aggarwal" in text, p.name
-        assert "Student Visitor at the Space Physics Laboratory (SPL)" in text, p.name
+        assert "Space Physics Laboratory (SPL)" in text, p.name
+    for p in (ROOT / "DATA_POLICY.md", FRONTEND / "help.html"):
+        assert "Student Visitor" not in texts[p], p.name   # citations omit the visitor title
+    for p in texts:
+        assert not re.search(r"(publisher|institution)\s*=\s*\{Space Physics", texts[p]), p.name
     for p in (ROOT / "README.md", ROOT / "DATA_POLICY.md", FRONTEND / "help.html"):
         assert f"ersion {APP_VERSION})" in texts[p], p.name

@@ -55,7 +55,7 @@ DATA_LICENSES = {
     "software": {
         "name": "MIT License",
         "type": "Open Source",
-        "copyright": "Copyright (c) 2026 Keshav Aggarwal, Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO",
+        "copyright": "Copyright (c) 2026 Keshav Aggarwal",
         "url": "https://github.com/jovian-explorer/COSMIC2-Explorer/blob/main/LICENSE",
         "terms": "Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files.",
     },

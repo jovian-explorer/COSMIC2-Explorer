@@ -514,16 +514,16 @@ function aboutBody() {
   author    = {Keshav Aggarwal},
   title     = {{COSMIC-2 Explorer: Atmospheric and Ionospheric GNSS Radio Occultation Scientific Analysis and Visualization Platform}},
   year      = {2026},
-  publisher = {Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO},
+  publisher = {Zenodo},
+  affiliation = {Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO},
   version   = {${state.meta.app.version}},
-  url       = {https://jovian-explorer.github.io/},
-  address   = {Thiruvananthapuram, Kerala, India}
+  url       = {https://jovian-explorer.github.io/}
 }</pre>
 
     <hr/>
 
     <h3>3. Software License and Open-Source Attributions</h3>
-    <p><strong>License:</strong> COSMIC-2 Explorer is open-source software distributed under the <strong>MIT License</strong>. Copyright (c) 2026 Keshav Aggarwal, Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO.</p>
+    <p><strong>License:</strong> COSMIC-2 Explorer is open-source software distributed under the <strong>MIT License</strong>. Copyright (c) 2026 Keshav Aggarwal.</p>
     <p><strong>Third-Party Components:</strong> This application bundles permissive open-source libraries: KaTeX (MIT), Plotly.js (MIT), TopoJSON (BSD-3-Clause), FastAPI (MIT), Starlette (BSD-3-Clause), Pydantic (MIT), Uvicorn (BSD-3-Clause), NumPy (BSD-3-Clause), SciPy (BSD-3-Clause), pandas (BSD-3-Clause), NetCDF4 (MIT), Matplotlib (PSF-based Matplotlib License), Requests (Apache-2.0), and PyWebView (BSD-3-Clause). Full license notices are available in the repository documentation.</p>
 
     <hr/>
@@ -646,8 +646,8 @@ function dataPolicyBody() {
   title        = {{COSMIC-2 Explorer: High-Resolution Radio Occultation Processing, Visualisation, and Atmospheric Profiling System}},
   year         = {2026},
   version      = {${state.meta.app.version}},
-  institution  = {Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO},
-  address      = {Thiruvananthapuram, Kerala, India},
+  publisher    = {Zenodo},
+  affiliation  = {Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO},
   doi          = {10.5281/zenodo.23329841},
   url          = {https://doi.org/10.5281/zenodo.23329841}
 }</pre>
@@ -657,7 +657,7 @@ function dataPolicyBody() {
 
     <h3>4. Software Licensing (MIT)</h3>
     <p style="font-size: calc(12px * var(--font-scale, 1.0));">
-      COSMIC-2 Explorer is free and open-source software distributed under the <strong>MIT License</strong>. Copyright &copy; 2026 <strong>Keshav Aggarwal</strong>, Student Visitor at the Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), Indian Space Research Organisation (ISRO), Thiruvananthapuram, Kerala, India (Former PMRF Scholar at DAASE, IIT Indore).
+      COSMIC-2 Explorer is free and open-source software distributed under the <strong>MIT License</strong>. Copyright &copy; 2026 <strong>Keshav Aggarwal</strong>. Author: Keshav Aggarwal, Student Visitor at the Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), Indian Space Research Organisation (ISRO), Thiruvananthapuram, Kerala, India (Former PMRF Scholar at DAASE, IIT Indore).
     </p>
   `;
   renderMath(container);

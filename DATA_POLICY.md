@@ -1,6 +1,6 @@
 # COSMIC-2 Explorer: Data Availability and Third-Party Data Policy
 
-**Lead Author and Maintainer**: Keshav Aggarwal, Student Visitor at the Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO, Thiruvananthapuram, Kerala, India.
+**Lead Author and Maintainer**: Keshav Aggarwal, Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO, Thiruvananthapuram, Kerala, India.
 
 ## 1. Overview and Open Access Philosophy
 
@@ -51,7 +51,7 @@ Please cite the data set as UCAR asks and, if you used this software, COSMIC-2 E
 * UCAR COSMIC Program, 2019: COSMIC-2 Data Products [Data set]. UCAR/NCAR - COSMIC, Access date [insert date], https://doi.org/10.5065/T353-C093 (the form suggested on https://www.cosmic.ucar.edu/what-we-do/cosmic-2/data).
 
 ### Citation 2: COSMIC-2 Explorer Software
-* Aggarwal, Keshav (2026). COSMIC-2 Explorer: High-Resolution Radio Occultation Processing, Visualisation, and Atmospheric Profiling System (Version 0.1.0) [Computer software]. Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO, Thiruvananthapuram, Kerala, India. https://doi.org/10.5281/zenodo.23329841
+* Aggarwal, Keshav (2026). COSMIC-2 Explorer: High-Resolution Radio Occultation Processing, Visualisation, and Atmospheric Profiling System (Version 0.1.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23329841
 
 ```bibtex
 @software{Aggarwal_COSMIC2_Explorer_2026,
@@ -60,8 +60,8 @@ Please cite the data set as UCAR asks and, if you used this software, COSMIC-2 E
   year = {2026},
   version = {0.1.0},
   doi = {10.5281/zenodo.23329841},
-  institution = {Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO},
-  address = {Thiruvananthapuram, Kerala, India},
+  publisher = {Zenodo},
+  affiliation = {Space Physics Laboratory (SPL), Vikram Sarabhai Space Centre (VSSC), ISRO},
   url = {https://github.com/jovian-explorer/COSMIC2-Explorer}
 }
 ```
