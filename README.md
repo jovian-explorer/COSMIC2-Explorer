@@ -300,7 +300,8 @@ Dates are in UTC and are taken from the git history, the GitHub releases and the
 
 | Date | Event |
 |---|---|
-| 29 September 2026 | Development began and the GitHub repository was created. |
+| 2025 | Development began, at about the same time as VEDA. |
+| 29 September 2026 | First commit to the git repository, and the GitHub repository was created. |
 | 1 October 2026 | Version 0.0.1, the first pre-release build, made before the repository was public. |
 | 13 October 2026 | Repository made public with version 0.1.0, a public pre-release ([10.5281/zenodo.23329842](https://doi.org/10.5281/zenodo.23329842)). |
 
